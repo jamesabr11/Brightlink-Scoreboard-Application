@@ -1,52 +1,45 @@
 import { useState, useEffect } from 'react';
+import { clockRemaining, formatGameClock, formatShotClock } from '../../lib/clock';
+import type { GameClock, ShotClock } from '../../types/basketball';
 
 interface ClockDisplayProps {
-  remainingTime: number;
-  isRunning: boolean;
-  startTimestamp: number | null;
-  size?: 'small' | 'medium' | 'large';
+  clock: GameClock | ShotClock;
+  kind?: 'game' | 'shot';
+  size?: 'small' | 'medium' | 'large' | 'huge';
   label?: string;
+  themed?: boolean; // size and color come from the scoreboard theme
 }
 
-export const ClockDisplay: React.FC<ClockDisplayProps> = ({
-  remainingTime,
-  isRunning,
-  startTimestamp,
-  size = 'medium',
-  label
-}) => {
-  const [displayTime, setDisplayTime] = useState(remainingTime);
+export const ClockDisplay: React.FC<ClockDisplayProps> = ({ clock, kind = 'game', size = 'medium', label, themed }) => {
+  const [now, setNow] = useState(Date.now);
 
   useEffect(() => {
-    if (!isRunning || !startTimestamp) {
-      setDisplayTime(remainingTime);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      const elapsed = (Date.now() - startTimestamp) / 1000;
-      const newTime = Math.max(0, remainingTime - elapsed);
-      setDisplayTime(newTime);
-    }, 100);
-
+    if (!clock.isRunning) return;
+    const interval = setInterval(() => setNow(Date.now()), 50);
     return () => clearInterval(interval);
-  }, [remainingTime, isRunning, startTimestamp]);
+  }, [clock.isRunning]);
 
-  const minutes = Math.floor(displayTime / 60);
-  const seconds = Math.floor(displayTime % 60);
-  const tenths = Math.floor((displayTime % 1) * 10);
+  const remaining = clockRemaining(clock, now);
+  const warning = kind === 'shot' && remaining <= 5;
 
   const sizeClasses = {
     small: 'text-2xl',
-    medium: 'text-4xl',
-    large: 'text-6xl md:text-8xl',
+    medium: 'text-5xl',
+    large: 'text-6xl',
+    huge: 'text-8xl',
   };
+  const color = warning ? 'text-red-500' : clock.isRunning ? 'text-green-400' : 'text-white';
+  const text = kind === 'shot' ? formatShotClock(remaining) : formatGameClock(remaining);
+
+  if (themed) {
+    return <span data-testid={`${kind}-clock`} data-warning={warning} data-running={clock.isRunning} className="sb-digits">{text}</span>;
+  }
 
   return (
     <div className="flex flex-col items-center">
       {label && <div className="text-sm text-neutral-400 uppercase tracking-wider mb-1">{label}</div>}
-      <div className={`font-mono font-bold ${sizeClasses[size]} ${isRunning ? 'text-green-400' : 'text-white'} tabular-nums`}>
-        {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}.{tenths}
+      <div data-testid={`${kind}-clock`} className={`font-mono font-bold ${sizeClasses[size]} ${color} ${warning && clock.isRunning ? 'animate-pulse' : ''} tabular-nums`}>
+        {text}
       </div>
     </div>
   );

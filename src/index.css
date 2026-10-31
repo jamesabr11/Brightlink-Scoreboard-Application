@@ -1,3 +1,401 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:focus-visible {
+  outline: 3px solid #facc15;
+  outline-offset: 2px;
+}
+
+/* Remounted on each operator action, so it replays as confirmation. */
+.action-flash {
+  animation: action-flash 0.4s ease-out;
+}
+
+@keyframes action-flash {
+  from {
+    background-color: #ca8a04;
+  }
+}
+
+@media print {
+  body, .min-h-screen {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  section {
+    border: 0 !important;
+    background: #fff !important;
+  }
+}
+
+/* Public scoreboard. Everything is sized in cqw, a percentage of the 16:9 stage,
+   so the fullscreen display and the small preview are the same layout. */
+.sb-page {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--sb-bg);
+}
+
+.sb-page .sb-stage {
+  width: min(100vw, calc(100vh * 16 / 9));
+}
+
+.sb-stage {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  container-type: size;
+  overflow: hidden;
+}
+
+.sb-board {
+  width: 100%;
+  height: 100%;
+  color: var(--sb-text);
+  background-color: var(--sb-bg);
+  background-image: var(--sb-bg-image);
+  font-family: var(--sb-font);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sb-digits {
+  font-variant-numeric: tabular-nums;
+}
+
+.sb-truncate {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-nowrap {
+  white-space: nowrap;
+}
+
+.sb-panel {
+  min-width: 0;
+  min-height: 0;
+  background: var(--sb-panel);
+  border: 0.2cqw solid var(--sb-border);
+  border-radius: 1cqw;
+}
+
+.sb-label {
+  color: var(--sb-muted);
+  font-size: 1.5cqw;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sb-team {
+  border-top: 0.7cqw solid var(--team);
+}
+
+.sb-board[data-fill='true'] .sb-team {
+  color: var(--on-team);
+  background: var(--team);
+}
+
+.sb-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6cqw;
+  padding: 1.2cqw;
+  text-align: center;
+}
+
+.sb-identity {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1cqw;
+}
+
+.sb-logo {
+  width: 6cqw;
+  height: 6cqw;
+  flex: none;
+  object-fit: contain;
+}
+
+.sb-name {
+  min-width: 0;
+  height: 6.6cqw;
+  display: flex;
+  align-items: center;
+  font-size: 3.4cqw;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.sb-name[data-size='medium'] {
+  font-size: 2.5cqw;
+}
+
+.sb-name[data-size='small'] {
+  font-size: 1.9cqw;
+}
+
+.sb-name span {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.sb-score {
+  font-size: var(--sb-score);
+  font-weight: 900;
+}
+
+.sb-score[data-digits='3'] {
+  font-size: calc(var(--sb-score) * 0.78);
+}
+
+.sb-stats {
+  display: flex;
+  justify-content: center;
+  gap: 3cqw;
+  text-align: center;
+}
+
+.sb-stat {
+  margin-top: 0.4cqw;
+  font-size: 3.6cqw;
+}
+
+.sb-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.4cqw;
+  height: 0.9cqw;
+  margin-top: 0.4cqw;
+}
+
+.sb-dots span {
+  width: 0.9cqw;
+  height: 0.9cqw;
+  border: 0.15cqw solid var(--sb-accent);
+  border-radius: 50%;
+}
+
+.sb-dots span[data-on='true'] {
+  background: var(--sb-accent);
+}
+
+.sb-badges {
+  min-height: 3.2cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7cqw;
+}
+
+.sb-badge {
+  padding: 0.6cqw 1cqw;
+  border-radius: 0.5cqw;
+  color: var(--sb-on-accent);
+  background: var(--sb-accent);
+  font-size: 1.8cqw;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.sb-badge-strong {
+  color: var(--sb-on-warning);
+  background: var(--sb-warning);
+}
+
+.sb-badge-quiet {
+  color: var(--sb-panel);
+  background: var(--sb-text);
+}
+
+.sb-center {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1cqw;
+}
+
+.sb-game,
+.sb-shot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8cqw;
+}
+
+.sb-game-clock {
+  font-size: 9cqw;
+}
+
+.sb-period {
+  color: var(--sb-accent-text);
+  font-size: 3.2cqw;
+}
+
+.sb-shot-clock {
+  font-size: 10cqw;
+}
+
+.sb-shot:has([data-warning='true']) {
+  color: var(--sb-on-warning);
+  border-color: var(--sb-on-warning);
+  background: var(--sb-warning);
+}
+
+.sb-shot:has([data-warning='true']) .sb-label {
+  color: inherit;
+}
+
+.sb-classic {
+  --sb-score: 14cqw;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 1.2cqw;
+  padding: 1.6cqw;
+}
+
+.sb-modern {
+  --sb-score: 21cqw;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 13.5cqw;
+  gap: 1cqw;
+  padding: 1.2cqw;
+}
+
+.sb-modern .sb-strip {
+  grid-column: 1 / -1;
+  min-height: 0;
+  display: flex;
+  gap: 1cqw;
+}
+
+.sb-modern .sb-game {
+  flex: 2;
+  flex-direction: row;
+  gap: 3cqw;
+}
+
+.sb-modern .sb-game-clock {
+  font-size: 10cqw;
+}
+
+.sb-modern .sb-period {
+  font-size: 4.5cqw;
+}
+
+.sb-modern .sb-shot {
+  flex-direction: row;
+  gap: 1.5cqw;
+}
+
+.sb-tournament {
+  --sb-score: 12.5cqw;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 4.2cqw minmax(0, 1fr) 9.5cqw;
+  gap: 0.9cqw;
+  padding: 1.2cqw;
+}
+
+.sb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2cqw;
+  padding: 0 1.5cqw;
+  border-radius: 0.8cqw;
+  color: var(--sb-on-accent);
+  background: var(--sb-accent);
+  font-size: 2.2cqw;
+}
+
+.sb-main {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 0.9cqw;
+}
+
+.sb-tournament .sb-identity {
+  flex-direction: column;
+  gap: 0.4cqw;
+}
+
+.sb-tournament .sb-logo {
+  width: 7.5cqw;
+  height: 7.5cqw;
+}
+
+.sb-tournament .sb-name {
+  height: 5.4cqw;
+  font-size: 2.8cqw;
+}
+
+.sb-tournament .sb-name[data-size='medium'] {
+  font-size: 2.2cqw;
+}
+
+.sb-tournament .sb-name[data-size='small'] {
+  font-size: 1.8cqw;
+}
+
+.sb-tournament .sb-game-clock {
+  font-size: 8.5cqw;
+}
+
+.sb-tournament .sb-shot-clock {
+  font-size: 8cqw;
+}
+
+.sb-tournament .sb-period {
+  font-size: 2.6cqw;
+}
+
+.sb-footer {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 0.9cqw;
+}
+
+.sb-footer .sb-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sb-footer .sb-stat {
+  font-size: 3.2cqw;
+}
+
+.sb-margin {
+  flex-direction: column;
+  gap: 0.8cqw;
+  padding: 0 1cqw;
+  font-size: 2.6cqw;
+}
+
+.sb-margin .sb-truncate {
+  max-width: 100%;
+}

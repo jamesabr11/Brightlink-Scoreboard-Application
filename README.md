@@ -27,15 +27,55 @@ npm run build
 npm run preview
 ```
 
+### Tests
+
+```bash
+npm test        # Vitest: scoring, clocks, fouls, timeouts, undo, persistence, tab sync, shortcuts
+npm run lint
+```
+
 ## 📖 How to Use
 
 ### Setting Up a Game
 
 1. Open the operator view at http://localhost:5173/
-2. Click the **Setup** button to configure:
-   - Home and away team names
-   - Team colors
-3. Click **Open Display ↗** to launch the public scoreboard in a new window/tab
+2. Use the navigation at the top of the page:
+   - **Scoreboard**: live game controls and keyboard shortcuts
+   - **Game Setup**: teams, colors, logos, rules, and the scoreboard theme with a live preview
+   - **Configurations**: save, load, update, rename, duplicate and delete prepared setups
+   - **History**: completed games, statistics, CSV export and printable summaries
+   - **Settings**: defaults for new games, sound, and display preferences
+3. Click **Open Display** to launch the public scoreboard in a new window. Press **F** or double-click it for fullscreen.
+
+### Themes and Layouts
+
+| Theme | Default layout | Look |
+|---|---|---|
+| Classic Sports Arena | Classic | Amber digits on black |
+| Modern Dark | Modern | Large scores on team-colored panels |
+| Minimal | Modern | Plain, light or dark |
+| Tournament | Tournament | Event name, logos, full stats, court background |
+| Custom | Classic | Your own scoreboard color; text adjusts to stay readable |
+
+Any theme can use any layout, font, background and accent color. Changes appear in the live preview and reach the display only when you click **Apply to Display**.
+
+### Finishing a Game
+
+A clock reaching zero never ends a game. Click **Finish & Save** on the Scoreboard page to stop the clocks, show FINAL on the display and record the result in History. **Reopen Game** continues it, and finishing again updates the same record.
+
+### Keyboard Shortcuts
+
+| Key | Action |
+|---|---|
+| 1 / 2 / 3 | Home +1 / +2 / +3 |
+| 4 / 5 / 6 | Away +1 / +2 / +3 |
+| Space | Start/pause game clock |
+| S | Start/pause shot clock |
+| R / E | Shot clock full / short reset (24 / 14 by default) |
+| T | Switch possession |
+| U | Undo |
+
+Shortcuts work on the Scoreboard page. They're off while typing in a field or while a confirmation is open, leave browser combinations (Cmd+R etc.) alone, and count a held key once. Nothing destructive has a key. To add one, add a row to `SHORTCUTS` in `src/components/basketball/shortcuts.ts`; the help panel and button hints follow.
 
 ### Operating During a Game
 
@@ -47,29 +87,36 @@ npm run preview
 - **Start** button begins the clock
 - **Pause** button stops it
 - **Reset** button returns clock to period duration
-- Clock automatically stops at 0:00
+- **±1m / ±1s / ±.1s** correct the time, even while it runs
+- Shows tenths under one minute, and stops automatically at 0.0 (stopping the shot clock too)
 
 **Shot Clock:**
-- **Start** button begins the shot clock
-- **24** button resets to 24 seconds
-- **14** button resets to 14 seconds (offensive rebound)
-- Clock turns red and pulses when ≤5 seconds
+- **Start** / **Pause** run the shot clock, independently of the game clock
+- The two reset buttons (**24** and **14** by default) reset it and leave it stopped, ready to start
+- **±1s / ±.1s** correct the time
+- Turns red and shows tenths at 5 seconds or fewer, and stops automatically at 0.0
 
 **Fouls & Timeouts:**
-- Use **+** and **-** buttons to adjust fouls and timeouts
-- **BONUS** indicator appears automatically at 5+ fouls
+- Use **+** and **-** buttons to adjust fouls and timeouts; neither can go negative
+- **BONUS** appears when a team reaches the configured foul count
+- Timeouts can't exceed the configured maximum. Changing the maximum keeps the number each team has used
+- **Restore timeouts now** in Game Setup refills both teams
 
 **Possession:**
-- Click **Give Possession** to award possession to a team
-- Yellow dot appears on display showing which team has the ball
+- Choose **Home**, **None** or **Away**, or press T to switch between teams
+- A **BALL** badge on the display shows which team has possession
 
 **Periods:**
-- **Previous** / **Next** buttons navigate quarters
-- Automatically switches to overtime after Q4
+- **Previous** / **Next** buttons navigate periods
+- **Next** refills both clocks, stops them, and applies the fouls and timeouts options from Setup
+- Automatically switches to overtime after the last period
 
 **Other Controls:**
-- **Undo** reverses the last action (scoring, fouls, timeouts)
-- **Reset Game** clears everything (requires confirmation)
+- **Undo** reverses the last action: scores, fouls, timeouts, possession, clock corrections and resets, period changes, game resets and loading a configuration. Starting and pausing clocks are not recorded
+- Undoing a clock change leaves that clock stopped at the earlier time, so it can't jump while running
+- The **Recent Actions** panel lists the last 50 undoable actions
+- **Reset Game** requires confirmation, keeps team names, colors and rules, and can be undone
+- Sound effects are off by default. Turn them on in Settings; they play from the operator page after your first click or key press
 
 ### Public Display
 
@@ -110,21 +157,44 @@ src/
 ├── main.tsx                     # Entry point
 ├── types/
 │   └── basketball.ts            # TypeScript interfaces
+├── lib/
+│   ├── clock.ts                 # Clock calculation and formatting
+│   ├── theme.ts                 # Themes, layouts, fonts and contrast rules
+│   ├── logos.ts                 # Logo validation, resizing and IndexedDB storage
+│   ├── gameRecords.ts           # Game records, statistics and CSV export
+│   ├── sound.ts                 # Generated sound effects
+│   ├── feedback.ts              # Toasts and confirmation dialogs
+│   └── storage.ts               # Safe localStorage access
 ├── store/
-│   └── useBasketballStore.ts   # Zustand state management
+│   ├── useBasketballStore.ts    # Live game, configurations, tab sync
+│   ├── useGameLog.ts            # Completed games
+│   └── useSettingsStore.ts      # Application settings
 └── components/
     └── basketball/
-        ├── OperatorView.tsx     # Operator control panel
-        ├── DisplayView.tsx      # Public scoreboard display
-        └── ClockDisplay.tsx     # Reusable clock component
+        ├── OperatorLayout.tsx   # Navigation shared by operator pages
+        ├── OperatorView.tsx     # Live game controls
+        ├── SetupPage.tsx        # Teams, logos, rules, theme
+        ├── ThemePicker.tsx      # Theme fields and live preview
+        ├── ConfigsPage.tsx      # Saved configurations
+        ├── HistoryPage.tsx      # Completed games
+        ├── SettingsPage.tsx     # Application settings
+        ├── DisplayView.tsx      # Public display page
+        ├── Scoreboard.tsx       # The three scoreboard layouts
+        ├── ClockDisplay.tsx     # Reusable clock component
+        ├── ui.tsx               # Shared panels, fields, logo, dialogs
+        ├── styles.ts            # Shared button and input styles
+        ├── useSounds.ts         # Plays alerts on the operator page
+        └── shortcuts.ts         # Keyboard shortcut table and handler
 ```
+
+Tests sit next to the code they cover (`*.test.ts`).
 
 ### Key Features
 
 **⏱️ Timestamp-Based Timers**
 - Clocks use timestamps instead of simple counters
 - Remain accurate even when browser tab is inactive
-- No time drift during page refreshes
+- A running clock keeps its time through a page refresh
 
 **🔄 Real-Time Synchronization**
 - Uses BroadcastChannel API for instant updates
@@ -132,15 +202,18 @@ src/
 - Works across multiple tabs/windows on same device
 
 **💾 State Persistence**
-- Automatically saves game state to localStorage
+- Automatically saves game state and undo history to localStorage
 - Survives page refreshes
 - Resumes game exactly where it left off
-- Clocks intentionally saved in paused state to prevent time jumps
+- Running clocks stay running, so time that passes while a page is closed still counts down
+- Saved data is validated on load, so bad values can't break the game
+- Stored separately in this browser: the live game and configurations (`basketball-storage`), completed games (`basketball-games`), settings (`basketball-settings`), and logos (IndexedDB `basketball-logos`)
+- Clearing browser data deletes all of these, and they don't move between browsers or computers
 
 **📊 Game State Management**
-- Complete undo/redo system (last 50 actions)
-- History tracking for all scoring and stat changes
-- Configurable game rules (period duration, shot clock, bonus threshold)
+- Undo with a history of the last 50 actions (no redo)
+- History tracking for scoring, stats, possession, clock corrections and periods
+- Configurable game rules (period duration, bonus threshold, timeouts)
 
 **🎨 Professional Design**
 - Dark theme optimized for sports venues
@@ -159,9 +232,12 @@ src/
 - ✅ Foul tracking with bonus indicators
 - ✅ Timeout management
 - ✅ Possession controls
-- ✅ Undo functionality
+- ✅ Undo and action history
+- ✅ Keyboard shortcuts
+- ✅ Manual clock corrections
 - ✅ Game reset with confirmation
 - ✅ Team customization (names, colors)
+- ✅ Configurable league rules
 
 ### Display View
 - ✅ Large scores (readable from distance)
@@ -178,13 +254,14 @@ src/
 
 ### Game Settings
 
-Default configuration (customizable in setup):
+Default configuration (change the current game in Game Setup, or your defaults in Settings):
 - **Period Duration**: 12 minutes
 - **Overtime Duration**: 5 minutes
 - **Number of Periods**: 4 quarters
-- **Shot Clock**: 24 seconds
+- **Shot Clock**: 24 seconds, 14 for the short reset
 - **Bonus Threshold**: 5 team fouls
 - **Timeouts**: 3 per team
+- **Each new period**: team fouls reset, timeouts are kept
 
 ### Customization
 
@@ -198,6 +275,8 @@ const defaultConfig: GameConfig = {
   shotClockDuration: 24,     // seconds
   foulsForBonus: 5,          // fouls for bonus
   maxTimeouts: 3,            // timeouts per team
+  resetFoulsEachPeriod: true,
+  restoreTimeoutsEachPeriod: false,
 };
 ```
 
@@ -236,6 +315,8 @@ Output in `dist/` folder:
 
 ### Deploy
 
+The app uses page routes such as `/display` and `/history`, so configure your host to serve `index.html` for all paths. Otherwise those pages return 404 when opened directly or refreshed.
+
 Deploy the `dist/` folder to any static hosting:
 - Vercel: `vercel deploy`
 - Netlify: Drag & drop `dist/` folder
@@ -248,17 +329,6 @@ Deploy the `dist/` folder to any static hosting:
 - Modern browser with ES6 support
 - BroadcastChannel API support (Chrome, Firefox, Safari, Edge)
 
-## 🏗️ Build Information
-
-**Latest Production Build:**
-```
-✓ 2157 modules transformed
-✓ Built in 775ms
-dist/index.html                   0.46 kB │ gzip:   0.29 kB
-dist/assets/index-*.css          10.60 kB │ gzip:   2.97 kB
-dist/assets/index-*.js          380.84 kB │ gzip: 119.72 kB
-```
-
 ## 🛠️ Development
 
 ### Available Scripts
@@ -266,6 +336,7 @@ dist/assets/index-*.js          380.84 kB │ gzip: 119.72 kB
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
+- `npm test` - Run automated tests
 - `npm run lint` - Run ESLint
 
 ### Tech Stack Details
@@ -283,14 +354,9 @@ Built with:
 ## 🎯 Future Enhancements
 
 Planned features:
-- [ ] Keyboard shortcuts
-- [ ] Saved game configurations
-- [ ] Game history/statistics
-- [ ] Team logo upload
-- [ ] Multiple scoreboard themes
-- [ ] Export game data
+- [ ] Redo
+- [ ] Backup and restore of configurations and history
 - [ ] Multi-device sync (WebSocket)
-- [ ] Sound effects
 - [ ] Player statistics tracking
 
 ## 📄 License
