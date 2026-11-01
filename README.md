@@ -339,6 +339,10 @@ Deploy the `dist/` folder to any static hosting:
 - `npm test` - Run automated tests
 - `npm run lint` - Run ESLint
 
+### Dependency Override
+
+`package.json` forces `minimatch` to `^11.0.3` to fix advisory GHSA-g3hv-75wg-m249, because ESLint and typescript-eslint still declare `^10`. It only affects lint tooling, not the shipped app. Remove the `overrides` entry once `eslint`, `@eslint/config-array` and `@typescript-eslint/typescript-estree` all declare `minimatch` 11 or later.
+
 ### Tech Stack Details
 
 Built with:
