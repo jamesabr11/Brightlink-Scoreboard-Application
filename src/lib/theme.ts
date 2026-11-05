@@ -16,7 +16,6 @@ interface ThemePreset {
   font: FontId;
   background: BackgroundId;
   accent: string;
-  teamFill: boolean; // paint team panels in the team color
   dark: Palette;
   light?: Palette;
 }
@@ -28,42 +27,38 @@ export const THEMES: Record<ThemeId, ThemePreset> = {
     label: 'Classic Sports Arena',
     description: 'Traditional scoreboard with amber digits on black.',
     layout: 'classic',
-    font: 'mono',
+    font: 'athletic',
     background: 'solid',
     accent: '#ffb300',
-    teamFill: false,
-    dark: { bg: '#050505', panel: '#0f0f0f', border: '#3d3d3d', text: '#ffb300', muted: '#e6d3a3', warning: '#ff3b30' },
+    dark: { bg: '#000000', panel: '#0b0b0b', border: '#2b2b2b', text: '#ffb300', muted: '#e0cc9a', warning: '#e52020' },
   },
   modern: {
     label: 'Modern Dark',
-    description: 'Clean dark board with huge scores and team colors.',
+    description: 'Black board with huge scores and team-color panels.',
     layout: 'modern',
     font: 'athletic',
     background: 'gradient',
     accent: '#22d3ee',
-    teamFill: true,
-    dark: { bg: '#0b0f19', panel: '#151b2b', border: '#2f3a55', text: '#ffffff', muted: '#c6d0e3', warning: '#ff5a5f' },
+    dark: { bg: '#000000', panel: '#0f0f10', border: '#2a2a2d', text: '#ffffff', muted: '#a7a7a7', warning: '#e52020' },
   },
   minimal: {
     label: 'Minimal',
     description: 'Simple and distraction-free. Light or dark.',
-    layout: 'modern',
+    layout: 'minimal',
     font: 'sans',
     background: 'solid',
-    accent: '#2563eb',
-    teamFill: false,
-    dark: { bg: '#000000', panel: '#000000', border: '#3f3f46', text: '#ffffff', muted: '#d4d4d8', warning: '#ff5a5f' },
+    accent: '#3b82f6',
+    dark: { bg: '#000000', panel: '#000000', border: '#333333', text: '#ffffff', muted: '#a1a1a1', warning: '#e52020' },
     light: { bg: '#ffffff', panel: '#ffffff', border: '#a1a1aa', text: '#09090b', muted: '#3f3f46', warning: '#b91c1c' },
   },
   tournament: {
     label: 'Tournament',
     description: 'Detailed board with event name, logos and game stats.',
     layout: 'tournament',
-    font: 'sans',
+    font: 'athletic',
     background: 'court',
     accent: '#facc15',
-    teamFill: false,
-    dark: { bg: '#10203a', panel: '#0a1628', border: '#3b5478', text: '#ffffff', muted: '#c9d6ea', warning: '#ff6b6b' },
+    dark: { bg: '#07101f', panel: '#0d1a2e', border: '#23395a', text: '#ffffff', muted: '#b7c4da', warning: '#e52020' },
   },
   custom: {
     label: 'Custom',
@@ -72,22 +67,23 @@ export const THEMES: Record<ThemeId, ThemePreset> = {
     font: 'sans',
     background: 'gradient',
     accent: '#22c55e',
-    teamFill: false,
     dark: CUSTOM_DARK,
   },
 };
 
 export const LAYOUTS: Record<LayoutId, { label: string; description: string }> = {
-  classic: { label: 'Classic', description: 'Scores either side of a central clock, with fouls and timeouts.' },
-  modern: { label: 'Modern', description: 'Very large scores and team branding, minimal extras.' },
-  tournament: { label: 'Tournament', description: 'Logos, full stats, possession, bonus and event name.' },
+  classic: { label: 'Arena Classic', description: 'Team panels either side of a central clock, possession arrows, shot clock, fouls and timeouts.' },
+  modern: { label: 'Modern Sports', description: 'Full team-color panels with huge scores over a broadcast clock bar.' },
+  tournament: { label: 'Tournament', description: 'Event header, large logos, possession, bonus and a full team stats row.' },
+  minimal: { label: 'Minimal', description: 'Scores, clock, shot clock and period. Nothing else.' },
 };
 
-export const FONTS: Record<FontId, { label: string; stack: string }> = {
-  athletic: { label: 'Athletic', stack: 'Impact, Haettenschweiler, "Arial Narrow Bold", "Arial Black", sans-serif' },
-  sans: { label: 'Clean sans', stack: 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif' },
-  mono: { label: 'Digital mono', stack: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' },
-  rounded: { label: 'Rounded', stack: 'ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", system-ui, sans-serif' },
+// digitScale (measured: Bebas digits are 0.40em wide, Inter 0.67em, mono 0.60em) evens out how wide each face's numbers are, so a score or clock fits its box in any font.
+export const FONTS: Record<FontId, { label: string; stack: string; digitScale: number }> = {
+  athletic: { label: 'Athletic', stack: '"Bebas Neue", Impact, "Arial Narrow Bold", sans-serif', digitScale: 1 },
+  sans: { label: 'Clean sans', stack: '"Inter Variable", Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif', digitScale: 0.6 },
+  mono: { label: 'Digital mono', stack: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', digitScale: 0.6 },
+  rounded: { label: 'Rounded', stack: 'ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", system-ui, sans-serif', digitScale: 0.66 },
 };
 
 export const BACKGROUNDS: Record<BackgroundId, string> = {
@@ -158,10 +154,10 @@ export const themePalette = (theme: ScoreboardTheme): Palette => {
 };
 
 const backgroundImage = (background: BackgroundId, palette: Palette, accent: string) => {
-  if (background === 'gradient') return `linear-gradient(135deg, ${mix(palette.bg, palette.text, 0.1)}, ${palette.bg} 60%)`;
+  if (background === 'gradient') return `radial-gradient(ellipse 120% 80% at 50% 0%, ${mix(palette.bg, palette.text, 0.09)}, ${palette.bg} 70%)`;
   if (background === 'court') {
-    const line = mix(palette.bg, accent, 0.25);
-    return `radial-gradient(circle at 50% 50%, transparent 17cqw, ${line} 17cqw, ${line} 17.3cqw, transparent 17.3cqw), linear-gradient(90deg, transparent calc(50% - 0.15cqw), ${line} calc(50% - 0.15cqw), ${line} calc(50% + 0.15cqw), transparent calc(50% + 0.15cqw))`;
+    const line = mix(palette.bg, accent, 0.2);
+    return `radial-gradient(circle at 50% 50%, transparent 24cqmin, ${line} 24cqmin, ${line} 24.3cqmin, transparent 24.3cqmin), linear-gradient(90deg, transparent calc(50% - 0.15cqmin), ${line} calc(50% - 0.15cqmin), ${line} calc(50% + 0.15cqmin), transparent calc(50% + 0.15cqmin))`;
   }
   return 'none';
 };
@@ -187,6 +183,7 @@ export const themeStyle = (theme: ScoreboardTheme) => {
     '--sb-accent': theme.accent,
     '--sb-on-accent': readableOn(theme.accent),
     '--sb-font': FONTS[theme.font].stack,
+    '--sb-digit-scale': FONTS[theme.font].digitScale,
   } as React.CSSProperties;
 };
 

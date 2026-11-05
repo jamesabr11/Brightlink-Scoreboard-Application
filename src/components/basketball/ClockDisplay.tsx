@@ -32,7 +32,12 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ clock, kind = 'game'
   const text = kind === 'shot' ? formatShotClock(remaining) : formatGameClock(remaining);
 
   if (themed) {
-    return <span data-testid={`${kind}-clock`} data-warning={warning} data-running={clock.isRunning} className="sb-digits">{text}</span>;
+    // One fixed-width cell per character, so a ticking clock never shifts sideways.
+    return (
+      <span data-testid={`${kind}-clock`} data-warning={warning} data-running={clock.isRunning} className="sb-digits" aria-label={text}>
+        {[...text].map((char, i) => <span key={i} className={/\d/.test(char) ? 'sb-cell' : 'sb-sep'} aria-hidden>{char}</span>)}
+      </span>
+    );
   }
 
   return (

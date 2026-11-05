@@ -69,7 +69,7 @@ export const RulesFields: React.FC<{ rules: GameRules; onChange: (rules: Partial
 
 const logoUrls = new Map<string, string>();
 
-export const TeamLogo: React.FC<{ id?: string; alt: string; className?: string }> = ({ id, alt, className }) => {
+export const TeamLogo: React.FC<{ id?: string; alt: string; className?: string; fallback?: React.ReactNode }> = ({ id, alt, className, fallback = null }) => {
   const [loaded, setLoaded] = useState<{ id: string; url: string } | null>(null);
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export const TeamLogo: React.FC<{ id?: string; alt: string; className?: string }
   }, [id]);
 
   const url = id && (logoUrls.get(id) ?? (loaded?.id === id ? loaded.url : undefined));
-  return url ? <img src={url} alt={alt} className={className} /> : null;
+  return url ? <img src={url} alt={alt} className={className} /> : fallback;
 };
 
 const Toast: React.FC = () => {

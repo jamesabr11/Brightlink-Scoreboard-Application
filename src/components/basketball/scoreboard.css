@@ -1,0 +1,1162 @@
+/* Public scoreboard design system.
+ *
+ * Canvas: true black with one-step surfaces and hairline rules (NVIDIA / BMW M).
+ * Type: condensed athletic display for names and digits (Nike), Inter for
+ *   machined uppercase labels with wide tracking (BMW M / Vercel).
+ * Color: team colors carry identity; one theme accent marks live state
+ *   (period, possession, shot clock); red is reserved for the shot-clock warning.
+ * Geometry: square corners, 2px at most (NVIDIA / BMW M).
+ *
+ * Sizing: --u is 1% of a design canvas that always fits the screen:
+ *   wide  (>= 1.45:1)  100 x 56.25u  (16:9, 16:10, ultrawide)
+ *   tall  (0.95-1.45)  100 x 75u     (4:3, 5:4)
+ *   portrait (< 0.95)  100 x 133u    (3:4, phones)
+ * Each layout places the same blocks with grid areas per canvas, so a 4:3 or
+ * portrait screen gets a rearranged board instead of a letterboxed 16:9 one. */
+
+@property --u {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 10px;
+}
+
+.sb-page {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--sb-bg);
+}
+
+.sb-stage {
+  container: sb / size;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.sb-page .sb-stage {
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.sb-board {
+  --u: min(1cqw, 1.7778cqh);
+  --ui: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --hair: max(1px, calc(var(--u) * 0.08));
+  --radius: min(2px, calc(var(--u) * 0.15));
+  --paused: color-mix(in srgb, var(--sb-text) 72%, var(--sb-bg));
+  --name-k: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: calc(var(--u) * 0.8);
+  padding: calc(var(--u) * 1.6) calc(var(--u) * 1.2) calc(var(--u) * 1.2);
+  overflow: hidden;
+  color: var(--sb-text);
+  background-color: var(--sb-bg);
+  background-image: var(--sb-bg-image);
+  font-family: var(--sb-font);
+  font-weight: 700;
+  font-synthesis-weight: none;
+  line-height: 1;
+}
+
+@container sb (max-aspect-ratio: 145 / 100) {
+  .sb-board { --u: min(1cqw, 1.3333cqh); }
+}
+
+@container sb (max-aspect-ratio: 95 / 100) {
+  .sb-board { --u: min(1cqw, 0.75cqh); }
+}
+
+/* ---------- Atoms ---------- */
+
+.sb-stripe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--u) * 0.4);
+  background: linear-gradient(90deg, var(--home) 0 calc(50% - var(--u) * 2), var(--sb-accent) calc(50% - var(--u) * 2) calc(50% + var(--u) * 2), var(--away) calc(50% + var(--u) * 2));
+}
+
+.sb-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+  color: var(--sb-muted);
+  font-family: var(--ui);
+  font-size: max(12px, calc(var(--u) * 1.05));
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sb-digits {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Clock characters: digits get a fixed 1ch cell, so the clock never jitters. */
+.sb-cell {
+  display: inline-block;
+  width: 1ch;
+  text-align: center;
+}
+
+.sb-sep {
+  display: inline-block;
+  margin: 0 -0.02em;
+}
+
+.sb-truncate {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.sb-team,
+.sb-center,
+.sb-header,
+.sb-statgroup,
+.sb-lead-cell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: var(--sb-panel);
+  border: var(--hair) solid var(--sb-border);
+  border-radius: var(--radius);
+}
+
+.sb-team {
+  overflow: hidden;
+}
+
+.sb-team[data-side='home'] { grid-area: home; }
+.sb-team[data-side='away'] { grid-area: away; }
+.sb-center { grid-area: center; }
+.sb-header { grid-area: header; }
+.sb-stats { grid-area: stats; }
+
+/* Team stripe: primary with a secondary tail, mirrored for the away side. */
+.sb-team::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--u) * 0.6);
+  background: linear-gradient(90deg, var(--team) 0 80%, var(--team-2) 80%);
+}
+
+.sb-team[data-side='away']::before {
+  background: linear-gradient(270deg, var(--team) 0 80%, var(--team-2) 80%);
+}
+
+.sb-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 70% 70% at 50% 55%, color-mix(in srgb, var(--team) 55%, white), transparent 72%);
+  mix-blend-mode: screen;
+}
+
+.sb-team-head {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+}
+
+.sb-team[data-side='away'] .sb-team-head {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.sb-crest {
+  width: var(--crest);
+  height: var(--crest);
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+.sb-crest-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sb-monogram {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--on-team);
+  background: linear-gradient(160deg, var(--team), color-mix(in srgb, var(--team), black 25%));
+  box-shadow: inset 0 calc(var(--u) * -0.4) 0 var(--team-2);
+  border-radius: var(--radius);
+  font-size: calc(var(--crest) * 0.42 * var(--sb-digit-scale));
+  letter-spacing: 0.02em;
+  overflow: hidden;
+}
+
+.sb-ident {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.35);
+}
+
+.sb-team[data-side='away'] .sb-ident {
+  align-items: flex-end;
+}
+
+.sb-name {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: calc(var(--name) * var(--name-k));
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.sb-name[data-size='medium'] { --name-k: 0.78; }
+.sb-name[data-size='small'] { --name-k: 0.6; }
+
+.sb-score {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 0.9);
+}
+
+.sb-score-num {
+  display: block;
+  font-size: calc(var(--score) * var(--sb-digit-scale));
+  line-height: 0.8;
+}
+
+.sb-score[data-digits='3'] .sb-score-num {
+  font-size: calc(var(--score) * var(--sb-digit-scale) * 0.74);
+}
+
+.sb-lead {
+  width: calc(var(--u) * 6);
+  height: calc(var(--u) * 0.5);
+  background: var(--sb-accent);
+  opacity: 0;
+  transform: scaleX(0.3);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.sb-lead[data-on='true'] {
+  opacity: 1;
+  transform: none;
+}
+
+.sb-stat {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--u) * 0.5);
+}
+
+.sb-stat-value {
+  font-size: calc(var(--stat) * var(--sb-digit-scale));
+  line-height: 0.85;
+}
+
+.sb-pips {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--u) * 0.35);
+  padding: calc(var(--u) * 0.6) 0;
+}
+
+/* Pips shrink to fit, so a league with 7 timeouts still fits its cell. */
+.sb-pip {
+  flex: 0 1 calc(var(--u) * 1.5);
+  min-width: 2px;
+  height: calc(var(--u) * 0.55);
+  background: var(--sb-border);
+  transition: background 0.25s;
+}
+
+.sb-pip[data-on='true'] {
+  background: var(--sb-accent);
+}
+
+.sb-bonus {
+  padding: calc(var(--u) * 0.45) calc(var(--u) * 0.8);
+  border: var(--hair) solid var(--sb-border);
+  border-radius: var(--radius);
+  color: var(--sb-border);
+  font-family: var(--ui);
+  font-size: max(12px, calc(var(--u) * 1.05));
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  transition: background 0.25s, color 0.25s, border-color 0.25s;
+}
+
+.sb-bonus[data-on='true'] {
+  color: var(--sb-on-accent);
+  background: var(--sb-accent);
+  border-color: var(--sb-accent);
+}
+
+.sb-arrow {
+  width: var(--arrow, calc(var(--u) * 2.2));
+  height: calc(var(--arrow, calc(var(--u) * 2.2)) * 1.2);
+  flex: none;
+  background: var(--sb-border);
+  transition: background 0.25s, transform 0.25s;
+}
+
+.sb-arrow[data-dir='home'] { clip-path: polygon(100% 0, 0 50%, 100% 100%); }
+.sb-arrow[data-dir='away'] { clip-path: polygon(0 0, 100% 50%, 0 100%); }
+
+.sb-arrow[data-on='true'] {
+  background: var(--sb-accent);
+  transform: scale(1.12);
+}
+
+/* Sits outside the label's box, so showing it never moves the text. */
+.sb-ident .sb-eyebrow {
+  position: relative;
+}
+
+.sb-ball {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + var(--u) * 0.2);
+  width: calc(var(--u) * 0.9);
+  height: calc(var(--u) * 0.9);
+  margin-top: calc(var(--u) * -0.45);
+  border-radius: 50%;
+  background: var(--sb-accent);
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 0.25s, transform 0.25s;
+}
+
+.sb-team[data-side='away'] .sb-ball {
+  left: auto;
+  right: calc(100% + var(--u) * 0.5);
+}
+
+.sb-ball[data-on='true'] {
+  opacity: 1;
+  transform: none;
+}
+
+.sb-clock {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--clock) * var(--sb-digit-scale));
+  line-height: 0.8;
+}
+
+.sb-clock [data-running='false'] {
+  color: var(--paused);
+  transition: color 0.3s;
+}
+
+/* Running light: the system's corner square, lit while the clock runs. */
+.sb-run {
+  position: absolute;
+  top: calc(var(--u) * 1.2);
+  left: calc(var(--u) * 1.2);
+  width: calc(var(--u) * 0.9);
+  height: calc(var(--u) * 0.9);
+  border: var(--hair) solid var(--sb-border);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.sb-run[data-on='true'] {
+  background: var(--sb-accent);
+  border-color: var(--sb-accent);
+}
+
+.sb-period {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+}
+
+.sb-period-value {
+  display: block;
+  padding: 0 calc(var(--u) * 0.4);
+  color: var(--sb-accent-text);
+  font-size: var(--period);
+  line-height: 0.95;
+  white-space: nowrap;
+}
+
+.sb-period[data-state='ot'] .sb-period-value,
+.sb-period[data-state='final'] .sb-period-value {
+  color: var(--sb-on-accent);
+  background: var(--sb-accent);
+  border-radius: var(--radius);
+  padding: calc(var(--u) * 0.2) calc(var(--u) * 0.8) 0;
+}
+
+.sb-period-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+  --arrow: calc(var(--u) * 2.6);
+}
+
+.sb-shot {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 0.6);
+  padding: calc(var(--u) * 1) calc(var(--u) * 2.4);
+  color: var(--sb-accent-text);
+  background: var(--sb-bg);
+  border: var(--hair) solid var(--sb-border);
+  border-radius: var(--radius);
+  font-size: calc(var(--shot) * var(--sb-digit-scale));
+  line-height: 0.8;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.sb-shot:has([data-warning='true']) {
+  color: #ffffff;
+  background: var(--sb-warning);
+  border-color: var(--sb-warning);
+}
+
+.sb-shot:has([data-warning='true']) .sb-eyebrow {
+  color: inherit;
+}
+
+.sb-shot:has([data-warning='true'][data-running='true']) {
+  animation: sb-pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes sb-pulse {
+  to { box-shadow: 0 0 calc(var(--u) * 2.5) color-mix(in srgb, var(--sb-warning) 70%, transparent); filter: brightness(1.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-board *,
+  .sb-board *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* =====================================================================
+   Layout A: Arena Classic
+   Team panels either side of a central clock tower.
+   ===================================================================== */
+
+.sb-board[data-layout='classic'] {
+  --score: calc(var(--u) * 30);
+  --clock: calc(var(--u) * 16);
+  --crest: calc(var(--u) * 6.4);
+  --name: calc(var(--u) * 4.4);
+  --stat: calc(var(--u) * 4.6);
+  --period: calc(var(--u) * 6);
+  --shot: calc(var(--u) * 10);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1fr);
+  grid-template-areas: 'home center away';
+}
+
+.sb-board[data-layout='classic'] .sb-team {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: calc(var(--u) * 0.8);
+  padding: calc(var(--u) * 2) calc(var(--u) * 1.6) calc(var(--u) * 1.4);
+}
+
+.sb-team-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  column-gap: calc(var(--u) * 1.2);
+  padding-top: calc(var(--u) * 1.2);
+  border-top: var(--hair) solid var(--sb-border);
+}
+
+.sb-team-stats > .sb-stat:last-child {
+  align-self: stretch;
+  justify-content: center;
+}
+
+.sb-board[data-layout='classic'] .sb-center,
+.sb-board[data-layout='tournament'] .sb-center {
+  display: grid;
+  grid-template-rows: minmax(0, 1.1fr) auto minmax(0, 1fr);
+  justify-items: center;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * 1.6);
+}
+
+.sb-board[data-layout='classic'] .sb-shot,
+.sb-board[data-layout='tournament'] .sb-shot {
+  min-width: 50%;
+  padding: calc(var(--u) * 1.4) calc(var(--u) * 2.4) calc(var(--u) * 1.8);
+}
+
+/* =====================================================================
+   Layout B: Modern Sports
+   Full team-color panels over a broadcast clock bar.
+   ===================================================================== */
+
+.sb-board[data-layout='modern'] {
+  --score: calc(var(--u) * 34);
+  --clock: calc(var(--u) * 13);
+  --crest: calc(var(--u) * 9);
+  --name: calc(var(--u) * 5.2);
+  --stat: calc(var(--u) * 2.6);
+  --period: calc(var(--u) * 6.5);
+  --shot: calc(var(--u) * 8.5);
+  gap: calc(var(--u) * 0.5);
+  padding: calc(var(--u) * 0.5);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) calc(var(--u) * 15);
+  grid-template-areas: 'home away' 'center center';
+}
+
+.sb-board[data-layout='modern'] .sb-stripe {
+  display: none;
+}
+
+/* Inside a filled panel the tokens re-scope to the team's own colors. */
+.sb-board[data-layout='modern'] .sb-team {
+  --sb-accent: var(--on-team);
+  --sb-on-accent: var(--team);
+  --sb-muted: color-mix(in srgb, var(--on-team) 78%, var(--team));
+  --sb-border: color-mix(in srgb, var(--on-team) 28%, var(--team));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas: 'head score' 'meta meta';
+  column-gap: calc(var(--u) * 2);
+  row-gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * 2.6) calc(var(--u) * 3) calc(var(--u) * 2.4);
+  color: var(--on-team);
+  background: linear-gradient(155deg, var(--team) 35%, color-mix(in srgb, var(--team), black 22%));
+  border: 0;
+}
+
+.sb-board[data-layout='modern'] .sb-team[data-side='away'] {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: 'score head' 'meta meta';
+}
+
+.sb-board[data-layout='modern'] .sb-team::before {
+  top: auto;
+  bottom: 0;
+  background: var(--team-2);
+}
+
+.sb-board[data-layout='modern'] .sb-team-head {
+  grid-area: head;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.sb-board[data-layout='modern'] .sb-team[data-side='away'] .sb-team-head {
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.sb-board[data-layout='modern'] .sb-score { grid-area: score; }
+
+.sb-team-meta {
+  grid-area: meta;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+}
+
+.sb-team[data-side='away'] .sb-team-meta {
+  flex-direction: row-reverse;
+}
+
+.sb-team-meta .sb-stat {
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: calc(var(--u) * 0.7);
+}
+
+.sb-team-meta .sb-pips {
+  width: auto;
+  padding: 0;
+}
+
+.sb-board[data-layout='modern'] .sb-flash {
+  background: radial-gradient(ellipse 70% 70% at 50% 55%, rgb(255 255 255 / 0.55), transparent 75%);
+  mix-blend-mode: normal;
+}
+
+.sb-board[data-layout='modern'] .sb-center,
+.sb-board[data-layout='minimal'] .sb-center {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  justify-items: center;
+  gap: calc(var(--u) * 3);
+  padding: 0 calc(var(--u) * 3);
+}
+
+.sb-board[data-layout='modern'] .sb-center {
+  background: var(--sb-bg);
+}
+
+.sb-board[data-layout='modern'] .sb-period,
+.sb-board[data-layout='minimal'] .sb-period { grid-column: 1; justify-self: end; }
+.sb-board[data-layout='modern'] .sb-clock,
+.sb-board[data-layout='minimal'] .sb-clock { grid-column: 2; }
+.sb-board[data-layout='modern'] .sb-shot,
+.sb-board[data-layout='minimal'] .sb-shot { grid-column: 3; justify-self: start; }
+
+.sb-board[data-layout='modern'] .sb-shot {
+  flex-direction: row-reverse;
+  gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 1.8);
+}
+
+/* =====================================================================
+   Layout C: Tournament
+   Event header, big crests, centre clock tower and a stats table.
+   ===================================================================== */
+
+.sb-board[data-layout='tournament'] {
+  --score: calc(var(--u) * 21);
+  --clock: calc(var(--u) * 15.5);
+  --crest: calc(var(--u) * 10);
+  --name: calc(var(--u) * 3.8);
+  --stat: calc(var(--u) * 4.2);
+  --period: calc(var(--u) * 5);
+  --shot: calc(var(--u) * 8);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1fr);
+  grid-template-rows: calc(var(--u) * 4.4) minmax(0, 1fr) calc(var(--u) * 9.6);
+  grid-template-areas: 'header header header' 'home center away' 'stats stats stats';
+}
+
+.sb-header {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+  padding: 0 calc(var(--u) * 1.6);
+  font-family: var(--ui);
+  font-size: calc(var(--u) * 1.5);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sb-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--u) * 0.3);
+  background: linear-gradient(90deg, var(--home) 50%, var(--away) 50%);
+}
+
+.sb-header-mark {
+  width: calc(var(--u) * 1);
+  height: calc(var(--u) * 1);
+  flex: none;
+  background: var(--sb-accent);
+}
+
+.sb-header-event {
+  flex: 1;
+}
+
+.sb-header-period {
+  flex: none;
+  color: var(--sb-accent-text);
+}
+
+.sb-header-period[data-state='ot'],
+.sb-header-period[data-state='final'] {
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.8);
+  color: var(--sb-on-accent);
+  background: var(--sb-accent);
+}
+
+.sb-board[data-layout='tournament'] .sb-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 1);
+  padding: calc(var(--u) * 2) calc(var(--u) * 1.6) calc(var(--u) * 1.2);
+  text-align: center;
+}
+
+.sb-board[data-layout='tournament'] .sb-team .sb-ident {
+  align-items: center;
+  max-width: 100%;
+}
+
+.sb-board[data-layout='tournament'] .sb-score {
+  flex: 1;
+}
+
+.sb-board[data-layout='tournament'] .sb-team .sb-ident .sb-eyebrow {
+  display: none;
+}
+
+.sb-stats {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr) minmax(0, 1fr);
+  gap: calc(var(--u) * 0.8);
+}
+
+.sb-statgroup {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-left: calc(var(--u) * 0.5) solid var(--team);
+}
+
+.sb-statgroup[data-side='away'] {
+  border-left-width: var(--hair);
+  border-left-color: var(--sb-border);
+  border-right: calc(var(--u) * 0.5) solid var(--team);
+}
+
+.sb-statgroup .sb-stat,
+.sb-lead-cell {
+  justify-content: center;
+  padding: calc(var(--u) * 0.8);
+}
+
+.sb-statgroup .sb-stat + .sb-stat {
+  border-left: var(--hair) solid var(--sb-border);
+}
+
+.sb-statgroup .sb-pips {
+  display: none;
+}
+
+.sb-lead-text {
+  max-width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 0.8);
+  font-size: calc(var(--u) * 3.6);
+  text-transform: uppercase;
+}
+
+.sb-lead-text .sb-digits {
+  color: var(--sb-accent-text);
+}
+
+/* =====================================================================
+   Layout D: Minimal
+   Names, scores, one line of clocks. No panels.
+   ===================================================================== */
+
+.sb-board[data-layout='minimal'] {
+  --score: calc(var(--u) * 40);
+  --clock: calc(var(--u) * 12);
+  --name: calc(var(--u) * 3.4);
+  --period: calc(var(--u) * 5.4);
+  --shot: calc(var(--u) * 7.5);
+  gap: 0;
+  padding: calc(var(--u) * 3) calc(var(--u) * 3) calc(var(--u) * 1.2);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) calc(var(--u) * 14);
+  grid-template-areas: 'home away' 'center center';
+}
+
+.sb-board[data-layout='minimal'] .sb-stripe,
+.sb-board[data-layout='minimal'] .sb-team::before {
+  display: none;
+}
+
+.sb-board[data-layout='minimal'] .sb-team,
+.sb-board[data-layout='minimal'] .sb-center {
+  background: none;
+  border: 0;
+}
+
+.sb-board[data-layout='minimal'] .sb-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 2.2);
+  padding: 0 calc(var(--u) * 2);
+  overflow: visible;
+}
+
+.sb-board[data-layout='minimal'] .sb-team[data-side='home'] {
+  border-right: var(--hair) solid var(--sb-border);
+}
+
+.sb-board[data-layout='minimal'] .sb-flash {
+  display: none;
+}
+
+.sb-board[data-layout='minimal'] .sb-ident,
+.sb-board[data-layout='minimal'] .sb-team[data-side='away'] .sb-ident {
+  align-items: center;
+  max-width: 100%;
+  gap: calc(var(--u) * 0.8);
+  text-align: center;
+}
+
+.sb-board[data-layout='minimal'] .sb-name {
+  font-family: var(--ui);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  line-height: 1.1;
+}
+
+/* Hairline in the team color: the only team branding Minimal keeps. */
+.sb-board[data-layout='minimal'] .sb-ident::after {
+  content: '';
+  width: calc(var(--u) * 5);
+  height: calc(var(--u) * 0.35);
+  background: var(--team);
+}
+
+.sb-board[data-layout='minimal'] .sb-center {
+  border-top: var(--hair) solid var(--sb-border);
+}
+
+.sb-board[data-layout='minimal'] .sb-run {
+  top: calc(var(--u) * 1.4);
+  left: 0;
+}
+
+.sb-board[data-layout='minimal'] .sb-shot {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+/* No box to fill in Minimal: the warning turns the digits themselves red. */
+.sb-board[data-layout='minimal'] .sb-shot:has([data-warning='true']) {
+  color: var(--sb-warning);
+  background: none;
+  animation: none;
+}
+
+/* =====================================================================
+   Tall canvas (4:3, 5:4): teams side by side, clocks in a row below.
+   ===================================================================== */
+
+@container sb (max-aspect-ratio: 145 / 100) {
+  .sb-board[data-layout='classic'] {
+    --score: calc(var(--u) * 34);
+    --clock: calc(var(--u) * 15);
+    --name: calc(var(--u) * 5);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) calc(var(--u) * 19);
+    grid-template-areas: 'home away' 'center center';
+  }
+
+  .sb-board[data-layout='classic'] .sb-center,
+  .sb-board[data-layout='tournament'] .sb-center {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: calc(var(--u) * 2.4);
+  }
+
+  .sb-board[data-layout='classic'] .sb-period-row,
+  .sb-board[data-layout='tournament'] .sb-period-row { grid-column: 1; grid-row: 1; }
+  .sb-board[data-layout='classic'] .sb-clock,
+  .sb-board[data-layout='tournament'] .sb-clock { grid-column: 2; grid-row: 1; }
+  .sb-board[data-layout='classic'] .sb-shot,
+  .sb-board[data-layout='tournament'] .sb-shot { grid-column: 3; grid-row: 1; min-width: 70%; }
+
+  .sb-board[data-layout='modern'] {
+    --score: calc(var(--u) * 32);
+    grid-template-rows: minmax(0, 1fr) calc(var(--u) * 17);
+  }
+
+  .sb-board[data-layout='modern'] .sb-team,
+  .sb-board[data-layout='modern'] .sb-team[data-side='away'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'head' 'score' 'meta';
+  }
+
+  .sb-board[data-layout='modern'] .sb-team-head,
+  .sb-board[data-layout='modern'] .sb-team[data-side='away'] .sb-team-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .sb-board[data-layout='modern'] .sb-team .sb-ident,
+  .sb-board[data-layout='modern'] .sb-team[data-side='away'] .sb-ident {
+    align-items: flex-start;
+  }
+
+  .sb-board[data-layout='modern'] .sb-team-meta,
+  .sb-board[data-layout='modern'] .sb-team[data-side='away'] .sb-team-meta {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .sb-board[data-layout='tournament'] {
+    --score: calc(var(--u) * 26);
+    --crest: calc(var(--u) * 11);
+    --name: calc(var(--u) * 4.4);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: calc(var(--u) * 5) minmax(0, 1fr) calc(var(--u) * 17) calc(var(--u) * 11);
+    grid-template-areas: 'header header' 'home away' 'center center' 'stats stats';
+  }
+
+  .sb-board[data-layout='tournament'] .sb-stats {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.6fr) minmax(0, 1fr);
+  }
+
+  /* Crest beside name + score: stacking all three is too tall for 4:3. */
+  .sb-board[data-layout='tournament'] .sb-team {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: 'crest name' 'crest score';
+    align-items: center;
+    column-gap: calc(var(--u) * 2);
+    padding: calc(var(--u) * 2.4) calc(var(--u) * 2);
+  }
+
+  .sb-board[data-layout='tournament'] .sb-team[data-side='away'] {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'name crest' 'score crest';
+  }
+
+  .sb-board[data-layout='tournament'] .sb-crest { grid-area: crest; }
+  .sb-board[data-layout='tournament'] .sb-ident { grid-area: name; }
+  .sb-board[data-layout='tournament'] .sb-score { grid-area: score; }
+
+  .sb-board[data-layout='minimal'] {
+    --score: calc(var(--u) * 46);
+    --clock: calc(var(--u) * 14);
+    --name: calc(var(--u) * 4);
+    grid-template-rows: minmax(0, 1fr) calc(var(--u) * 17);
+  }
+}
+
+/* =====================================================================
+   Portrait canvas: teams stack as rows, clocks below.
+   ===================================================================== */
+
+@container sb (max-aspect-ratio: 95 / 100) {
+  /* Shared portrait team row: crest + name on the left, score on the right. */
+  .sb-board .sb-team .sb-team-head,
+  .sb-board .sb-team[data-side='away'] .sb-team-head {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .sb-board .sb-team[data-side='away'] .sb-ident {
+    align-items: flex-start;
+  }
+
+  .sb-board:not([data-layout='modern']) .sb-team[data-side='away']::before {
+    background: linear-gradient(90deg, var(--team) 0 80%, var(--team-2) 80%);
+  }
+
+  .sb-board[data-layout='classic'] {
+    --score: calc(var(--u) * 34);
+    --clock: calc(var(--u) * 26);
+    --crest: calc(var(--u) * 9);
+    --name: calc(var(--u) * 6);
+    --stat: calc(var(--u) * 5.5);
+    --period: calc(var(--u) * 8);
+    --shot: calc(var(--u) * 14);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-areas: 'home' 'away' 'center';
+  }
+
+  .sb-board[data-layout='classic'] .sb-team {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: 'head score' 'stats score';
+    column-gap: calc(var(--u) * 3);
+    padding: calc(var(--u) * 3) calc(var(--u) * 3) calc(var(--u) * 2);
+  }
+
+  .sb-board[data-layout='classic'] .sb-team-head { grid-area: head; }
+  .sb-board[data-layout='classic'] .sb-score { grid-area: score; }
+  .sb-board[data-layout='classic'] .sb-team-stats { grid-area: stats; }
+
+  .sb-board[data-layout='classic'] .sb-center,
+  .sb-board[data-layout='tournament'] .sb-center {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    padding: calc(var(--u) * 3);
+    gap: calc(var(--u) * 2.4);
+  }
+
+  .sb-board[data-layout='classic'] .sb-clock,
+  .sb-board[data-layout='tournament'] .sb-clock { grid-column: 1 / -1; grid-row: 1; }
+  .sb-board[data-layout='classic'] .sb-period-row,
+  .sb-board[data-layout='tournament'] .sb-period-row { grid-column: 1; grid-row: 2; }
+  .sb-board[data-layout='classic'] .sb-shot,
+  .sb-board[data-layout='tournament'] .sb-shot { grid-column: 2; grid-row: 2; min-width: 0; justify-self: stretch; }
+
+  .sb-board[data-layout='modern'] {
+    --score: calc(var(--u) * 34);
+    --clock: calc(var(--u) * 24);
+    --crest: calc(var(--u) * 11);
+    --name: calc(var(--u) * 6.5);
+    --stat: calc(var(--u) * 3.6);
+    --period: calc(var(--u) * 9);
+    --shot: calc(var(--u) * 12);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-areas: 'home' 'away' 'center';
+  }
+
+  .sb-board[data-layout='modern'] .sb-team,
+  .sb-board[data-layout='modern'] .sb-team[data-side='away'] {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: 'head score' 'meta meta';
+    padding: calc(var(--u) * 3.5);
+  }
+
+  .sb-board[data-layout='modern'] .sb-team[data-side='away'] .sb-team-meta {
+    flex-direction: row;
+  }
+
+  .sb-board[data-layout='modern'] .sb-center,
+  .sb-board[data-layout='minimal'] .sb-center {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    padding: calc(var(--u) * 3);
+    row-gap: calc(var(--u) * 3);
+  }
+
+  .sb-board[data-layout='modern'] .sb-clock,
+  .sb-board[data-layout='minimal'] .sb-clock { grid-column: 1 / -1; grid-row: 1; }
+  .sb-board[data-layout='modern'] .sb-period,
+  .sb-board[data-layout='minimal'] .sb-period { grid-column: 1; grid-row: 2; justify-self: center; }
+  .sb-board[data-layout='modern'] .sb-shot,
+  .sb-board[data-layout='minimal'] .sb-shot { grid-column: 2; grid-row: 2; justify-self: center; }
+
+  .sb-board[data-layout='tournament'] {
+    --score: calc(var(--u) * 28);
+    --clock: calc(var(--u) * 22);
+    --crest: calc(var(--u) * 13);
+    --name: calc(var(--u) * 5.5);
+    --stat: calc(var(--u) * 5);
+    --period: calc(var(--u) * 7);
+    --shot: calc(var(--u) * 11);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: calc(var(--u) * 6.5) minmax(0, 1fr) minmax(0, 1fr) auto auto;
+    grid-template-areas: 'header' 'home' 'away' 'center' 'stats';
+  }
+
+  .sb-board[data-layout='tournament'] .sb-header {
+    font-size: calc(var(--u) * 2);
+  }
+
+  .sb-board[data-layout='tournament'] .sb-team,
+  .sb-board[data-layout='tournament'] .sb-team[data-side='away'] {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: 'crest name score';
+    column-gap: calc(var(--u) * 3);
+    padding: calc(var(--u) * 2.4) calc(var(--u) * 3);
+    text-align: left;
+  }
+
+  .sb-board[data-layout='tournament'] .sb-team .sb-ident,
+  .sb-board[data-layout='tournament'] .sb-team[data-side='away'] .sb-ident {
+    flex: 1;
+    align-items: flex-start;
+  }
+
+  .sb-board[data-layout='tournament'] .sb-score {
+    flex: none;
+  }
+
+  .sb-board[data-layout='tournament'] .sb-stats {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'home away' 'lead lead';
+  }
+
+  .sb-board[data-layout='tournament'] .sb-statgroup[data-side='home'] { grid-area: home; }
+  .sb-board[data-layout='tournament'] .sb-statgroup[data-side='away'] { grid-area: away; }
+  .sb-board[data-layout='tournament'] .sb-lead-cell { grid-area: lead; }
+
+  .sb-board[data-layout='minimal'] {
+    --score: calc(var(--u) * 36);
+    --clock: calc(var(--u) * 24);
+    --name: calc(var(--u) * 6);
+    --period: calc(var(--u) * 9);
+    --shot: calc(var(--u) * 12);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-areas: 'home' 'away' 'center';
+  }
+
+  .sb-board[data-layout='minimal'] .sb-team {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0 calc(var(--u) * 2);
+  }
+
+  .sb-board[data-layout='minimal'] .sb-ident {
+    flex: 1 1 0;
+  }
+
+  .sb-board[data-layout='minimal'] .sb-score {
+    flex: none;
+  }
+
+  .sb-board[data-layout='minimal'] .sb-team[data-side='home'] {
+    border-right: 0;
+    border-bottom: var(--hair) solid var(--sb-border);
+  }
+
+  .sb-board[data-layout='minimal'] .sb-ident,
+  .sb-board[data-layout='minimal'] .sb-team[data-side='away'] .sb-ident {
+    align-items: flex-start;
+    text-align: left;
+  }
+}

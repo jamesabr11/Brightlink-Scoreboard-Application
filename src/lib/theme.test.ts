@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ScoreboardTheme, ThemeId } from '../types/basketball';
-import { THEMES, accentText, cleanTheme, contrast, readableOn, themePalette, themePreset } from './theme';
+import { LAYOUTS, THEMES, accentText, cleanTheme, contrast, readableOn, themePalette, themePreset } from './theme';
 
 const themeIds = Object.keys(THEMES) as ThemeId[];
 const variants = themeIds.flatMap((id): ScoreboardTheme[] => [
@@ -48,6 +48,13 @@ describe('cleanTheme', () => {
   it('replaces invalid values and keeps valid ones', () => {
     const theme = cleanTheme({ themeId: 'tournament', layout: 'spiral' as never, accent: 'red', font: 'mono', mode: 'light' });
     expect(theme).toMatchObject({ themeId: 'tournament', layout: 'tournament', accent: '#facc15', font: 'mono', mode: 'dark' });
+  });
+
+  it('keeps every layout, including Minimal, through a save and reload', () => {
+    for (const layout of Object.keys(LAYOUTS) as (keyof typeof LAYOUTS)[]) {
+      expect(cleanTheme({ ...themePreset('modern'), layout }).layout).toBe(layout);
+    }
+    for (const id of themeIds) expect(LAYOUTS).toHaveProperty(themePreset(id).layout);
   });
 
   it('rejects an unknown theme id', () => {

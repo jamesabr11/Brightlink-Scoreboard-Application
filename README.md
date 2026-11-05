@@ -49,13 +49,20 @@ npm run lint
 
 ### Themes and Layouts
 
+| Layout | What it shows |
+|---|---|
+| Arena Classic | Team panels either side of a central clock tower: game clock, possession arrows, period, shot clock, fouls, timeout pips and bonus |
+| Modern Sports | Full team-color panels with huge scores over a broadcast-style clock bar |
+| Tournament | Event-name header, large logos, center clock tower and a stats table (fouls, timeouts, bonus, lead) |
+| Minimal | Names, scores, game clock, shot clock and period only |
+
 | Theme | Default layout | Look |
 |---|---|---|
-| Classic Sports Arena | Classic | Amber digits on black |
-| Modern Dark | Modern | Large scores on team-colored panels |
-| Minimal | Modern | Plain, light or dark |
-| Tournament | Tournament | Event name, logos, full stats, court background |
-| Custom | Classic | Your own scoreboard color; text adjusts to stay readable |
+| Classic Sports Arena | Arena Classic | Amber digits on black |
+| Modern Dark | Modern Sports | Black board, team-colored panels |
+| Minimal | Minimal | Plain, light or dark |
+| Tournament | Tournament | Navy board, event name, court lines |
+| Custom | Arena Classic | Your own scoreboard color; text adjusts to stay readable |
 
 Any theme can use any layout, font, background and accent color. Changes appear in the live preview and reach the display only when you click **Apply to Display**.
 
@@ -104,7 +111,7 @@ Shortcuts work on the Scoreboard page. They're off while typing in a field or wh
 
 **Possession:**
 - Choose **Home**, **None** or **Away**, or press T to switch between teams
-- A **BALL** badge on the display shows which team has possession
+- The display shows possession with lit arrows (Arena Classic, Tournament) or a dot beside the team label (Modern Sports, Minimal)
 
 **Periods:**
 - **Previous** / **Next** buttons navigate periods
@@ -126,15 +133,18 @@ The display view (`/display`) shows:
 - Current period/overtime
 - Team fouls and timeouts
 - Possession indicator
-- Leading team badge
-- Bonus indicators
+- Leading team marker (a bar under the leader's score; can be turned off in Settings)
+- Bonus indicators (always in place, lit when active, so nothing moves)
+- Team logos, or a monogram in the team colors when no logo is uploaded
 
 **Display features:**
 - Updates automatically when operator makes changes
-- Optimized for TVs, projectors, and large screens
-- High contrast for visibility from distance
-- Smooth animations
-- Works in fullscreen mode (press F11)
+- Fills any screen: each layout rearranges itself for widescreen (16:9, 16:10, ultrawide), 4:3 and portrait screens instead of letterboxing. Checked at 3840×2160, 1920×1080, 1280×720, 1024×768 and 768×1024
+- A running light beside the game clock shows when it is running; a stopped clock dims slightly
+- The shot clock turns red at 5 seconds and pulses while it runs
+- Short animations on score changes, period changes and possession; turned off when the device asks for reduced motion. They never delay an update
+- **Fullscreen** button (bottom right), **F**, or double-click. The button and the mouse pointer hide after 2.5 seconds without movement
+- Fonts (Bebas Neue, Inter) are bundled, so the display looks the same with no internet connection
 
 ## 🏗️ Technical Architecture
 
@@ -179,7 +189,8 @@ src/
         ├── HistoryPage.tsx      # Completed games
         ├── SettingsPage.tsx     # Application settings
         ├── DisplayView.tsx      # Public display page
-        ├── Scoreboard.tsx       # The three scoreboard layouts
+        ├── Scoreboard.tsx       # The four public scoreboard layouts
+        ├── scoreboard.css       # Scoreboard design system and responsive layouts
         ├── ClockDisplay.tsx     # Reusable clock component
         ├── ui.tsx               # Shared panels, fields, logo, dialogs
         ├── styles.ts            # Shared button and input styles
@@ -199,7 +210,8 @@ Tests sit next to the code they cover (`*.test.ts`).
 **🔄 Real-Time Synchronization**
 - Uses BroadcastChannel API for instant updates
 - Operator and display views sync automatically
-- Works across multiple tabs/windows on same device
+- Works across multiple tabs/windows in the same browser on the same device
+- It does **not** reach other devices: a tablet operating a scoreboard on a gym TV's computer would need a server (for example a small WebSocket relay). Until then, run the operator and the display on the same computer (e.g. display on an extended screen)
 
 **💾 State Persistence**
 - Automatically saves game state and undo history to localStorage
