@@ -20,7 +20,7 @@ const labels = <T extends string>(items: Record<T, { label: string }>) =>
 
 export const ThemeFields: React.FC<{ value: ScoreboardTheme; onChange: (theme: ScoreboardTheme) => void }> = ({ value, onChange }) => (
   <>
-    <div role="radiogroup" aria-label="Theme" className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2 mb-4">
+    <div role="radiogroup" aria-label="Theme" className="grid sm:grid-cols-3 xl:grid-cols-6 gap-2 mb-4">
       {(Object.keys(THEMES) as ThemeId[]).map((id) => (
         <button key={id} role="radio" aria-checked={value.themeId === id} onClick={() => onChange(themePreset(id))} className={`rounded border p-3 text-left ${value.themeId === id ? 'border-yellow-400 bg-neutral-800' : 'border-neutral-600 hover:bg-neutral-800'}`}>
           <span className="block font-bold text-white text-sm">{THEMES[id].label}</span>

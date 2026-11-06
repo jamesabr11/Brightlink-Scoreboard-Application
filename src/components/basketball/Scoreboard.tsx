@@ -287,6 +287,29 @@ const Minimal: React.FC = () => {
   );
 };
 
+/* Layout E: Broadcast */
+const Broadcast: React.FC = () => {
+  const team = (side: Side) => (
+    <TeamBlock side={side}>
+      <Crest side={side} />
+      <Ident side={side} ball />
+      <div className="sb-team-meta"><Fouls side={side} /><Timeouts side={side} /><Bonus side={side} /></div>
+      <Score side={side} />
+    </TeamBlock>
+  );
+  return (
+    <>
+      {team('home')}
+      {team('away')}
+      <section className="sb-center" aria-label="Game clock">
+        <Period />
+        <GameClock />
+        <ShotClock />
+      </section>
+    </>
+  );
+};
+
 export const Scoreboard: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) => {
   const home = useBasketballStore((state) => state.homeTeam.primaryColor);
   const away = useBasketballStore((state) => state.awayTeam.primaryColor);
@@ -298,6 +321,7 @@ export const Scoreboard: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) => {
         {theme.layout === 'modern' && <ModernSports />}
         {theme.layout === 'tournament' && <Tournament />}
         {theme.layout === 'minimal' && <Minimal />}
+        {theme.layout === 'broadcast' && <Broadcast />}
       </div>
     </div>
   );

@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { BRAND_TEAM } from '../lib/branding';
 import { clockRemaining } from '../lib/clock';
+import { THEMES, defaultTheme, themePreset } from '../lib/theme';
+import type { ThemeId } from '../types/basketball';
 
 // In-memory stand-in so each test gets its own set of tabs.
 class FakeChannel {
@@ -531,7 +534,7 @@ describe('saved configurations', () => {
   it('loads everything back as a fresh game', async () => {
     const { tab, id } = await prepare();
     tab.getState().loadConfig('default');
-    expect(tab.getState().homeTeam.name).toBe('Home');
+    expect(tab.getState().homeTeam.name).toBe(BRAND_TEAM.name);
     tab.getState().loadConfig(id);
     const state = tab.getState();
     expect(state.homeTeam).toMatchObject({ name: 'Bulls', logo: 'logo-1', score: 0, timeouts: 5 });
@@ -544,7 +547,7 @@ describe('saved configurations', () => {
     const { tab } = await prepare();
     tab.getState().addScore('home', 3);
     tab.getState().loadConfig('default');
-    expect(tab.getState().homeTeam).toMatchObject({ name: 'Home', score: 0 });
+    expect(tab.getState().homeTeam).toMatchObject({ name: BRAND_TEAM.name, score: 0 });
     tab.getState().undo();
     expect(tab.getState().homeTeam).toMatchObject({ name: 'Bulls', score: 3, logo: 'logo-1' });
     expect(tab.getState().gameConfig.periodDuration).toBe(10);
@@ -585,7 +588,7 @@ describe('saved configurations', () => {
     }));
     const { savedConfigs } = (await openTab()).getState();
     expect(savedConfigs).toHaveLength(1);
-    expect(savedConfigs[0]).toMatchObject({ id: 'x', periodDuration: 1, shotClockShort: 14, theme: { themeId: 'modern' } });
+    expect(savedConfigs[0]).toMatchObject({ id: 'x', periodDuration: 1, shotClockShort: 14, theme: { themeId: defaultTheme.themeId } });
   });
 });
 
@@ -687,13 +690,47 @@ describe('defaults and themes', () => {
     tab.getState().updateTeams({ name: 'Bulls' }, {});
     tab.getState().addScore('home', 2);
     const { theme, ...rules } = tab.getState().gameConfig;
-    tab.getState().applyDefaults({ ...rules, periodDuration: 8, maxTimeouts: 4 }, { ...theme, themeId: 'classic' });
+    tab.getState().applyDefaults({ ...rules, periodDuration: 8, maxTimeouts: 4 }, { ...theme, themeId: 'broadcast' });
     expect(tab.getState().homeTeam).toMatchObject({ name: 'Bulls', score: 0, timeouts: 4 });
     expect(tab.getState().gameClock.remainingTime).toBe(480);
-    expect(tab.getState().gameConfig.theme.themeId).toBe('classic');
+    expect(tab.getState().gameConfig.theme.themeId).toBe('broadcast');
     tab.getState().undo();
     expect(tab.getState().homeTeam.score).toBe(2);
-    expect(tab.getState().gameConfig.theme.themeId).toBe('modern');
+    expect(tab.getState().gameConfig.theme.themeId).toBe(defaultTheme.themeId);
+  });
+
+  it('starts with the school branding: home team, visitors and the Classic preset', async () => {
+    const { homeTeam, awayTeam, gameConfig } = (await openTab()).getState();
+    expect(homeTeam).toMatchObject(BRAND_TEAM);
+    expect(awayTeam.name).toBe('Visitors');
+    expect(gameConfig.theme).toEqual(defaultTheme);
+  });
+
+  it('switches through every preset mid-game without touching the game', async () => {
+    const operator = await openTab();
+    const display = await openTab();
+    const op = operator.getState;
+    op().addScore('home', 3);
+    op().addScore('away', 2);
+    op().addFoul('away');
+    op().subtractTimeout('home');
+    op().togglePossession();
+    op().nextPeriod();
+    op().startGameClock();
+    op().startShotClock();
+    seconds(5);
+    const game = () => {
+      const { homeTeam, awayTeam, period, possession, gameClock, shotClock, history } = op();
+      return { homeTeam, awayTeam, period, possession, gameClock, shotClock, history: history.length };
+    };
+    const before = game();
+    for (const id of Object.keys(THEMES) as ThemeId[]) {
+      op().updateGameConfig({ theme: themePreset(id) });
+      expect(display.getState().gameConfig.theme.themeId).toBe(id);
+      expect(game()).toEqual(before);
+    }
+    seconds(2);
+    expect(clockRemaining(display.getState().gameClock, Date.now())).toBe(713);
   });
 
   it('keeps Phase 2 data, adding a default theme', async () => {
@@ -710,7 +747,7 @@ describe('defaults and themes', () => {
     }));
     const tab = await openTab();
     expect(tab.getState()).toMatchObject({ period: 3, homeTeam: { name: 'Bulls', primaryColor: '#123456', score: 40 } });
-    expect(tab.getState().gameConfig).toMatchObject({ resetFoulsEachPeriod: false, shotClockShort: 14, theme: { themeId: 'modern' } });
+    expect(tab.getState().gameConfig).toMatchObject({ resetFoulsEachPeriod: false, shotClockShort: 14, theme: { themeId: defaultTheme.themeId } });
     expect(tab.getState().gameClock.remainingTime).toBe(300);
     tab.getState().undo();
     expect(tab.getState().homeTeam).toMatchObject({ name: 'Bulls', score: 38 });
@@ -718,7 +755,7 @@ describe('defaults and themes', () => {
 
   it('repairs an invalid saved team color', async () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 0, state: { homeTeam: { primaryColor: 'url(evil)' } } }));
-    expect((await openTab()).getState().homeTeam.primaryColor).toBe('#EF4444');
+    expect((await openTab()).getState().homeTeam.primaryColor).toBe(BRAND_TEAM.primaryColor);
   });
 });
 
@@ -726,8 +763,8 @@ describe('sync between tabs', () => {
   it('brings theme, branding, configurations and the final result to the display', async () => {
     const operator = await openTab();
     const display = await openTab();
-    operator.getState().updateGameConfig({ theme: { ...operator.getState().gameConfig.theme, themeId: 'classic', layout: 'classic' } });
-    expect(display.getState().gameConfig.theme.layout).toBe('classic');
+    operator.getState().updateGameConfig({ theme: { ...operator.getState().gameConfig.theme, themeId: 'broadcast', layout: 'broadcast' } });
+    expect(display.getState().gameConfig.theme.layout).toBe('broadcast');
     operator.getState().updateTeams({ primaryColor: '#00ff00', logo: 'logo-1' }, {});
     expect(display.getState().homeTeam).toMatchObject({ primaryColor: '#00ff00', logo: 'logo-1' });
     operator.getState().saveCurrentConfig('Saved');

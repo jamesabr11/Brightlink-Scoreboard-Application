@@ -25,8 +25,8 @@ export interface ShotClock {
   startTimestamp: number | null;
 }
 
-export type ThemeId = 'classic' | 'modern' | 'minimal' | 'tournament' | 'custom';
-export type LayoutId = 'classic' | 'modern' | 'tournament' | 'minimal';
+export type ThemeId = 'classic' | 'modern' | 'minimal' | 'tournament' | 'broadcast' | 'custom';
+export type LayoutId = 'classic' | 'modern' | 'tournament' | 'minimal' | 'broadcast';
 export type FontId = 'athletic' | 'sans' | 'mono' | 'rounded';
 export type BackgroundId = 'solid' | 'gradient' | 'court';
 

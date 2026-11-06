@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { themePreset } from '../lib/theme';
+import { defaultTheme, themePreset } from '../lib/theme';
 
 const STORAGE_KEY = 'basketball-settings';
 
@@ -52,7 +52,7 @@ describe('settings', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 0, state: { rules: { periodDuration: 'long' }, theme: { themeId: 'neon' }, sound: { volume: 'loud' }, display: 7 } }));
     const state = (await openTab()).getState();
     expect(state.rules.periodDuration).toBe(12);
-    expect(state.theme.themeId).toBe('modern');
+    expect(state.theme.themeId).toBe(defaultTheme.themeId);
     expect(state.sound.volume).toBe(0.5);
     expect(state.display.showShotClock).toBe(true);
   });

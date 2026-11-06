@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ScoreboardTheme, ThemeId } from '../types/basketball';
-import { LAYOUTS, THEMES, accentText, cleanTheme, contrast, readableOn, themePalette, themePreset } from './theme';
+import { BRAND } from './branding';
+import { LAYOUTS, THEMES, accentText, cleanTheme, contrast, defaultTheme, readableOn, themePalette, themePreset } from './theme';
 
 const themeIds = Object.keys(THEMES) as ThemeId[];
 const variants = themeIds.flatMap((id): ScoreboardTheme[] => [
@@ -42,12 +43,12 @@ describe('theme readability', () => {
 
 describe('cleanTheme', () => {
   it('fills a missing theme with the default', () => {
-    expect(cleanTheme(undefined).themeId).toBe('modern');
+    expect(cleanTheme(undefined).themeId).toBe(defaultTheme.themeId);
   });
 
   it('replaces invalid values and keeps valid ones', () => {
     const theme = cleanTheme({ themeId: 'tournament', layout: 'spiral' as never, accent: 'red', font: 'mono', mode: 'light' });
-    expect(theme).toMatchObject({ themeId: 'tournament', layout: 'tournament', accent: '#facc15', font: 'mono', mode: 'dark' });
+    expect(theme).toMatchObject({ themeId: 'tournament', layout: 'tournament', accent: BRAND.red, font: 'mono', mode: 'dark' });
   });
 
   it('keeps every layout, including Minimal, through a save and reload', () => {
@@ -58,6 +59,21 @@ describe('cleanTheme', () => {
   });
 
   it('rejects an unknown theme id', () => {
-    expect(cleanTheme({ themeId: 'neon' as never }).themeId).toBe('modern');
+    expect(cleanTheme({ themeId: 'neon' as never }).themeId).toBe(defaultTheme.themeId);
+  });
+});
+
+describe('branding', () => {
+  it('gives every preset the school accent and a dark default board', () => {
+    for (const id of themeIds) expect(themePreset(id)).toMatchObject({ accent: BRAND.red, mode: 'dark' });
+  });
+
+  it('keeps the shot-clock warning distinct from the brand red', () => {
+    for (const theme of variants) expect(themePalette(theme).warning.toLowerCase()).not.toBe(BRAND.red.toLowerCase());
+  });
+
+  it('gives each preset its own layout, apart from Custom', () => {
+    const layouts = themeIds.filter((id) => id !== 'custom').map((id) => THEMES[id].layout);
+    expect(new Set(layouts).size).toBe(layouts.length);
   });
 });

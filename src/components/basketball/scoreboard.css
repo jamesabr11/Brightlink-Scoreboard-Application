@@ -537,17 +537,17 @@
    ===================================================================== */
 
 .sb-board[data-layout='modern'] {
-  --score: calc(var(--u) * 34);
-  --clock: calc(var(--u) * 13);
+  --score: calc(var(--u) * 31);
+  --clock: calc(var(--u) * 16.5);
   --crest: calc(var(--u) * 9);
   --name: calc(var(--u) * 5.2);
   --stat: calc(var(--u) * 2.6);
-  --period: calc(var(--u) * 6.5);
-  --shot: calc(var(--u) * 8.5);
+  --period: calc(var(--u) * 7);
+  --shot: calc(var(--u) * 9.5);
   gap: calc(var(--u) * 0.5);
   padding: calc(var(--u) * 0.5);
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) calc(var(--u) * 15);
+  grid-template-rows: minmax(0, 1fr) calc(var(--u) * 19);
   grid-template-areas: 'home away' 'center center';
 }
 
@@ -621,6 +621,12 @@
   padding: 0;
 }
 
+/* An auto-width row gives shrinkable pips nothing to fill, so they collapse to slivers. */
+.sb-team-meta .sb-pip {
+  flex: none;
+  width: calc(var(--u) * 1.5);
+}
+
 .sb-board[data-layout='modern'] .sb-flash {
   background: radial-gradient(ellipse 70% 70% at 50% 55%, rgb(255 255 255 / 0.55), transparent 75%);
   mix-blend-mode: normal;
@@ -671,32 +677,26 @@
   grid-template-areas: 'header header header' 'home center away' 'stats stats stats';
 }
 
+/* A solid accent band: the event's colors lead the board. */
 .sb-header {
   display: flex;
   align-items: center;
   gap: calc(var(--u) * 1.2);
   padding: 0 calc(var(--u) * 1.6);
+  color: var(--sb-on-accent);
+  background: var(--sb-accent);
+  border-color: var(--sb-accent);
   font-family: var(--ui);
   font-size: calc(var(--u) * 1.5);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-.sb-header::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: calc(var(--u) * 0.3);
-  background: linear-gradient(90deg, var(--home) 50%, var(--away) 50%);
-}
-
 .sb-header-mark {
   width: calc(var(--u) * 1);
   height: calc(var(--u) * 1);
   flex: none;
-  background: var(--sb-accent);
+  background: var(--sb-on-accent);
 }
 
 .sb-header-event {
@@ -705,14 +705,13 @@
 
 .sb-header-period {
   flex: none;
-  color: var(--sb-accent-text);
 }
 
 .sb-header-period[data-state='ot'],
 .sb-header-period[data-state='final'] {
   padding: calc(var(--u) * 0.3) calc(var(--u) * 0.8);
-  color: var(--sb-on-accent);
-  background: var(--sb-accent);
+  color: var(--sb-accent);
+  background: var(--sb-on-accent);
 }
 
 .sb-board[data-layout='tournament'] .sb-team {
@@ -908,7 +907,7 @@
 
   .sb-board[data-layout='modern'] {
     --score: calc(var(--u) * 32);
-    grid-template-rows: minmax(0, 1fr) calc(var(--u) * 17);
+    grid-template-rows: minmax(0, 1fr) calc(var(--u) * 20);
   }
 
   .sb-board[data-layout='modern'] .sb-team,
@@ -1158,5 +1157,175 @@
   .sb-board[data-layout='minimal'] .sb-team[data-side='away'] .sb-ident {
     align-items: flex-start;
     text-align: left;
+  }
+}
+
+/* =====================================================================
+   Layout E: Broadcast
+   TV score bug scaled to the whole board: stacked team rows (color edge,
+   crest, name, stat strip, score slab) beside a period / clock column.
+   Kept last so its rules win over the shared portrait team rules above.
+   ===================================================================== */
+
+.sb-board[data-layout='broadcast'] {
+  --score: calc(var(--u) * 23);
+  --clock: calc(var(--u) * 14);
+  --crest: calc(var(--u) * 9);
+  --name: calc(var(--u) * 5.4);
+  --stat: calc(var(--u) * 3.2);
+  --period: calc(var(--u) * 5);
+  --shot: calc(var(--u) * 9);
+  --slab: calc(var(--u) * 24);
+  grid-template-columns: minmax(0, 1fr) calc(var(--u) * 32);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: 'home center' 'away center';
+}
+
+.sb-board[data-layout='broadcast'] .sb-stripe {
+  display: none;
+}
+
+.sb-board[data-layout='broadcast'] .sb-team {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) var(--slab);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas: 'crest name score' 'meta meta score';
+  align-items: center;
+  column-gap: calc(var(--u) * 2.4);
+  row-gap: calc(var(--u) * 1.2);
+  padding-left: calc(var(--u) * 3);
+}
+
+/* Team color runs down the row's left edge instead of across the top. */
+.sb-board[data-layout='broadcast'] .sb-team[data-side]::before {
+  right: auto;
+  bottom: 0;
+  width: calc(var(--u) * 1);
+  height: auto;
+  background: linear-gradient(180deg, var(--team) 0 78%, var(--team-2) 78%);
+}
+
+.sb-board[data-layout='broadcast'] .sb-crest {
+  grid-area: crest;
+  margin-top: calc(var(--u) * 1.6);
+}
+
+.sb-board[data-layout='broadcast'] .sb-ident,
+.sb-board[data-layout='broadcast'] .sb-team[data-side='away'] .sb-ident {
+  grid-area: name;
+  align-items: flex-start;
+  margin-top: calc(var(--u) * 1.6);
+}
+
+.sb-board[data-layout='broadcast'] .sb-ball,
+.sb-board[data-layout='broadcast'] .sb-team[data-side='away'] .sb-ball {
+  left: calc(100% + var(--u) * 0.2);
+  right: auto;
+}
+
+.sb-board[data-layout='broadcast'] .sb-team-meta,
+.sb-board[data-layout='broadcast'] .sb-team[data-side='away'] .sb-team-meta {
+  flex-direction: row;
+  gap: calc(var(--u) * 2.4);
+  margin-bottom: calc(var(--u) * 1.6);
+}
+
+.sb-board[data-layout='broadcast'] .sb-score {
+  grid-area: score;
+  align-self: stretch;
+  background: color-mix(in srgb, var(--team) 18%, var(--sb-bg));
+  border-left: var(--hair) solid var(--sb-border);
+}
+
+.sb-board[data-layout='broadcast'] .sb-center {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * 2) calc(var(--u) * 1.6);
+}
+
+/* Period sits in a solid accent band at the top of the clock column. */
+.sb-board[data-layout='broadcast'] .sb-period {
+  justify-self: stretch;
+  padding: calc(var(--u) * 1) calc(var(--u) * 1) calc(var(--u) * 0.8);
+  color: var(--sb-on-accent);
+  background: var(--sb-accent);
+  border-radius: var(--radius);
+}
+
+.sb-board[data-layout='broadcast'] .sb-period .sb-eyebrow,
+.sb-board[data-layout='broadcast'] .sb-period .sb-period-value,
+.sb-board[data-layout='broadcast'] .sb-period[data-state] .sb-period-value {
+  color: inherit;
+  background: none;
+  padding: 0;
+}
+
+.sb-board[data-layout='broadcast'] .sb-run {
+  top: auto;
+  bottom: calc(var(--u) * 1.2);
+}
+
+.sb-board[data-layout='broadcast'] .sb-shot {
+  min-width: 70%;
+}
+
+/* Tall canvas: team rows stack full width, clocks in one row beneath. */
+@container sb (max-aspect-ratio: 145 / 100) {
+  .sb-board[data-layout='broadcast'] {
+    --score: calc(var(--u) * 24);
+    --clock: calc(var(--u) * 15);
+    --crest: calc(var(--u) * 10);
+    --name: calc(var(--u) * 6);
+    --stat: calc(var(--u) * 3.6);
+    --period: calc(var(--u) * 6);
+    --shot: calc(var(--u) * 9);
+    --slab: calc(var(--u) * 28);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) calc(var(--u) * 18);
+    grid-template-areas: 'home' 'away' 'center';
+  }
+
+  .sb-board[data-layout='broadcast'] .sb-center {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: calc(var(--u) * 3);
+    padding: calc(var(--u) * 1.6) calc(var(--u) * 3);
+  }
+
+  .sb-board[data-layout='broadcast'] .sb-period { justify-self: center; padding: calc(var(--u) * 1) calc(var(--u) * 2.4) calc(var(--u) * 0.8); }
+  .sb-board[data-layout='broadcast'] .sb-shot { min-width: 0; }
+}
+
+/* Portrait: clock across the full width, period and shot clock below it. */
+@container sb (max-aspect-ratio: 95 / 100) {
+  .sb-board[data-layout='broadcast'] {
+    --score: calc(var(--u) * 32);
+    --clock: calc(var(--u) * 26);
+    --crest: calc(var(--u) * 13);
+    --name: calc(var(--u) * 7.5);
+    --stat: calc(var(--u) * 5);
+    --period: calc(var(--u) * 8);
+    --shot: calc(var(--u) * 13);
+    --slab: calc(var(--u) * 34);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .sb-board[data-layout='broadcast'] .sb-center {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    padding: calc(var(--u) * 3);
+    row-gap: calc(var(--u) * 3);
+  }
+
+  .sb-board[data-layout='broadcast'] .sb-clock { grid-column: 1 / -1; grid-row: 1; }
+  .sb-board[data-layout='broadcast'] .sb-period { grid-column: 1; grid-row: 2; }
+  .sb-board[data-layout='broadcast'] .sb-shot { grid-column: 2; grid-row: 2; }
+
+  .sb-board[data-layout='broadcast'] .sb-team-meta {
+    flex-wrap: wrap;
+    row-gap: calc(var(--u) * 1.2);
   }
 }

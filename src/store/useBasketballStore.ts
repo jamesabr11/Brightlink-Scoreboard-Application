@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { clockRemaining, formatGameClock, formatShotClock, stopClock } from '../lib/clock';
+import { BRAND_TEAM, VISITOR_TEAM } from '../lib/branding';
 import { buildGameRecord } from '../lib/gameRecords';
 import { newId, safeStorage } from '../lib/storage';
 import { cleanTheme, defaultTheme, isHexColor } from '../lib/theme';
@@ -55,9 +56,9 @@ const HISTORY_LIMIT = 50;
 
 export const defaultConfig: GameConfig = {
   id: 'default',
-  name: 'Standard Game',
-  homeTeam: { name: 'Home', abbreviation: 'HOM', primaryColor: '#EF4444', secondaryColor: '#991B1B' },
-  awayTeam: { name: 'Away', abbreviation: 'AWY', primaryColor: '#3B82F6', secondaryColor: '#1E3A8A' },
+  name: `${BRAND_TEAM.name} Basketball`,
+  homeTeam: BRAND_TEAM,
+  awayTeam: VISITOR_TEAM,
   periodDuration: 12,
   overtimeDuration: 5,
   numberOfPeriods: 4,
