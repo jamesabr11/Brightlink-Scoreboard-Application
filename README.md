@@ -1,406 +1,244 @@
-# 🏀 Basketball Scoreboard Application
+# Basketball Scoreboard
 
-A complete, professional basketball scoreboard system built with React, TypeScript, Zustand, and Tailwind CSS. Features dual-view architecture for operators and public displays with real-time synchronization.
+A basketball scoreboard and game-day presentation system for school gyms and arenas. One computer runs an **operator console** and a **public display**: the operator scores the game, runs the clocks and manages media, and the display shows a professional scoreboard on a TV, projector or LED wall.
 
-## 🚀 Quick Start
+Holy Cross Regional High School red, white and black is the default branding. Team names, colours and logos can be changed for any school.
 
-### Installation
+> **Status:** in active development. Branding and scoreboard presets (Phase 1) and the media library with sponsor management (Phase 2) are complete. Presentation modes and media playback are next. See [Roadmap](#roadmap).
+
+## Contents
+
+- [Features](#features)
+- [Getting started](#getting-started)
+- [Using the scoreboard](#using-the-scoreboard)
+- [Architecture](#architecture)
+- [Project structure](#project-structure)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Roadmap](#roadmap)
+- [Known limitations](#known-limitations)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Features
+
+**Operator console**
+- Scoring (+1, +2, +3, −1), team fouls with bonus, timeouts and possession
+- Game clock and shot clock with start, pause, reset and corrections down to a tenth of a second
+- Periods and overtime, with configurable league rules
+- Undo for the last 50 actions, and a recent-actions log
+- Keyboard shortcuts for scoring, both clocks, possession and undo
+- Saved game configurations, finished-game history with CSV export, and printable summaries
+- Optional period, game-end and shot-clock warning sounds
+
+**Public display**
+- Five scoreboard presets that use different layouts, not just different colours (see [Scoreboard presets](#scoreboard-presets))
+- Layouts rearrange for widescreen, 4:3 and portrait screens. Checked at 3840×2160, 1920×1080, 1280×720, 1024×768 and 768×1024
+- Large high-contrast scores, tenths on the clock under one minute, and a shot-clock warning at 5 seconds
+- Fullscreen with **F**, a double-click or the button; the cursor and button hide when idle
+- Reduced-motion preferences are respected; fonts are bundled, so it works offline
+
+**Media library and sponsors**
+- Upload PNG, JPG and WebP images (up to 25 MB) and MP4 video (up to 500 MB), with thumbnails
+- Built-in categories (Sponsors, Advertisements, Pregame, Team Hype, Player Introductions, Halftime, Timeout, General Promotions) plus your own
+- Search, filter, preview, rename, recategorize and set display times
+- Sponsors with logos, linked advertisements and per-ad display times
+
+## Getting started
+
+### Requirements
+
+- **Node.js 20.19+ or 22.12+** (required by Vite 8)
+- A current desktop browser. Chrome or Edge is recommended for the display.
+
+### Install and run
 
 ```bash
 npm install
-```
-
-### Run the Application
-
-```bash
 npm run dev
 ```
 
-Then open:
-- **Operator Control Panel**: http://localhost:5173/
-- **Public Display**: http://localhost:5173/display
+Open the operator console at http://localhost:5173/, then click **Open Display** to open the public scoreboard (`/display`) in a new window. Drag that window to the TV, projector or LED wall and press **F** for fullscreen.
 
-### Production Build
+### Scripts
 
-```bash
-npm run build
-npm run preview
-```
-
-### Tests
-
-```bash
-npm test        # Vitest: scoring, clocks, fouls, timeouts, undo, persistence, tab sync, shortcuts
-npm run lint
-```
-
-## 📖 How to Use
-
-### Setting Up a Game
-
-1. Open the operator view at http://localhost:5173/
-2. Use the navigation at the top of the page:
-   - **Scoreboard**: live game controls and keyboard shortcuts
-   - **Game Setup**: teams, colors, logos, rules, and the scoreboard theme with a live preview
-   - **Configurations**: save, load, update, rename, duplicate and delete prepared setups
-   - **Media**: upload, organize and preview images and videos for game-day presentation
-   - **Sponsors**: sponsor names, logos, advertisements and their display times
-   - **History**: completed games, statistics, CSV export and printable summaries
-   - **Settings**: defaults for new games, sound, and display preferences
-3. Click **Open Display** to launch the public scoreboard in a new window. Press **F** or double-click it for fullscreen.
-
-### Themes and Layouts
-
-| Layout | What it shows |
+| Command | What it does |
 |---|---|
-| Arena Classic | Team panels either side of a central clock tower: game clock, possession arrows, period, shot clock, fouls, timeout pips and bonus |
-| Modern Sports | Full team-color panels with huge scores over a broadcast-style clock bar |
-| Tournament | Event-name header, large logos, center clock tower and a stats table (fouls, timeouts, bonus, lead) |
-| Minimal | Names, scores, game clock, shot clock and period only |
+| `npm run dev` | Start the development server |
+| `npm run build` | Type-check and build for production into `dist/` |
+| `npm run preview` | Serve the production build locally |
+| `npm test` | Run the unit tests (Vitest) |
+| `npm run typecheck` | Type-check without building |
+| `npm run lint` | Run ESLint |
 
-| Theme | Default layout | Look |
-|---|---|---|
-| Classic Sports Arena | Arena Classic | Amber digits on black |
-| Modern Dark | Modern Sports | Black board, team-colored panels |
-| Minimal | Minimal | Plain, light or dark |
-| Tournament | Tournament | Navy board, event name, court lines |
-| Custom | Arena Classic | Your own scoreboard color; text adjusts to stay readable |
+## Using the scoreboard
 
-Any theme can use any layout, font, background and accent color. Changes appear in the live preview and reach the display only when you click **Apply to Display**.
+### Before the game
 
-### Finishing a Game
+The navigation at the top of the operator console has:
 
-A clock reaching zero never ends a game. Click **Finish & Save** on the Scoreboard page to stop the clocks, show FINAL on the display and record the result in History. **Reopen Game** continues it, and finishing again updates the same record.
+| Page | Purpose |
+|---|---|
+| **Scoreboard** | Live game controls |
+| **Game Setup** | Team names, colours, logos, rules, and the scoreboard preset with a live preview |
+| **Configurations** | Save, load, update, rename, duplicate and delete prepared setups |
+| **Media** | Upload and organize images and videos |
+| **Sponsors** | Sponsor names, logos, advertisements and display times |
+| **History** | Finished games, statistics, CSV export and printable summaries |
+| **Settings** | Defaults for new games, sound, and display preferences |
 
-### Keyboard Shortcuts
+Default rules are 4 × 12-minute quarters, 5-minute overtime, a 24/14 shot clock, bonus at 5 team fouls and 3 timeouts per team. Team fouls reset each period; timeouts carry over. Change them for the current game in Game Setup, or as defaults in Settings.
+
+### Scoreboard presets
+
+| Preset | Layout |
+|---|---|
+| Holy Cross Classic (default) | Traditional: team panels either side of a central clock, white digits on black, red accents |
+| Arena | Full team-colour panels with large scores over a big clock bar |
+| Minimal | Names, scores, clock, shot clock and period only. Dark or light |
+| Tournament | Red event header band, large crests and a team stats row |
+| Broadcast | TV-style: stacked team rows with scores beside a period and clock column |
+| Custom | Any layout, font, background and colours; text adjusts to stay readable |
+
+Changes appear in the live preview and reach the display when you click **Apply to Display**. Switching presets never changes the game.
+
+### During the game
 
 | Key | Action |
 |---|---|
 | 1 / 2 / 3 | Home +1 / +2 / +3 |
 | 4 / 5 / 6 | Away +1 / +2 / +3 |
-| Space | Start/pause game clock |
-| S | Start/pause shot clock |
-| R / E | Shot clock full / short reset (24 / 14 by default) |
+| Space | Start/pause the game clock |
+| S | Start/pause the shot clock |
+| R / E | Shot clock full / short reset |
 | T | Switch possession |
 | U | Undo |
 
-Shortcuts work on the Scoreboard page. They're off while typing in a field or while a confirmation is open, leave browser combinations (Cmd+R etc.) alone, and count a held key once. Nothing destructive has a key. To add one, add a row to `SHORTCUTS` in `src/components/basketball/shortcuts.ts`; the help panel and button hints follow.
+Shortcuts work on the Scoreboard page. They're off while typing in a field or while a confirmation is open, and a held key counts once. To add one, add a row to `SHORTCUTS` in `src/components/basketball/shortcuts.ts`.
 
-### Operating During a Game
+- The game clock stops at 0.0 and stops the shot clock with it. **Next** period refills both clocks and applies the foul and timeout rules.
+- **Undo** reverses scores, fouls, timeouts, possession, clock corrections, period changes, resets and loading a configuration. Starting and pausing clocks aren't recorded.
+- A clock reaching zero never ends the game. **Finish & Save** stops the clocks, shows FINAL and records the result in History. **Reopen Game** continues it.
+- **Reset Game** asks for confirmation, keeps teams and rules, and can be undone.
 
-**Scoring:**
-- Click **+1**, **+2**, or **+3** to add points for each team
-- Click **-1** to subtract points if needed
+## Architecture
 
-**Game Clock:**
-- **Start** button begins the clock
-- **Pause** button stops it
-- **Reset** button returns clock to period duration
-- **±1m / ±1s / ±.1s** correct the time, even while it runs
-- Shows tenths under one minute, and stops automatically at 0.0 (stopping the shot clock too)
+### Technology
 
-**Shot Clock:**
-- **Start** / **Pause** run the shot clock, independently of the game clock
-- The two reset buttons (**24** and **14** by default) reset it and leave it stopped, ready to start
-- **±1s / ±.1s** correct the time
-- Turns red and shows tenths at 5 seconds or fewer, and stops automatically at 0.0
+React 19, TypeScript, Vite 8, Zustand 5, Tailwind CSS 3, Framer Motion, React Router, Lucide icons and Vitest. There is no backend.
 
-**Fouls & Timeouts:**
-- Use **+** and **-** buttons to adjust fouls and timeouts; neither can go negative
-- **BONUS** appears when a team reaches the configured foul count
-- Timeouts can't exceed the configured maximum. Changing the maximum keeps the number each team has used
-- **Restore timeouts now** in Game Setup refills both teams
+### State and synchronization
 
-**Possession:**
-- Choose **Home**, **None** or **Away**, or press T to switch between teams
-- The display shows possession with lit arrows (Arena Classic, Tournament) or a dot beside the team label (Modern Sports, Minimal)
+- **Zustand stores** hold the live game, settings, finished games and media metadata. Every undoable game action goes through one `commit` function that records exactly what it changes.
+- **Clocks are timestamp-based.** A running clock stores its remaining time and start timestamp, and every window derives the current time from the wall clock, so inactive tabs and refreshes don't drift.
+- **Operator and display stay in sync** through the BroadcastChannel API. This works between windows of the same browser on the same computer, not across devices.
 
-**Periods:**
-- **Previous** / **Next** buttons navigate periods
-- **Next** refills both clocks, stops them, and applies the fouls and timeouts options from Setup
-- Automatically switches to overtime after the last period
+### Storage
 
-**Other Controls:**
-- **Undo** reverses the last action: scores, fouls, timeouts, possession, clock corrections and resets, period changes, game resets and loading a configuration. Starting and pausing clocks are not recorded
-- Undoing a clock change leaves that clock stopped at the earlier time, so it can't jump while running
-- The **Recent Actions** panel lists the last 50 undoable actions
-- **Reset Game** requires confirmation, keeps team names, colors and rules, and can be undone
-- Sound effects are off by default. Turn them on in Settings; they play from the operator page after your first click or key press
+All data stays in the browser on this computer and is validated when it loads:
 
-### Public Display
+| Data | Where |
+|---|---|
+| Live game, configurations, undo history | localStorage `basketball-storage` |
+| Settings | localStorage `basketball-settings` |
+| Finished games | localStorage `basketball-games` |
+| Media metadata, categories, sponsors | localStorage `basketball-media` |
+| Team logos | IndexedDB `basketball-logos` |
+| Media files and thumbnails | IndexedDB `basketball-media` |
 
-The display view (`/display`) shows:
-- Large, readable scores
-- Game clock and shot clock
-- Current period/overtime
-- Team fouls and timeouts
-- Possession indicator
-- Leading team marker (a bar under the leader's score; can be turned off in Settings)
-- Bonus indicators (always in place, lit when active, so nothing moves)
-- Team logos, or a monogram in the team colors when no logo is uploaded
+Large files never go into localStorage or Zustand state. Clearing the browser's site data deletes everything above.
 
-**Display features:**
-- Updates automatically when operator makes changes
-- Fills any screen: each layout rearranges itself for widescreen (16:9, 16:10, ultrawide), 4:3 and portrait screens instead of letterboxing. Checked at 3840×2160, 1920×1080, 1280×720, 1024×768 and 768×1024
-- A running light beside the game clock shows when it is running; a stopped clock dims slightly
-- The shot clock turns red at 5 seconds and pulses while it runs
-- Short animations on score changes, period changes and possession; turned off when the device asks for reduced motion. They never delay an update
-- **Fullscreen** button (bottom right), **F**, or double-click. The button and the mouse pointer hide after 2.5 seconds without movement
-- Fonts (Bebas Neue, Inter) are bundled, so the display looks the same with no internet connection
+### Branding
 
-### Media Library and Sponsors
+The default school identity (name and colours) lives in `src/lib/branding.ts`. Changing it updates the default teams, every preset's accent colour and the operator header.
 
-The **Media** page holds the images and videos used for game-day presentation:
-- Upload PNG, JPG and WebP images (up to 25 MB) and MP4 video (up to 500 MB) with the Upload button or by dragging files onto the page. Each upload gets a thumbnail; videos are checked for playability when they're added
-- Built-in categories: Sponsors, Advertisements, Pregame, Team Hype, Player Introductions, Halftime, Timeout and General Promotions. Add your own categories; deleting one moves its media to General Promotions
-- Search by name or sponsor, and filter by category and by images or videos
-- Click an item to preview it, rename it, change its category or sponsor, set its display time, or delete it
-
-The **Sponsors** page manages each sponsor's name, logo and advertisements, with a display time for every ad. Removing a sponsor keeps its media in the library.
-
-Media is stored on this computer, in this browser: files and thumbnails in IndexedDB, and only small details (names, categories, display times) in localStorage. Clearing the browser's site data deletes it. Playback on the public display arrives with the presentation modes.
-
-## 🏗️ Technical Architecture
-
-### Technology Stack
-
-- **Framework**: React 19 + TypeScript
-- **Build Tool**: Vite 8
-- **State Management**: Zustand with persistence
-- **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-- **Routing**: React Router DOM
-- **Synchronization**: BroadcastChannel API
-
-### Project Structure
+## Project structure
 
 ```
 src/
-├── App.tsx                      # Main app with routing
-├── main.tsx                     # Entry point
-├── types/
-│   ├── basketball.ts            # TypeScript interfaces
-│   └── media.ts                 # Media item, category and sponsor types
-├── lib/
-│   ├── clock.ts                 # Clock calculation and formatting
-│   ├── theme.ts                 # Themes, layouts, fonts and contrast rules
-│   ├── idb.ts                   # Shared IndexedDB blob storage
-│   ├── logos.ts                 # Logo validation, resizing and IndexedDB storage
-│   ├── media.ts                 # Media validation, thumbnails and IndexedDB storage
-│   ├── gameRecords.ts           # Game records, statistics and CSV export
-│   ├── sound.ts                 # Generated sound effects
-│   ├── feedback.ts              # Toasts and confirmation dialogs
-│   └── storage.ts               # Safe localStorage access
-├── store/
-│   ├── useBasketballStore.ts    # Live game, configurations, tab sync
-│   ├── useGameLog.ts            # Completed games
-│   ├── useMediaStore.ts         # Media metadata, categories and sponsors
-│   └── useSettingsStore.ts      # Application settings
-└── components/
-    └── basketball/
-        ├── OperatorLayout.tsx   # Navigation shared by operator pages
-        ├── OperatorView.tsx     # Live game controls
-        ├── SetupPage.tsx        # Teams, logos, rules, theme
-        ├── ThemePicker.tsx      # Theme fields and live preview
-        ├── ConfigsPage.tsx      # Saved configurations
-        ├── MediaPage.tsx        # Media library
-        ├── SponsorsPage.tsx     # Sponsor management
-        ├── MediaParts.tsx       # Media thumbnail, preview and details dialog
-        ├── useMedia.ts          # Media URLs, uploads and deletion
-        ├── HistoryPage.tsx      # Completed games
-        ├── SettingsPage.tsx     # Application settings
-        ├── DisplayView.tsx      # Public display page
-        ├── Scoreboard.tsx       # The four public scoreboard layouts
-        ├── scoreboard.css       # Scoreboard design system and responsive layouts
-        ├── ClockDisplay.tsx     # Reusable clock component
-        ├── ui.tsx               # Shared panels, fields, logo, dialogs
-        ├── styles.ts            # Shared button and input styles
-        ├── useSounds.ts         # Plays alerts on the operator page
-        └── shortcuts.ts         # Keyboard shortcut table and handler
+├── App.tsx                    Routes
+├── main.tsx                   Entry point
+├── types/                     Shared types (game, media)
+├── lib/                       Framework-free logic
+│   ├── branding.ts            Default school identity
+│   ├── theme.ts               Presets, layouts, fonts and contrast rules
+│   ├── clock.ts               Clock maths and formatting
+│   ├── idb.ts                 Shared IndexedDB blob storage
+│   ├── logos.ts               Team logo storage
+│   ├── media.ts               Media validation, thumbnails and storage
+│   ├── gameRecords.ts         Finished-game records, statistics, CSV
+│   ├── sound.ts               Generated sound effects
+│   ├── feedback.ts            Toasts and confirmation dialogs
+│   └── storage.ts             Safe localStorage access
+├── store/                     Zustand stores
+│   ├── useBasketballStore.ts  Live game, configurations, undo, tab sync
+│   ├── useSettingsStore.ts    Settings
+│   ├── useGameLog.ts          Finished games
+│   └── useMediaStore.ts       Media metadata, categories, sponsors
+└── components/basketball/
+    ├── OperatorLayout.tsx     Operator navigation
+    ├── OperatorView.tsx       Live game controls
+    ├── SetupPage.tsx          Teams, rules and preset
+    ├── ThemePicker.tsx        Preset fields and live preview
+    ├── ConfigsPage.tsx        Saved configurations
+    ├── MediaPage.tsx          Media library
+    ├── SponsorsPage.tsx       Sponsor management
+    ├── MediaParts.tsx         Media thumbnail, preview and details dialog
+    ├── useMedia.ts            Media URLs, uploads and deletion
+    ├── HistoryPage.tsx        Finished games
+    ├── SettingsPage.tsx       Settings
+    ├── DisplayView.tsx        Public display page
+    ├── Scoreboard.tsx         The five scoreboard layouts
+    ├── scoreboard.css         Display design system and responsive layouts
+    ├── ClockDisplay.tsx       Clock component
+    ├── ui.tsx                 Shared panels, fields, logo and dialogs
+    ├── styles.ts              Shared button and input styles
+    ├── useSounds.ts           Operator sound alerts
+    └── shortcuts.ts           Keyboard shortcuts
 ```
 
 Tests sit next to the code they cover (`*.test.ts`).
 
-### Key Features
-
-**⏱️ Timestamp-Based Timers**
-- Clocks use timestamps instead of simple counters
-- Remain accurate even when browser tab is inactive
-- A running clock keeps its time through a page refresh
-
-**🔄 Real-Time Synchronization**
-- Uses BroadcastChannel API for instant updates
-- Operator and display views sync automatically
-- Works across multiple tabs/windows in the same browser on the same device
-- It does **not** reach other devices: a tablet operating a scoreboard on a gym TV's computer would need a server (for example a small WebSocket relay). Until then, run the operator and the display on the same computer (e.g. display on an extended screen)
-
-**💾 State Persistence**
-- Automatically saves game state and undo history to localStorage
-- Survives page refreshes
-- Resumes game exactly where it left off
-- Running clocks stay running, so time that passes while a page is closed still counts down
-- Saved data is validated on load, so bad values can't break the game
-- Stored separately in this browser: the live game and configurations (`basketball-storage`), completed games (`basketball-games`), settings (`basketball-settings`), and logos (IndexedDB `basketball-logos`)
-- Clearing browser data deletes all of these, and they don't move between browsers or computers
-
-**📊 Game State Management**
-- Undo with a history of the last 50 actions (no redo)
-- History tracking for scoring, stats, possession, clock corrections and periods
-- Configurable game rules (period duration, bonus threshold, timeouts)
-
-**🎨 Professional Design**
-- Dark theme optimized for sports venues
-- Large, high-contrast typography
-- Responsive layout (desktop and mobile)
-- Team color customization
-- Animated possession and leading indicators
-
-## 🎯 Features
-
-### Operator View
-- ✅ Score controls (1, 2, 3 points)
-- ✅ Game clock (start/pause/reset)
-- ✅ Shot clock (24/14 second resets)
-- ✅ Period navigation (Q1-Q4 + overtime)
-- ✅ Foul tracking with bonus indicators
-- ✅ Timeout management
-- ✅ Possession controls
-- ✅ Undo and action history
-- ✅ Keyboard shortcuts
-- ✅ Manual clock corrections
-- ✅ Game reset with confirmation
-- ✅ Team customization (names, colors)
-- ✅ Configurable league rules
-
-### Display View
-- ✅ Large scores (readable from distance)
-- ✅ Game clock with tenths of seconds
-- ✅ Shot clock with warning animation
-- ✅ Period/overtime display
-- ✅ Possession indicator (animated)
-- ✅ Leading team badge
-- ✅ Team fouls and bonus status
-- ✅ Timeouts remaining
-- ✅ Team colors and branding
-
-## 🔧 Configuration
-
-### Game Settings
-
-Default configuration (change the current game in Game Setup, or your defaults in Settings):
-- **Period Duration**: 12 minutes
-- **Overtime Duration**: 5 minutes
-- **Number of Periods**: 4 quarters
-- **Shot Clock**: 24 seconds, 14 for the short reset
-- **Bonus Threshold**: 5 team fouls
-- **Timeouts**: 3 per team
-- **Each new period**: team fouls reset, timeouts are kept
-
-### Customization
-
-Edit `src/store/useBasketballStore.ts` to change default settings:
-
-```typescript
-const defaultConfig: GameConfig = {
-  periodDuration: 12,        // minutes per quarter
-  overtimeDuration: 5,       // minutes per OT
-  numberOfPeriods: 4,        // regular periods
-  shotClockDuration: 24,     // seconds
-  foulsForBonus: 5,          // fouls for bonus
-  maxTimeouts: 3,            // timeouts per team
-  resetFoulsEachPeriod: true,
-  restoreTimeoutsEachPeriod: false,
-};
-```
-
-## 🔍 Troubleshooting
-
-**Clock doesn't update smoothly:**
-- Check if browser tab is active
-- Timestamp-based system handles inactive tabs automatically
-
-**Display not syncing:**
-- Ensure both tabs are from same browser
-- Refresh both operator and display views
-- Check browser console for errors
-
-**Game state lost after refresh:**
-- Check if localStorage is enabled
-- Verify browser privacy settings allow local storage
-- Try clearing localStorage and starting fresh
-
-**Build errors:**
-- Run `npm install` to ensure dependencies are installed
-- Check Node.js version (requires Node 18+)
-- Clear `node_modules` and reinstall if needed
-
-## 📦 Production Deployment
-
-### Build
+## Testing
 
 ```bash
+npm test
+npm run typecheck
+npm run lint
 npm run build
 ```
 
-Output in `dist/` folder:
-- `index.html` - Entry point
-- `assets/` - Bundled JS and CSS
+The unit tests cover scoring, clocks, periods and overtime, fouls, timeouts, possession, undo, persistence and data repair, tab sync, shortcuts, presets and contrast, game records, and media validation and metadata. Display layouts and media uploads were also tested in a real browser during development.
 
-### Deploy
+## Deployment
 
-The app uses page routes such as `/display` and `/history`, so configure your host to serve `index.html` for all paths. Otherwise those pages return 404 when opened directly or refreshed.
+`npm run build` produces a static site in `dist/`. Any static host works, but it must serve `index.html` for every path, because the app uses routes such as `/display` and `/history`. Without that, those pages return 404 when opened directly or refreshed.
 
-Deploy the `dist/` folder to any static hosting:
-- Vercel: `vercel deploy`
-- Netlify: Drag & drop `dist/` folder
-- GitHub Pages: Push `dist/` to gh-pages branch
-- Any web server: Copy `dist/` contents to public directory
+### Development notes
 
-### Environment Requirements
+`package.json` overrides `minimatch` to `^11.0.3` to fix advisory GHSA-g3hv-75wg-m249, because ESLint and typescript-eslint still declare version 10. It only affects lint tooling. Remove the override once `eslint`, `@eslint/config-array` and `@typescript-eslint/typescript-estree` all declare `minimatch` 11 or later.
 
-- Node.js 18+
-- Modern browser with ES6 support
-- BroadcastChannel API support (Chrome, Firefox, Safari, Edge)
+## Roadmap
 
-## 🛠️ Development
+| Phase | Scope | Status |
+|---|---|---|
+| 1 | Branding and professional scoreboard presets | Done |
+| 2 | Media library, local storage and sponsor management | Done |
+| 3 | Pregame, Live, Stadium and Halftime presentation modes | Planned |
+| 4 | Media playback, sponsor rotation and game-day presentation | Planned |
+| 5 | Polish, reliability, fullscreen and Screen Wake Lock | Planned |
 
-### Available Scripts
+## Known limitations
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm test` - Run automated tests
-- `npm run lint` - Run ESLint
+- **One computer.** The operator and the display must run in the same browser on the same computer, for example with the display on an extended screen. A tablet can't yet control a display on another machine.
+- **Local data only.** Games, settings and media live in this browser. There's no backup or export of media yet, and clearing site data deletes everything.
+- **No redo**, and no player statistics.
+- **MP4 video must use H.264.** Other codecs are rejected when uploaded.
 
-### Dependency Override
+## Contributing
 
-`package.json` forces `minimatch` to `^11.0.3` to fix advisory GHSA-g3hv-75wg-m249, because ESLint and typescript-eslint still declare `^10`. It only affects lint tooling, not the shipped app. Remove the `overrides` entry once `eslint`, `@eslint/config-array` and `@typescript-eslint/typescript-estree` all declare `minimatch` 11 or later.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the branch, commit and pull request workflow.
 
-### Tech Stack Details
+## License
 
-Built with:
-- **React 19.2.7** - Latest React with concurrent features
-- **TypeScript 6.0.2** - Type safety and developer experience
-- **Vite 8.0.12** - Lightning-fast build tool
-- **Zustand 5.0.14** - Lightweight state management
-- **Tailwind CSS 3.4.19** - Utility-first styling
-- **Framer Motion 12.40.0** - Smooth animations
-- **React Router DOM 7.17.0** - Client-side routing
-- **Lucide React 1.17.0** - Beautiful icons
-
-## 🎯 Future Enhancements
-
-Planned features:
-- [ ] Redo
-- [ ] Backup and restore of configurations and history
-- [ ] Multi-device sync (WebSocket)
-- [ ] Player statistics tracking
-
-## 📄 License
-
-MIT
-
----
-
-Built with ❤️ for basketball communities, schools, and sports venues.
+Copyright © 2026 James Abramski. All rights reserved. See [LICENSE](LICENSE).
