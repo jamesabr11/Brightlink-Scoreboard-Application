@@ -43,6 +43,8 @@ npm run lint
    - **Scoreboard**: live game controls and keyboard shortcuts
    - **Game Setup**: teams, colors, logos, rules, and the scoreboard theme with a live preview
    - **Configurations**: save, load, update, rename, duplicate and delete prepared setups
+   - **Media**: upload, organize and preview images and videos for game-day presentation
+   - **Sponsors**: sponsor names, logos, advertisements and their display times
    - **History**: completed games, statistics, CSV export and printable summaries
    - **Settings**: defaults for new games, sound, and display preferences
 3. Click **Open Display** to launch the public scoreboard in a new window. Press **F** or double-click it for fullscreen.
@@ -146,6 +148,18 @@ The display view (`/display`) shows:
 - **Fullscreen** button (bottom right), **F**, or double-click. The button and the mouse pointer hide after 2.5 seconds without movement
 - Fonts (Bebas Neue, Inter) are bundled, so the display looks the same with no internet connection
 
+### Media Library and Sponsors
+
+The **Media** page holds the images and videos used for game-day presentation:
+- Upload PNG, JPG and WebP images (up to 25 MB) and MP4 video (up to 500 MB) with the Upload button or by dragging files onto the page. Each upload gets a thumbnail; videos are checked for playability when they're added
+- Built-in categories: Sponsors, Advertisements, Pregame, Team Hype, Player Introductions, Halftime, Timeout and General Promotions. Add your own categories; deleting one moves its media to General Promotions
+- Search by name or sponsor, and filter by category and by images or videos
+- Click an item to preview it, rename it, change its category or sponsor, set its display time, or delete it
+
+The **Sponsors** page manages each sponsor's name, logo and advertisements, with a display time for every ad. Removing a sponsor keeps its media in the library.
+
+Media is stored on this computer, in this browser: files and thumbnails in IndexedDB, and only small details (names, categories, display times) in localStorage. Clearing the browser's site data deletes it. Playback on the public display arrives with the presentation modes.
+
 ## 🏗️ Technical Architecture
 
 ### Technology Stack
@@ -166,11 +180,14 @@ src/
 ├── App.tsx                      # Main app with routing
 ├── main.tsx                     # Entry point
 ├── types/
-│   └── basketball.ts            # TypeScript interfaces
+│   ├── basketball.ts            # TypeScript interfaces
+│   └── media.ts                 # Media item, category and sponsor types
 ├── lib/
 │   ├── clock.ts                 # Clock calculation and formatting
 │   ├── theme.ts                 # Themes, layouts, fonts and contrast rules
+│   ├── idb.ts                   # Shared IndexedDB blob storage
 │   ├── logos.ts                 # Logo validation, resizing and IndexedDB storage
+│   ├── media.ts                 # Media validation, thumbnails and IndexedDB storage
 │   ├── gameRecords.ts           # Game records, statistics and CSV export
 │   ├── sound.ts                 # Generated sound effects
 │   ├── feedback.ts              # Toasts and confirmation dialogs
@@ -178,6 +195,7 @@ src/
 ├── store/
 │   ├── useBasketballStore.ts    # Live game, configurations, tab sync
 │   ├── useGameLog.ts            # Completed games
+│   ├── useMediaStore.ts         # Media metadata, categories and sponsors
 │   └── useSettingsStore.ts      # Application settings
 └── components/
     └── basketball/
@@ -186,6 +204,10 @@ src/
         ├── SetupPage.tsx        # Teams, logos, rules, theme
         ├── ThemePicker.tsx      # Theme fields and live preview
         ├── ConfigsPage.tsx      # Saved configurations
+        ├── MediaPage.tsx        # Media library
+        ├── SponsorsPage.tsx     # Sponsor management
+        ├── MediaParts.tsx       # Media thumbnail, preview and details dialog
+        ├── useMedia.ts          # Media URLs, uploads and deletion
         ├── HistoryPage.tsx      # Completed games
         ├── SettingsPage.tsx     # Application settings
         ├── DisplayView.tsx      # Public display page
