@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { MotionConfig } from 'framer-motion';
+import { MotionConfig, motion } from 'framer-motion';
 import { Maximize, Minimize } from 'lucide-react';
 import { useBasketballStore } from '../../store/useBasketballStore';
+import { usePresentationStore } from '../../store/usePresentationStore';
 import { themeStyle } from '../../lib/theme';
+import { HalftimeView, PregameView, StadiumView } from './PresentationViews';
 import { Scoreboard } from './Scoreboard';
 
 const toggleFullscreen = () => {
@@ -14,6 +16,7 @@ const IDLE_MS = 2500;
 
 export const DisplayView: React.FC = () => {
   const theme = useBasketballStore((state) => state.gameConfig.theme);
+  const mode = usePresentationStore((state) => state.mode);
   const [fullscreen, setFullscreen] = useState(() => Boolean(document.fullscreenElement));
   const [active, setActive] = useState(true); // pointer moved recently: show the control and cursor
 
@@ -42,7 +45,12 @@ export const DisplayView: React.FC = () => {
   return (
     <MotionConfig reducedMotion="user">
       <div className="sb-page" style={{ ...themeStyle(theme), cursor: active ? 'default' : 'none' }} onDoubleClick={toggleFullscreen}>
-        <Scoreboard theme={theme} />
+        <motion.div key={mode} className="h-full" data-testid="presentation-mode" data-mode={mode} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          {mode === 'pregame' && <PregameView theme={theme} />}
+          {mode === 'live' && <Scoreboard theme={theme} />}
+          {mode === 'stadium' && <StadiumView theme={theme} />}
+          {mode === 'halftime' && <HalftimeView theme={theme} />}
+        </motion.div>
         <button
           type="button"
           onClick={toggleFullscreen}
