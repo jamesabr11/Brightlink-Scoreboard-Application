@@ -1,3 +1,4 @@
+import { idbStores } from './idb';
 import { newId } from './storage';
 
 export const LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
@@ -11,29 +12,8 @@ export const logoFileError = (file: { type: string; size: number }): string | nu
   return null;
 };
 
-// Logos live in IndexedDB: only their id is in game state, so images never slow
-// down the state that's rewritten and broadcast on every action.
-const openDb = () =>
-  new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open('basketball-logos', 1);
-    request.onupgradeneeded = () => request.result.createObjectStore('logos');
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-
-const withLogos = async <T,>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequest<T>) => {
-  const db = await openDb();
-  try {
-    return await new Promise<T>((resolve, reject) => {
-      const transaction = db.transaction('logos', mode);
-      const request = run(transaction.objectStore('logos'));
-      transaction.oncomplete = () => resolve(request.result);
-      transaction.onerror = transaction.onabort = () => reject(transaction.error);
-    });
-  } finally {
-    db.close();
-  }
-};
+const logoDb = idbStores('basketball-logos', ['logos']);
+const withLogos = <T,>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequest<T>) => logoDb('logos', mode, run);
 
 const shrink = async (file: Blob): Promise<Blob> => {
   const bitmap = await createImageBitmap(file);

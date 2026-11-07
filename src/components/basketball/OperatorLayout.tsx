@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { ExternalLink, FolderOpen, Gauge, History, Settings, SlidersHorizontal } from 'lucide-react';
+import { ExternalLink, FolderOpen, Gauge, Handshake, History, Images, Settings, SlidersHorizontal } from 'lucide-react';
 import { BRAND, BRAND_TEAM } from '../../lib/branding';
 import { primary } from './styles';
 import { FeedbackHost } from './ui';
@@ -9,6 +9,8 @@ const LINKS = [
   { to: '/', label: 'Scoreboard', icon: Gauge },
   { to: '/setup', label: 'Game Setup', icon: SlidersHorizontal },
   { to: '/configs', label: 'Configurations', icon: FolderOpen },
+  { to: '/media', label: 'Media', icon: Images },
+  { to: '/sponsors', label: 'Sponsors', icon: Handshake },
   { to: '/history', label: 'History', icon: History },
   { to: '/settings', label: 'Settings', icon: Settings },
 ];
