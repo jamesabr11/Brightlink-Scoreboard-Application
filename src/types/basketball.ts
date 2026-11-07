@@ -86,6 +86,12 @@ export interface AppSettings {
   display: { showShotClock: boolean; showLeadingBadge: boolean };
 }
 
+// Points scored in one period; index 0 is period 1. Their sum is always the team score.
+export interface PeriodScore {
+  home: number;
+  away: number;
+}
+
 export interface BasketballState {
   homeTeam: Team;
   awayTeam: Team;
@@ -94,6 +100,7 @@ export interface BasketballState {
   gameClock: GameClock;
   shotClock: ShotClock;
   possession: 'home' | 'away' | null;
+  periodScores: PeriodScore[];
   gameConfig: GameConfig;
   savedConfigs: GameConfig[];
   history: HistoryEntry[];
@@ -105,7 +112,7 @@ export interface BasketballState {
 export interface HistoryEntry {
   timestamp: number;
   action: string;
-  previousState: Partial<Pick<BasketballState, 'period' | 'isOvertime' | 'gameClock' | 'shotClock' | 'possession' | 'gameConfig' | 'finished' | 'gameRecordId'>> & {
+  previousState: Partial<Pick<BasketballState, 'period' | 'isOvertime' | 'gameClock' | 'shotClock' | 'possession' | 'periodScores' | 'gameConfig' | 'finished' | 'gameRecordId'>> & {
     homeTeam?: Partial<Team>;
     awayTeam?: Partial<Team>;
   };
