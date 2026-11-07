@@ -26,3 +26,11 @@ dist-ssr
 
 #Extra
 .claude
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
+# Locally installed agent skills and their lock file
+.agents/
+skills-lock.json
+# Environment files
+.env
+.env.*
