@@ -46,9 +46,7 @@ interface BasketballStore extends BasketballState {
   finishGame: () => void;
   reopenGame: () => void;
   undo: () => void;
-  toggleDisplay: () => void;
   resetGame: () => void;
-  syncState: (state: Partial<BasketballState>) => void;
   updateTeams: (home: Partial<Team>, away: Partial<Team>) => void;
 }
 
@@ -123,7 +121,6 @@ const createInitialState = (config: GameConfig = defaultConfig): BasketballState
   savedConfigs: [defaultConfig],
   history: [],
   lastAction: null,
-  showDisplay: true,
   finished: false,
   gameRecordId: null,
 });
@@ -185,7 +182,6 @@ const restoreState = (saved: Partial<BasketballState> | undefined, current: Bask
       ? saved.savedConfigs.filter((config) => typeof config?.id === 'string' && typeof config.name === 'string').map((config) => cleanConfig({ ...defaultConfig, ...config }))
       : current.savedConfigs,
     history: Array.isArray(saved?.history) ? saved.history.slice(-HISTORY_LIMIT) : [],
-    showDisplay: saved?.showDisplay ?? current.showDisplay,
     finished: saved?.finished === true,
     gameRecordId: typeof saved?.gameRecordId === 'string' ? saved.gameRecordId : null,
   };
@@ -487,11 +483,6 @@ export const useBasketballStore = create<BasketballStore>()(
           });
         },
 
-        toggleDisplay: () => {
-          const state = get();
-          syncAndSet({ showDisplay: !state.showDisplay });
-        },
-
         // Team names and colors survive, and an accidental reset can be undone.
         resetGame: () => {
           const state = get();
@@ -508,8 +499,6 @@ export const useBasketballStore = create<BasketballStore>()(
             gameRecordId: null,
           });
         },
-
-        syncState: (state) => set(state),
 
         updateTeams: (home, away) => {
           const state = get();
@@ -535,7 +524,6 @@ export const useBasketballStore = create<BasketballStore>()(
         gameConfig: state.gameConfig,
         savedConfigs: state.savedConfigs,
         history: state.history,
-        showDisplay: state.showDisplay,
         finished: state.finished,
         gameRecordId: state.gameRecordId,
       }),

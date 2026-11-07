@@ -98,7 +98,6 @@ export interface BasketballState {
   savedConfigs: GameConfig[];
   history: HistoryEntry[];
   lastAction: string | null;
-  showDisplay: boolean;
   finished: boolean;
   gameRecordId: string | null; // set once this game has been saved to history
 }
