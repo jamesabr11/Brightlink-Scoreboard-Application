@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { clockRemaining, formatGameClock, formatShotClock, stopClock } from '../lib/clock';
 import { BRAND_TEAM, VISITOR_TEAM } from '../lib/branding';
 import { buildGameRecord } from '../lib/gameRecords';
+import { addPoints, cleanPeriodScores } from '../lib/periodScores';
 import { newId, safeStorage } from '../lib/storage';
 import { cleanTheme, defaultTheme, isHexColor } from '../lib/theme';
 import type { BasketballState, GameClock, GameRules, ScoreboardTheme, ShotClock, Team, TeamStats, GameConfig, HistoryEntry } from '../types/basketball';
@@ -117,6 +118,7 @@ const createInitialState = (config: GameConfig = defaultConfig): BasketballState
   gameClock: fullGameClock(1, config),
   shotClock: fullShotClock(config.shotClockDuration),
   possession: null,
+  periodScores: [],
   gameConfig: config,
   savedConfigs: [defaultConfig],
   history: [],
@@ -168,13 +170,16 @@ const cleanClock = <T extends GameClock | ShotClock>(clock: Partial<T> | undefin
 const restoreState = (saved: Partial<BasketballState> | undefined, current: BasketballStore): BasketballStore => {
   const gameConfig = cleanConfig({ ...current.gameConfig, ...saved?.gameConfig });
   const period = wholeNumber(saved?.period, 1, 1);
+  const homeTeam = cleanTeam(saved?.homeTeam, current.homeTeam, gameConfig.maxTimeouts);
+  const awayTeam = cleanTeam(saved?.awayTeam, current.awayTeam, gameConfig.maxTimeouts);
   return {
     ...current,
     gameConfig,
     period,
+    periodScores: cleanPeriodScores(saved?.periodScores, period, homeTeam.score, awayTeam.score),
     isOvertime: period > gameConfig.numberOfPeriods,
-    homeTeam: cleanTeam(saved?.homeTeam, current.homeTeam, gameConfig.maxTimeouts),
-    awayTeam: cleanTeam(saved?.awayTeam, current.awayTeam, gameConfig.maxTimeouts),
+    homeTeam,
+    awayTeam,
     gameClock: cleanClock(saved?.gameClock, current.gameClock),
     shotClock: cleanClock(saved?.shotClock, current.shotClock),
     possession: saved?.possession === 'home' || saved?.possession === 'away' ? saved.possession : null,
@@ -212,6 +217,7 @@ export const useBasketballStore = create<BasketballStore>()(
           ...(update.gameClock && { gameClock: stopClock(state.gameClock, now) }),
           ...(update.shotClock && { shotClock: stopClock(state.shotClock, now) }),
           ...('possession' in update && { possession: state.possession }),
+          ...(update.periodScores && { periodScores: state.periodScores }),
           ...(update.period !== undefined && { period: state.period, isOvertime: state.isOvertime }),
           ...(update.gameConfig && { gameConfig: state.gameConfig }),
           ...('finished' in update && { finished: state.finished, gameRecordId: state.gameRecordId }),
@@ -228,7 +234,11 @@ export const useBasketballStore = create<BasketballStore>()(
         const team = get()[key];
         const next = Math.max(0, value);
         if (next === team[stat]) return;
-        commit(`${team.name} ${action}`, { [key]: { ...team, [stat]: next } });
+        const state = get();
+        commit(`${team.name} ${action}`, {
+          [key]: { ...team, [stat]: next },
+          ...(stat === 'score' && { periodScores: addPoints(state.periodScores, state.period, side, next - team.score) }),
+        });
       };
 
       const setClockTime = (key: 'gameClock' | 'shotClock', seconds: number, max: number, describe: (time: number) => string) => {
@@ -252,6 +262,7 @@ export const useBasketballStore = create<BasketballStore>()(
           gameClock: fresh.gameClock,
           shotClock: fresh.shotClock,
           possession: fresh.possession,
+          periodScores: [],
           finished: false,
           gameRecordId: null,
         });
@@ -495,6 +506,7 @@ export const useBasketballStore = create<BasketballStore>()(
             gameClock: fresh.gameClock,
             shotClock: fresh.shotClock,
             possession: fresh.possession,
+            periodScores: [],
             finished: false,
             gameRecordId: null,
           });
@@ -521,6 +533,7 @@ export const useBasketballStore = create<BasketballStore>()(
         gameClock: state.gameClock,
         shotClock: state.shotClock,
         possession: state.possession,
+        periodScores: state.periodScores,
         gameConfig: state.gameConfig,
         savedConfigs: state.savedConfigs,
         history: state.history,

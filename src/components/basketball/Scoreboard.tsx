@@ -43,7 +43,7 @@ const teamVars = (team: Team) =>
 
 const nameSize = (name: string) => (name.length > 18 ? 'small' : name.length > 11 ? 'medium' : 'large');
 
-const TeamBlock: React.FC<{ side: Side; children: React.ReactNode }> = ({ side, children }) => {
+export const TeamBlock: React.FC<{ side: Side; children: React.ReactNode }> = ({ side, children }) => {
   const team = useTeam(side);
   const flash = useChangeCount(team.score);
   return (
@@ -54,7 +54,7 @@ const TeamBlock: React.FC<{ side: Side; children: React.ReactNode }> = ({ side, 
   );
 };
 
-const Crest: React.FC<{ side: Side }> = ({ side }) => {
+export const Crest: React.FC<{ side: Side }> = ({ side }) => {
   const team = useTeam(side);
   return (
     <div className="sb-crest">
@@ -68,7 +68,7 @@ const Ball: React.FC<{ side: Side }> = ({ side }) => {
   return <span className="sb-ball" data-on={on} data-testid={on ? `${side}-possession` : undefined} />;
 };
 
-const Ident: React.FC<{ side: Side; ball?: boolean }> = ({ side, ball }) => {
+export const Ident: React.FC<{ side: Side; ball?: boolean }> = ({ side, ball }) => {
   const team = useTeam(side);
   return (
     <div className="sb-ident">
@@ -81,7 +81,7 @@ const Ident: React.FC<{ side: Side; ball?: boolean }> = ({ side, ball }) => {
   );
 };
 
-const Score: React.FC<{ side: Side }> = ({ side }) => {
+export const Score: React.FC<{ side: Side }> = ({ side }) => {
   const team = useTeam(side);
   const other = useTeam(side === 'home' ? 'away' : 'home');
   const showLeading = useSettingsStore((state) => state.display.showLeadingBadge);
@@ -103,14 +103,14 @@ const Score: React.FC<{ side: Side }> = ({ side }) => {
   );
 };
 
-const Fouls: React.FC<{ side: Side }> = ({ side }) => (
+export const Fouls: React.FC<{ side: Side }> = ({ side }) => (
   <div className="sb-stat">
     <span data-testid={`${side}-fouls`} className="sb-stat-value sb-digits">{useTeam(side).fouls}</span>
     <span className="sb-eyebrow">Fouls</span>
   </div>
 );
 
-const Timeouts: React.FC<{ side: Side; showValue?: boolean }> = ({ side, showValue }) => {
+export const Timeouts: React.FC<{ side: Side; showValue?: boolean }> = ({ side, showValue }) => {
   const { timeouts } = useTeam(side);
   const max = useBasketballStore((state) => state.gameConfig.maxTimeouts);
   const pips = max > 0 && max <= 7;
@@ -128,7 +128,7 @@ const Timeouts: React.FC<{ side: Side; showValue?: boolean }> = ({ side, showVal
 };
 
 // Always rendered, lit or unlit, so turning it on never moves anything.
-const Bonus: React.FC<{ side: Side }> = ({ side }) => {
+export const Bonus: React.FC<{ side: Side }> = ({ side }) => {
   const team = useTeam(side);
   const config = useBasketballStore((state) => state.gameConfig);
   return <span className="sb-bonus" data-on={inBonus(team, config)}>Bonus</span>;
@@ -139,7 +139,7 @@ const Arrow: React.FC<{ side: Side }> = ({ side }) => {
   return <span className="sb-arrow" data-dir={side} data-on={on} data-testid={on ? `${side}-possession` : undefined} aria-hidden />;
 };
 
-const GameClock: React.FC = () => {
+export const GameClock: React.FC = () => {
   const gameClock = useBasketballStore((state) => state.gameClock);
   return (
     <div className="sb-clock">
@@ -149,7 +149,7 @@ const GameClock: React.FC = () => {
   );
 };
 
-const Period: React.FC = () => {
+export const Period: React.FC = () => {
   const period = usePeriod();
   return (
     <div className="sb-period" data-state={period.state}>
@@ -161,7 +161,7 @@ const Period: React.FC = () => {
   );
 };
 
-const ShotClock: React.FC = () => {
+export const ShotClock: React.FC = () => {
   const shotClock = useBasketballStore((state) => state.shotClock);
   const show = useSettingsStore((state) => state.display.showShotClock);
   if (!show) return null;

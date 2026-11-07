@@ -4,6 +4,7 @@ import { ClockDisplay } from './ClockDisplay';
 import { SHORTCUTS, keyName, shortcutKey, useShortcuts } from './shortcuts';
 import { negative, neutral, positive, primary, buttonBase } from './styles';
 import { Panel, TeamLogo } from './ui';
+import { PresentationPanel } from './PresentationPanel';
 import { Flag, Play, Pause, Plus, Minus, RotateCcw, Undo2 } from 'lucide-react';
 
 const Kbd: React.FC<{ id: string }> = ({ id }) => (
@@ -118,6 +119,8 @@ export const OperatorView: React.FC = () => {
         </button>
         <GameActions />
       </div>
+
+      <PresentationPanel />
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
         <TeamPanel side="home" />

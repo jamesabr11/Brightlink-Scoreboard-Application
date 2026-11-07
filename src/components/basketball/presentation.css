@@ -1,0 +1,135 @@
+/* Pregame, Stadium and Halftime layouts. They reuse the scoreboard design
+ * system (scoreboard.css): the same --u canvas, theme tokens and blocks.
+ * Three canvases, like the live board: wide (16:9), tall (4:3) and portrait.
+ * Every mode keeps the same grid areas, so only sizes change per canvas. */
+
+.pm-board {
+  --crest: calc(var(--u) * 16);
+  --name: calc(var(--u) * 5.5);
+  --score: calc(var(--u) * 26);
+  --clock: calc(var(--u) * 15);
+  --period: calc(var(--u) * 6.5);
+  --shot: calc(var(--u) * 9);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) calc(var(--u) * 9);
+  grid-template-areas: 'header header header' 'home center away' 'slot slot slot';
+}
+
+/* Pregame has no score, so it gets the big crests. Halftime shares its panels
+ * with a score, so crest and digits are sized to fit together. */
+.pm-board[data-mode='pregame'] { --crest: calc(var(--u) * 15); --name: calc(var(--u) * 5.5); }
+.pm-board[data-mode='halftime'] { --crest: calc(var(--u) * 7); --name: calc(var(--u) * 4.2); --score: calc(var(--u) * 15); }
+
+/* Stadium has no header: the teams get the room. */
+.pm-board[data-mode='stadium'] {
+  --crest: calc(var(--u) * 11);
+  --name: calc(var(--u) * 4.6);
+  --score: calc(var(--u) * 25);
+  --clock: calc(var(--u) * 13);
+  grid-template-rows: minmax(0, 1fr) calc(var(--u) * 11);
+  grid-template-areas: 'home center away' 'slot slot slot';
+}
+
+.pm-header { grid-area: header; min-width: 0; display: flex; align-items: baseline; justify-content: space-between; gap: calc(var(--u) * 2); }
+.pm-title { margin: 0; color: var(--sb-accent-text); font-size: calc(var(--u) * 6); line-height: 1; text-transform: uppercase; }
+.pm-slot { grid-area: slot; }
+.pm-center { grid-area: center; }
+
+/* Same panel look as the scoreboard's blocks. */
+.pm-board .sb-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * 2) calc(var(--u) * 1.5) calc(var(--u) * 1.5);
+  text-align: center;
+}
+
+.pm-board .sb-team .sb-team-head { flex-direction: column; justify-content: center; text-align: center; }
+.pm-board[data-mode='stadium'] .sb-team .sb-team-head { flex-direction: row; max-width: 100%; }
+.pm-board .sb-team .sb-ident { align-items: center; }
+.pm-board .sb-team .sb-ident .sb-eyebrow { justify-content: center; }
+.pm-board .sb-name { -webkit-line-clamp: 2; }
+
+.pm-center {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+  background: var(--sb-panel);
+  border: var(--hair) solid var(--sb-border);
+  border-radius: var(--radius);
+}
+
+.pm-vs { color: var(--sb-accent-text); font-size: calc(var(--u) * 8); line-height: 0.9; }
+
+.pm-countdown { display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 1); }
+.pm-countdown .sb-clock { --clock: calc(var(--u) * 11); }
+
+.pm-meta { display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * 3); }
+
+.pm-slot {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sb-panel);
+  border: var(--hair) solid var(--sb-border);
+  border-radius: var(--radius);
+}
+
+/* 4:3 — same areas, a taller canvas. */
+@container sb (max-aspect-ratio: 145 / 100) {
+  .pm-board {
+    --crest: calc(var(--u) * 15);
+    --score: calc(var(--u) * 27);
+    --clock: calc(var(--u) * 13);
+    --shot: calc(var(--u) * 8);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto calc(var(--u) * 10);
+    grid-template-areas: 'header header' 'home away' 'center center' 'slot slot';
+  }
+  .pm-board[data-mode='halftime'] { --score: calc(var(--u) * 16); }
+  .pm-board[data-mode='stadium'] {
+    --crest: calc(var(--u) * 8);
+    --name: calc(var(--u) * 3.8);
+    --score: calc(var(--u) * 22);
+    --clock: calc(var(--u) * 16);
+    --shot: calc(var(--u) * 8);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 0.55fr) calc(var(--u) * 12);
+    grid-template-areas: 'home away' 'center center' 'slot slot';
+  }
+  .pm-board[data-mode='stadium'] .pm-center { flex-direction: row; gap: calc(var(--u) * 3); padding: calc(var(--u) * 1.2); }
+}
+
+/* Portrait — everything stacks. */
+@container sb (max-aspect-ratio: 95 / 100) {
+  .pm-board {
+    --crest: calc(var(--u) * 20);
+    --name: calc(var(--u) * 8);
+    --score: calc(var(--u) * 38);
+    --clock: calc(var(--u) * 24);
+    --period: calc(var(--u) * 8);
+    --shot: calc(var(--u) * 12);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 1fr) calc(var(--u) * 12);
+    grid-template-areas: 'header' 'home' 'center' 'away' 'slot';
+  }
+  .pm-board[data-mode='pregame'] { --crest: calc(var(--u) * 20); --name: calc(var(--u) * 8); }
+  .pm-board[data-mode='halftime'] { --crest: calc(var(--u) * 14); --name: calc(var(--u) * 7); --score: calc(var(--u) * 28); }
+  .pm-board[data-mode='stadium'] {
+    --crest: calc(var(--u) * 13);
+    --score: calc(var(--u) * 34);
+    grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr) calc(var(--u) * 14);
+    grid-template-areas: 'home' 'center' 'away' 'slot';
+  }
+  .pm-board[data-mode='stadium'] .pm-center { flex-direction: column; }
+  .pm-center { flex-direction: row; flex-wrap: wrap; gap: calc(var(--u) * 4); padding: calc(var(--u) * 2); }
+  .pm-board .sb-team { flex-direction: row; flex-wrap: wrap; }
+  .pm-board .sb-team .sb-team-head { flex-direction: row; }
+}

@@ -1,6 +1,7 @@
-import type { GameClock, ShotClock } from '../types/basketball';
+import type { GameClock } from '../types/basketball';
 
-type Clock = GameClock | ShotClock;
+// Game clocks, shot clocks and presentation countdowns all share this shape.
+type Clock = Pick<GameClock, 'remainingTime' | 'isRunning' | 'startTimestamp'>;
 
 // A running clock never changes in state: every tab derives the time from
 // remainingTime (the value at startTimestamp) and the wall clock, so inactive
@@ -29,3 +30,9 @@ export const formatGameClock = (seconds: number): string => {
 
 export const formatShotClock = (seconds: number): string =>
   seconds <= 5 ? tenths(seconds) : String(wholeSeconds(seconds));
+
+// Countdowns show whole seconds as m:ss; minutes keep counting past 59.
+export const formatCountdown = (seconds: number): string => {
+  const total = wholeSeconds(seconds);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+};

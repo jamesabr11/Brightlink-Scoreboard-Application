@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { clockRemaining, formatGameClock, formatShotClock } from '../../lib/clock';
+import { clockRemaining, formatCountdown, formatGameClock, formatShotClock } from '../../lib/clock';
+import type { Countdown } from '../../types/presentation';
 import type { GameClock, ShotClock } from '../../types/basketball';
 
 interface ClockDisplayProps {
-  clock: GameClock | ShotClock;
-  kind?: 'game' | 'shot';
+  clock: GameClock | ShotClock | Countdown;
+  kind?: 'game' | 'shot' | 'countdown';
   size?: 'small' | 'medium' | 'large' | 'huge';
   label?: string;
   themed?: boolean; // size and color come from the scoreboard theme
@@ -29,7 +30,7 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ clock, kind = 'game'
     huge: 'text-8xl',
   };
   const color = warning ? 'text-red-500' : clock.isRunning ? 'text-green-400' : 'text-white';
-  const text = kind === 'shot' ? formatShotClock(remaining) : formatGameClock(remaining);
+  const text = { game: formatGameClock, shot: formatShotClock, countdown: formatCountdown }[kind](remaining);
 
   if (themed) {
     // One fixed-width cell per character, so a ticking clock never shifts sideways.
