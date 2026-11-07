@@ -31,6 +31,11 @@ dist-ssr
 # Locally installed agent skills and their lock file
 .agents/
 skills-lock.json
+# Personal AI assistant instructions and settings
+CLAUDE.md
+.claude_exempt
+# Private design research, kept locally
+design-references/
 # Environment files
 .env
 .env.*
