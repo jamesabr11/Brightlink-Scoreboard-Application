@@ -15,7 +15,7 @@ import './presentation.css';
 
 type Side = 'home' | 'away';
 
-const Stage: React.FC<{ theme: ScoreboardTheme; mode: PresentationMode; children: React.ReactNode }> = ({ theme, mode, children }) => {
+export const Stage: React.FC<{ theme: ScoreboardTheme; mode: PresentationMode; children: React.ReactNode }> = ({ theme, mode, children }) => {
   const home = useBasketballStore((state) => state.homeTeam.primaryColor);
   const away = useBasketballStore((state) => state.awayTeam.primaryColor);
   return (

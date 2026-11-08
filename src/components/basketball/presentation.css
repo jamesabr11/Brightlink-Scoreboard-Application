@@ -93,6 +93,111 @@
   object-fit: contain;
 }
 
+/* ── Fullscreen mode ───────────────────────────────────────────────── */
+/* Single media item fills the entire board. */
+.pm-board[data-mode='fullscreen'] {
+  display: flex;
+  flex-direction: column;
+  background: #000;
+}
+
+.pm-board[data-mode='fullscreen'] .sb-stripe {
+  display: none;
+}
+
+.pm-board[data-mode='fullscreen'] .pm-slot {
+  flex: 1;
+  border-radius: 0;
+  border: none;
+  background: #000;
+}
+
+/* ── Intro mode ────────────────────────────────────────────────────── */
+/* Full-bleed card layout: each card fills the board. */
+.pm-board[data-mode='intro'] {
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+
+.pm-board[data-mode='intro'] .sb-stripe {
+  display: none;
+}
+
+/* Container for a single intro card. */
+.pm-intro {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+  overflow: hidden;
+  color: #fff;
+  text-align: center;
+  padding: calc(var(--u) * 4);
+}
+
+/* Large watermark number behind the player card. */
+.pm-intro-watermark {
+  position: absolute;
+  font-size: calc(var(--u) * 48);
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0.1;
+  user-select: none;
+  pointer-events: none;
+  color: #fff;
+}
+
+.pm-intro-eyebrow {
+  font-size: calc(var(--u) * 3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.7;
+}
+
+.pm-intro-name {
+  font-size: calc(var(--u) * 10);
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  word-break: break-word;
+  max-width: 80%;
+}
+
+.pm-intro-number {
+  font-size: calc(var(--u) * 22);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.pm-intro-position {
+  font-size: calc(var(--u) * 3.5);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.75;
+}
+
+.pm-intro-photo {
+  width: calc(var(--u) * 18);
+  height: calc(var(--u) * 18);
+  border-radius: 50%;
+  object-fit: cover;
+  border: calc(var(--u) * 0.4) solid rgba(255,255,255,0.4);
+}
+
+.pm-intro-crest {
+  width: calc(var(--u) * 20);
+  height: calc(var(--u) * 20);
+  object-fit: contain;
+}
+
 /* 4:3 — same areas, a taller canvas. */
 @container sb (max-aspect-ratio: 145 / 100) {
   .pm-board {

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ConfigsPage } from "./components/basketball/ConfigsPage";
+import { RosterPage } from "./components/basketball/RosterPage";
 import { DisplayView } from "./components/basketball/DisplayView";
 import { HistoryPage } from "./components/basketball/HistoryPage";
 import { MediaPage } from "./components/basketball/MediaPage";
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/configs" element={<ConfigsPage />} />
           <Route path="/media" element={<MediaPage />} />
           <Route path="/sponsors" element={<SponsorsPage />} />
+          <Route path="/roster" element={<RosterPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

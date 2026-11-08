@@ -1,4 +1,4 @@
-export const PRESENTATION_MODES = ['pregame', 'live', 'stadium', 'halftime'] as const;
+export const PRESENTATION_MODES = ['pregame', 'live', 'stadium', 'halftime', 'intro', 'fullscreen'] as const;
 export type PresentationMode = (typeof PRESENTATION_MODES)[number];
 
 export type CountdownId = 'pregame' | 'halftime';

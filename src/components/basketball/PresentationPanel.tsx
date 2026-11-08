@@ -2,12 +2,16 @@ import { usePresentationStore } from '../../store/usePresentationStore';
 import { PRESENTATION_MODES } from '../../types/presentation';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
 import { ClockDisplay } from './ClockDisplay';
+import { IntroPanel } from './IntroPanel';
 import { PlaybackPanel } from './PlaybackPanel';
 import { NumberField, Panel } from './ui';
 import { buttonBase, neutral, negative, positive } from './styles';
 import { Pause, Play, RotateCcw } from 'lucide-react';
 
-const LABELS: Record<PresentationMode, string> = { pregame: 'Pregame', live: 'Live', stadium: 'Stadium', halftime: 'Halftime' };
+const LABELS: Record<PresentationMode, string> = {
+  pregame: 'Pregame', live: 'Live', stadium: 'Stadium', halftime: 'Halftime',
+  intro: 'Introductions', fullscreen: 'Fullscreen',
+};
 const COUNTDOWN_FOR: Partial<Record<PresentationMode, { id: CountdownId; title: string }>> = {
   pregame: { id: 'pregame', title: 'Tip-off countdown' },
   halftime: { id: 'halftime', title: 'Second-half countdown' },
@@ -41,7 +45,7 @@ export const PresentationPanel: React.FC = () => {
   return (
     <div className="mb-3">
       <Panel title="Display Mode" aside={<span className="text-xs text-neutral-400">Changes only what the public display shows</span>}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2" role="group" aria-label="Display mode">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2" role="group" aria-label="Display mode">
           {PRESENTATION_MODES.map((id) => (
             <button
               key={id}
@@ -55,6 +59,7 @@ export const PresentationPanel: React.FC = () => {
         </div>
         {countdown && <CountdownControls {...countdown} />}
       </Panel>
+      {mode === 'intro' && <IntroPanel />}
       <PlaybackPanel />
     </div>
   );
