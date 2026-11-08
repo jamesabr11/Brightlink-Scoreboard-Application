@@ -28,6 +28,8 @@ dist-ssr
 .claude
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+# Browser test screenshots (generated during development; not part of the source tree)
+screenshots/
 # Locally installed agent skills and their lock file
 .agents/
 skills-lock.json
@@ -39,3 +41,5 @@ design-references/
 # Environment files
 .env
 .env.*
+
+.playwright
