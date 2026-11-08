@@ -4,6 +4,7 @@ import { Maximize, Minimize } from 'lucide-react';
 import { useBasketballStore } from '../../store/useBasketballStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import { themeStyle } from '../../lib/theme';
+import { FullscreenView, IntroView } from './IntroViews';
 import { HalftimeView, PregameView, StadiumView } from './PresentationViews';
 import { Scoreboard } from './Scoreboard';
 
@@ -50,6 +51,8 @@ export const DisplayView: React.FC = () => {
           {mode === 'live' && <Scoreboard theme={theme} />}
           {mode === 'stadium' && <StadiumView theme={theme} />}
           {mode === 'halftime' && <HalftimeView theme={theme} />}
+          {mode === 'intro' && <IntroView theme={theme} />}
+          {mode === 'fullscreen' && <FullscreenView theme={theme} />}
         </motion.div>
         <button
           type="button"
