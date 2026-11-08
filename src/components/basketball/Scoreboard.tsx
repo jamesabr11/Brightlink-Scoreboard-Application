@@ -45,10 +45,8 @@ const nameSize = (name: string) => (name.length > 18 ? 'small' : name.length > 1
 
 export const TeamBlock: React.FC<{ side: Side; children: React.ReactNode }> = ({ side, children }) => {
   const team = useTeam(side);
-  const flash = useChangeCount(team.score);
   return (
     <section className="sb-team" data-side={side} style={teamVars(team)} aria-label={`${side} team`}>
-      {flash > 0 && <motion.span key={flash} className="sb-flash" aria-hidden initial={{ opacity: 0.9 }} animate={{ opacity: 0 }} transition={{ duration: 1.1, ease: 'easeOut' }} />}
       {children}
     </section>
   );

@@ -165,14 +165,6 @@
   background: linear-gradient(270deg, var(--team) 0 80%, var(--team-2) 80%);
 }
 
-.sb-flash {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(ellipse 70% 70% at 50% 55%, color-mix(in srgb, var(--team) 55%, white), transparent 72%);
-  mix-blend-mode: screen;
-}
-
 .sb-team-head {
   min-width: 0;
   display: flex;
@@ -627,11 +619,6 @@
   width: calc(var(--u) * 1.5);
 }
 
-.sb-board[data-layout='modern'] .sb-flash {
-  background: radial-gradient(ellipse 70% 70% at 50% 55%, rgb(255 255 255 / 0.55), transparent 75%);
-  mix-blend-mode: normal;
-}
-
 .sb-board[data-layout='modern'] .sb-center,
 .sb-board[data-layout='minimal'] .sb-center {
   display: grid;
@@ -740,6 +727,7 @@
 .sb-stats {
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr) minmax(0, 1fr);
   gap: calc(var(--u) * 0.8);
@@ -769,6 +757,12 @@
 
 .sb-statgroup .sb-pips {
   display: none;
+}
+
+/* Bonus pill is smaller in the tight stats footer to prevent overlap with Timeouts. */
+.sb-statgroup .sb-bonus {
+  font-size: max(10px, calc(var(--u) * 0.85));
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.6);
 }
 
 .sb-lead-text {
@@ -825,10 +819,6 @@
 
 .sb-board[data-layout='minimal'] .sb-team[data-side='home'] {
   border-right: var(--hair) solid var(--sb-border);
-}
-
-.sb-board[data-layout='minimal'] .sb-flash {
-  display: none;
 }
 
 .sb-board[data-layout='minimal'] .sb-ident,

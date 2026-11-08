@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent white rubber-band overscroll flash on operator and display pages. */
+html,
+body {
+  background-color: #0a0a0a;
+  overscroll-behavior: none;
+}
+
 :focus-visible {
   outline: 3px solid #facc15;
   outline-offset: 2px;
