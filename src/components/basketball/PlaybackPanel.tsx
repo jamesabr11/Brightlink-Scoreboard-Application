@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Film, Image, ListVideo, Play, Square } from 'lucide-react';
 import { useMediaStore } from '../../store/useMediaStore';
 import { usePlaybackStore, queueForMode } from '../../store/usePlaybackStore';
@@ -12,6 +12,18 @@ import type { MediaItem } from '../../types/media';
 const KindIcon: React.FC<{ kind: MediaItem['kind'] }> = ({ kind }) =>
   kind === 'video' ? <Film size={14} aria-hidden /> : <Image size={14} aria-hidden />;
 
+// Single source of truth for timed advance. Runs only in the operator tab
+// (PlaybackPanel is never rendered in the display route). This prevents the
+// double-advance race that occurs when both tabs independently run timers.
+const usePlaybackTicker = (item: MediaItem | null, isPlaying: boolean) => {
+  const advance = usePlaybackStore((state) => state.advance);
+  useEffect(() => {
+    if (!isPlaying || !item) return;
+    const timer = setTimeout(advance, item.duration * 1000);
+    return () => clearTimeout(timer);
+  }, [item?.id, item?.duration, isPlaying, advance]); // eslint-disable-line react-hooks/exhaustive-deps
+};
+
 export const PlaybackPanel: React.FC = () => {
   const { queue, currentIndex, isPlaying, setQueue, playNow, play, stop, next, prev } = usePlaybackStore();
   const items = useMediaStore((state) => state.items);
@@ -20,6 +32,9 @@ export const PlaybackPanel: React.FC = () => {
 
   const currentId = currentIndex >= 0 ? (queue[currentIndex] ?? null) : null;
   const currentItem = currentId ? items.find((i) => i.id === currentId) ?? null : null;
+
+  // Advance timer — operator tab only. See usePlaybackTicker above.
+  usePlaybackTicker(currentItem, isPlaying);
 
   // Auto-queue: items that match the current presentation mode's categories.
   const autoQueueIds = useMemo(() => queueForMode(mode, items), [mode, items]);
