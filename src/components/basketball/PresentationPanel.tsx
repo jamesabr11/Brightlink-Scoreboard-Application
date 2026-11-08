@@ -2,6 +2,7 @@ import { usePresentationStore } from '../../store/usePresentationStore';
 import { PRESENTATION_MODES } from '../../types/presentation';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
 import { ClockDisplay } from './ClockDisplay';
+import { PlaybackPanel } from './PlaybackPanel';
 import { NumberField, Panel } from './ui';
 import { buttonBase, neutral, negative, positive } from './styles';
 import { Pause, Play, RotateCcw } from 'lucide-react';
@@ -54,6 +55,7 @@ export const PresentationPanel: React.FC = () => {
         </div>
         {countdown && <CountdownControls {...countdown} />}
       </Panel>
+      <PlaybackPanel />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { themeStyle } from '../../lib/theme';
 import type { ScoreboardTheme } from '../../types/basketball';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
 import { ClockDisplay } from './ClockDisplay';
+import { MediaPlayer } from './MediaPlayer';
 import { Bonus, Crest, Fouls, GameClock, Ident, Period, Score, ShotClock, TeamBlock, Timeouts } from './Scoreboard';
 import './presentation.css';
 
@@ -27,16 +28,11 @@ const Stage: React.FC<{ theme: ScoreboardTheme; mode: PresentationMode; children
   );
 };
 
-// Reserved for the Phase 4 media player and sponsor rotation. Until then it
-// carries the event name, so it never reads as an empty box.
-const MediaSlot: React.FC<{ region: 'sponsor' | 'media' }> = ({ region }) => {
-  const name = useBasketballStore((state) => state.gameConfig.name);
-  return (
-    <aside className="pm-slot" data-region={region} aria-label={region === 'media' ? 'Media area' : 'Sponsor area'}>
-      <span className="sb-eyebrow sb-truncate">{name}</span>
-    </aside>
-  );
-};
+const MediaSlot: React.FC<{ region: 'sponsor' | 'media' }> = ({ region }) => (
+  <aside className="pm-slot" data-region={region} aria-label={region === 'media' ? 'Media area' : 'Sponsor area'}>
+    <MediaPlayer />
+  </aside>
+);
 
 const Header: React.FC<{ title: string }> = ({ title }) => {
   const name = useBasketballStore((state) => state.gameConfig.name);
