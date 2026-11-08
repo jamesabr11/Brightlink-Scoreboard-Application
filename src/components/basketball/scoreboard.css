@@ -759,10 +759,21 @@
   display: none;
 }
 
-/* Bonus pill is smaller in the tight stats footer to prevent overlap with Timeouts. */
+/* Clip stat cells so their content never bleeds into adjacent columns. */
+.sb-statgroup .sb-stat {
+  overflow: hidden;
+}
+
+/* Bonus pill and cell labels are smaller in the tight stats footer to prevent
+   the Timeouts / Free throws overlap. */
 .sb-statgroup .sb-bonus {
   font-size: max(10px, calc(var(--u) * 0.85));
   padding: calc(var(--u) * 0.3) calc(var(--u) * 0.6);
+}
+
+.sb-statgroup .sb-eyebrow {
+  font-size: max(9px, calc(var(--u) * 0.8));
+  letter-spacing: 0.1em;
 }
 
 .sb-lead-text {
