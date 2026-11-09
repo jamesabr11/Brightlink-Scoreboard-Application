@@ -17,20 +17,31 @@ export const unlockAudio = () => {
   if (context.state === 'suspended') void context.resume();
 };
 
-export const playSound = (name: SoundName, volume: number) => {
-  if (!context || context.state !== 'running') return;
-  let start = context.currentTime;
+const scheduleSound = (name: SoundName, volume: number, ctx: AudioContext) => {
+  let start = ctx.currentTime;
   for (const [frequency, duration] of SOUNDS[name]) {
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
     oscillator.type = 'square';
     oscillator.frequency.value = frequency;
     gain.gain.setValueAtTime(volume * 0.3, start);
     gain.gain.setValueAtTime(0, start + duration);
-    oscillator.connect(gain).connect(context.destination);
+    oscillator.connect(gain).connect(ctx.destination);
     oscillator.start(start);
     oscillator.stop(start + duration);
     start += duration + 0.05;
+  }
+};
+
+// Resume the AudioContext if the browser suspended it (e.g., after a period of
+// silence), then schedule the sound. The resume() promise guarantees the context
+// is running before the oscillators start.
+export const playSound = (name: SoundName, volume: number) => {
+  if (!context) return;
+  if (context.state === 'running') {
+    scheduleSound(name, volume, context);
+  } else if (context.state === 'suspended') {
+    void context.resume().then(() => scheduleSound(name, volume, context!));
   }
 };
 

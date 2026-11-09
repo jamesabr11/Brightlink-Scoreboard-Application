@@ -4,7 +4,7 @@ A basketball scoreboard and game-day presentation system for school gyms and are
 
 Holy Cross Regional High School red, white and black is the default branding. Team names, colours and logos can be changed for any school.
 
-> **Status:** in active development. Branding and scoreboard presets (Phase 1) the media library with sponsor management (Phase 2) and presentation modes (Phase 3) are complete. Media playback is next. See [Roadmap](#roadmap).
+> **Status:** Phases 1–6 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, and operator UI/UX improvements are shipped. New phases coming soon.
 
 ## Contents
 
@@ -27,9 +27,11 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Game clock and shot clock with start, pause, reset and corrections down to a tenth of a second
 - Periods and overtime, with configurable league rules
 - Undo for the last 50 actions, and a recent-actions log
-- Keyboard shortcuts for scoring, both clocks, possession and undo
+- Keyboard shortcuts for scoring, both clocks, possession and undo (collapsible shortcuts panel)
 - Saved game configurations, finished-game history with CSV export, and printable summaries
 - Optional period, game-end and shot-clock warning sounds
+- Grouped navigation with visual separators for quick scanning
+- Optimized layout utilizing full screen width on wider displays
 
 **Public display**
 - Five scoreboard presets that use different layouts, not just different colours (see [Scoreboard presets](#scoreboard-presets))
@@ -39,9 +41,9 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Reduced-motion preferences are respected; fonts are bundled, so it works offline
 
 **Presentation modes**
-- Pregame (matchup and tip-off countdown), Live (the scoreboard), Stadium (arena layout with score, clocks, period and a reserved media area) and Halftime (first-half score and a second-half countdown)
+- Pregame (matchup and tip-off countdown), Live (the scoreboard), Stadium (arena layout with score, clocks, period and a media area), Halftime (first-half score and a second-half countdown), Introductions and Fullscreen
 - Switch modes in one click from the operator screen; the display follows. Switching never changes the game, and the clocks keep running
-- The media and sponsor areas are reserved for Phase 4 playback
+- Media playback and sponsor rotation run inside the presentation layout during live games
 
 **Media library and sponsors**
 - Upload PNG, JPG and WebP images (up to 25 MB) and MP4 video (up to 500 MB), with thumbnails
@@ -109,7 +111,7 @@ Changes appear in the live preview and reach the display when you click **Apply 
 
 ### Display modes
 
-The **Display Mode** panel at the top of the Scoreboard page switches the public display between Pregame, Live, Stadium and Halftime. Pregame and Halftime have an operator-controlled countdown (start, pause, reset, ±1 minute, and a length in minutes; 0 hides it). Halftime shows the score as of the end of the first half, kept per period so it stays correct after Undo. In Stadium mode the shot clock follows the *Show shot clock* display setting.
+The **Display Mode** panel at the top of the Scoreboard page switches the public display between Pregame, Live, Stadium, Halftime, Introductions and Fullscreen. Pregame and Halftime have an operator-controlled countdown (start, pause, reset, ±1 minute, and a length in minutes; 0 hides it). Halftime shows the score as of the end of the first half, kept per period so it stays correct after Undo. In Stadium mode the shot clock follows the *Show shot clock* display setting.
 
 ### During the game
 
@@ -236,11 +238,13 @@ The unit tests cover scoring, clocks, periods and overtime, fouls, timeouts, pos
 
 | Phase | Scope | Status |
 |---|---|---|
-| 1 | Branding and professional scoreboard presets | Done |
-| 2 | Media library, local storage and sponsor management | Done |
-| 3 | Pregame, Live, Stadium and Halftime presentation modes | Done |
-| 4 | Media playback, sponsor rotation and game-day presentation | Planned |
-| 5 | Polish, reliability, fullscreen and Screen Wake Lock | Planned |
+| 1 | Branding and professional scoreboard presets | ✅ Done |
+| 2 | Media library, local storage and sponsor management | ✅ Done |
+| 3 | Pregame, Live, Stadium and Halftime presentation modes | ✅ Done |
+| 4 | Media playback, sponsor rotation and game-day presentation | ✅ Done |
+| 5 | Player roster, introductions, fullscreen and polish | ✅ Done |
+| 6 | Operator UI/UX optimization, navigation improvements and layout refinements | ✅ Done |
+| 7+ | Coming soon | Planned |
 
 ## Known limitations
 
