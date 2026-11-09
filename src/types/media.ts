@@ -22,9 +22,17 @@ export interface MediaCategory {
   builtIn: boolean; // built-in categories can't be renamed or deleted
 }
 
+// Sponsor image entry with display settings
+export interface SponsorImage {
+  id: string;        // MediaItem id
+  duration: number;  // seconds on screen (0 = default)
+}
+
 export interface Sponsor {
   id: string;
   name: string;
   logoId: string | null; // an image MediaItem
+  imageIds: string[];    // ordered list of ad images
+  imageDurations: Record<string, number>; // per-image duration overrides
   createdAt: number;
 }

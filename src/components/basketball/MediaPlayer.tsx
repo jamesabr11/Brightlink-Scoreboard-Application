@@ -54,6 +54,12 @@ const VideoMedia: React.FC<MediaProps & { onError: () => void }> = ({ item, isPl
     }
   }, [isPlaying, url, onError]);
 
+  // Ensure audio is enabled (not muted) for sponsor/intro videos
+  useEffect(() => {
+    const video = ref.current;
+    if (video) video.muted = false;
+  }, []);
+
   if (!url) return null;
   return (
     <video

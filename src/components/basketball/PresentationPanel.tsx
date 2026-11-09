@@ -10,7 +10,7 @@ import { Pause, Play, RotateCcw } from 'lucide-react';
 
 const LABELS: Record<PresentationMode, string> = {
   pregame: 'Pregame', live: 'Live', stadium: 'Stadium', halftime: 'Halftime',
-  intro: 'Introductions', fullscreen: 'Fullscreen',
+  intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Live Sponsor',
 };
 const COUNTDOWN_FOR: Partial<Record<PresentationMode, { id: CountdownId; title: string }>> = {
   pregame: { id: 'pregame', title: 'Tip-off countdown' },

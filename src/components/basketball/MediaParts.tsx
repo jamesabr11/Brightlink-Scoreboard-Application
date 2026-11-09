@@ -30,7 +30,7 @@ export const MediaPreview: React.FC<{ item: MediaItem }> = ({ item }) => {
   if (!url) return <div className={box}>Loading…</div>;
   return item.kind === 'image'
     ? <img src={url} alt={item.name} className="max-h-[55vh] w-full bg-black object-contain" />
-    : <video src={url} controls preload="metadata" className="max-h-[55vh] w-full bg-black" />;
+    : <video src={url} controls preload="metadata" muted={false} className="max-h-[55vh] w-full bg-black" />;
 };
 
 export const DurationField: React.FC<{ item: MediaItem; label?: string }> = ({ item, label = 'Display time (seconds)' }) => {

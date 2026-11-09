@@ -1330,3 +1330,249 @@
     row-gap: calc(var(--u) * 1.2);
   }
 }
+
+/* =====================================================================
+   Layout F: Live Sponsor (Commercial)
+   TV score bug beside a sponsor rotation panel on the right.
+   Best for professional commercial presentation with rotating sponsors.
+   ===================================================================== */
+
+.sb-board[data-layout='livesponsor'] {
+  --score: calc(var(--u) * 23);
+  --clock: calc(var(--u) * 14);
+  --crest: calc(var(--u) * 9);
+  --name: calc(var(--u) * 5.4);
+  --stat: calc(var(--u) * 3.2);
+  --period: calc(var(--u) * 5);
+  --shot: calc(var(--u) * 9);
+  --slab: calc(var(--u) * 24);
+  --sponsor-width: calc(var(--u) * 36);
+  grid-template-columns: minmax(0, 1fr) calc(var(--u) * 32) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: 'home sponsor center' 'away sponsor center';
+}
+
+.sb-board[data-layout='livesponsor'] .sb-stripe {
+  display: none;
+}
+
+/* Team panels are Broadcast-style with color edge on the left/right */
+.sb-board[data-layout='livesponsor'] .sb-team {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) var(--slab);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas: 'crest name score' 'meta meta score';
+  align-items: center;
+  column-gap: calc(var(--u) * 2.4);
+  row-gap: calc(var(--u) * 1.2);
+  padding-left: calc(var(--u) * 3);
+}
+
+.sb-board[data-layout='livesponsor'] .sb-team[data-side]::before {
+  right: auto;
+  bottom: 0;
+  width: calc(var(--u) * 1);
+  height: auto;
+  background: linear-gradient(180deg, var(--team) 0 78%, var(--team-2) 78%);
+}
+
+.sb-board[data-layout='livesponsor'] .sb-crest {
+  grid-area: crest;
+  margin-top: calc(var(--u) * 1.6);
+}
+
+.sb-board[data-layout='livesponsor'] .sb-ident,
+.sb-board[data-layout='livesponsor'] .sb-team[data-side='away'] .sb-ident {
+  grid-area: name;
+  align-items: flex-start;
+  margin-top: calc(var(--u) * 1.6);
+}
+
+.sb-board[data-layout='livesponsor'] .sb-ball,
+.sb-board[data-layout='livesponsor'] .sb-team[data-side='away'] .sb-ball {
+  left: calc(100% + var(--u) * 0.2);
+  right: auto;
+}
+
+.sb-board[data-layout='livesponsor'] .sb-team-meta,
+.sb-board[data-layout='livesponsor'] .sb-team[data-side='away'] .sb-team-meta {
+  flex-direction: row;
+  gap: calc(var(--u) * 2.4);
+  margin-bottom: calc(var(--u) * 1.6);
+}
+
+.sb-board[data-layout='livesponsor'] .sb-score {
+  grid-area: score;
+  align-self: stretch;
+  background: color-mix(in srgb, var(--team) 18%, var(--sb-bg));
+  border-left: var(--hair) solid var(--sb-border);
+}
+
+/* Sponsor rotation panel beside the scoreboard */
+.sb-sponsor-panel {
+  grid-area: sponsor;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--sb-panel);
+  border: var(--hair) solid var(--sb-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Sponsor image container */
+.sb-sponsor-image {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.sb-sponsor-image img,
+.sb-sponsor-image video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Sponsor name badge at bottom of panel */
+.sb-sponsor-badge {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+  padding: calc(var(--u) * 1) calc(var(--u) * 1.5);
+  background: var(--sb-bg);
+  border-top: var(--hair) solid var(--sb-border);
+}
+
+.sb-sponsor-logo {
+  width: calc(var(--u) * 5);
+  height: calc(var(--u) * 5);
+  flex: none;
+  object-fit: contain;
+}
+
+.sb-sponsor-name {
+  flex: 1;
+  font-family: var(--ui);
+  font-size: max(12px, calc(var(--u) * 1.1));
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sb-muted);
+}
+
+/* Sponsor rotation indicator dots */
+.sb-sponsor-dots {
+  display: flex;
+  gap: calc(var(--u) * 0.4);
+}
+
+.sb-sponsor-dot {
+  width: calc(var(--u) * 0.5);
+  height: calc(var(--u) * 0.5);
+  border-radius: 50%;
+  background: var(--sb-border);
+}
+
+.sb-sponsor-dot[data-active='true'] {
+  background: var(--sb-accent);
+}
+
+/* Center area (period/clock/shot) spans the right side */
+.sb-board[data-layout='livesponsor'] .sb-center {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * 2) calc(var(--u) * 1.6);
+}
+
+/* Period sits in a solid accent band at the top */
+.sb-board[data-layout='livesponsor'] .sb-period {
+  justify-self: stretch;
+  padding: calc(var(--u) * 1) calc(var(--u) * 1) calc(var(--u) * 0.8);
+  color: var(--sb-on-accent);
+  background: var(--sb-accent);
+  border-radius: var(--radius);
+}
+
+.sb-board[data-layout='livesponsor'] .sb-period .sb-eyebrow,
+.sb-board[data-layout='livesponsor'] .sb-period .sb-period-value,
+.sb-board[data-layout='livesponsor'] .sb-period[data-state] .sb-period-value {
+  color: inherit;
+  background: none;
+  padding: 0;
+}
+
+.sb-board[data-layout='livesponsor'] .sb-run {
+  top: auto;
+  bottom: calc(var(--u) * 1.2);
+}
+
+.sb-board[data-layout='livesponsor'] .sb-shot {
+  min-width: 70%;
+}
+
+/* Tall canvas (4:3): sponsor panel on right, teams and center below */
+@container sb (max-aspect-ratio: 145 / 100) {
+  .sb-board[data-layout='livesponsor'] {
+    --score: calc(var(--u) * 24);
+    --clock: calc(var(--u) * 15);
+    --crest: calc(var(--u) * 10);
+    --name: calc(var(--u) * 6);
+    --stat: calc(var(--u) * 3.6);
+    --period: calc(var(--u) * 6);
+    --shot: calc(var(--u) * 9);
+    --slab: calc(var(--u) * 28);
+    --sponsor-width: calc(var(--u) * 40);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) calc(var(--u) * 18);
+    grid-template-areas: 'home' 'away' 'center';
+  }
+
+  .sb-board[data-layout='livesponsor'] .sb-center {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: calc(var(--u) * 3);
+    padding: calc(var(--u) * 1.6) calc(var(--u) * 3);
+  }
+
+  .sb-board[data-layout='livesponsor'] .sb-period { justify-self: center; padding: calc(var(--u) * 1) calc(var(--u) * 2.4) calc(var(--u) * 0.8); }
+  .sb-board[data-layout='livesponsor'] .sb-shot { min-width: 0; }
+}
+
+/* Portrait: sponsor below center area */
+@container sb (max-aspect-ratio: 95 / 100) {
+  .sb-board[data-layout='livesponsor'] {
+    --score: calc(var(--u) * 32);
+    --clock: calc(var(--u) * 26);
+    --crest: calc(var(--u) * 13);
+    --name: calc(var(--u) * 7.5);
+    --stat: calc(var(--u) * 5);
+    --period: calc(var(--u) * 8);
+    --shot: calc(var(--u) * 13);
+    --slab: calc(var(--u) * 34);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) calc(var(--u) * 16);
+  }
+
+  .sb-board[data-layout='livesponsor'] .sb-center {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    padding: calc(var(--u) * 3);
+    row-gap: calc(var(--u) * 3);
+  }
+
+  .sb-board[data-layout='livesponsor'] .sb-clock { grid-column: 1 / -1; grid-row: 1; }
+  .sb-board[data-layout='livesponsor'] .sb-period { grid-column: 1; grid-row: 2; }
+  .sb-board[data-layout='livesponsor'] .sb-shot { grid-column: 2; grid-row: 2; }
+
+  .sb-board[data-layout='livesponsor'] .sb-team-meta {
+    flex-wrap: wrap;
+    row-gap: calc(var(--u) * 1.2);
+  }
+}

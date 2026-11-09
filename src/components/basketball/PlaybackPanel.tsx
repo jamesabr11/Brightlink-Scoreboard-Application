@@ -53,7 +53,7 @@ export const PlaybackPanel: React.FC = () => {
 
   const modeLabel: Record<typeof mode, string> = {
     pregame: 'Pregame', live: 'Live', stadium: 'Stadium', halftime: 'Halftime',
-    intro: 'Intro', fullscreen: 'Fullscreen',
+    intro: 'Intro', fullscreen: 'Fullscreen', livesponsor: 'Live Sponsor',
   };
 
   return (

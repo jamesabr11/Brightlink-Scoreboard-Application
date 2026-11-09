@@ -4,7 +4,7 @@ A basketball scoreboard and game-day presentation system for school gyms and are
 
 Holy Cross Regional High School red, white and black is the default branding. Team names, colours and logos can be changed for any school.
 
-> **Status:** Phases 1–6 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, and operator UI/UX improvements are shipped. New phases coming soon.
+> **Status:** Phases 1–9 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, operator UI/UX improvements, and sponsor/advertising system optimization are shipped.
 
 ## Contents
 
@@ -41,7 +41,7 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Reduced-motion preferences are respected; fonts are bundled, so it works offline
 
 **Presentation modes**
-- Pregame (matchup and tip-off countdown), Live (the scoreboard), Stadium (arena layout with score, clocks, period and a media area), Halftime (first-half score and a second-half countdown), Introductions and Fullscreen
+- Pregame (matchup and tip-off countdown), Live (the scoreboard), Live Sponsor (scoreboard with dedicated sponsor panel), Stadium (arena layout with score, clocks, period and a media area), Halftime (first-half score and a second-half countdown), Introductions and Fullscreen
 - Switch modes in one click from the operator screen; the display follows. Switching never changes the game, and the clocks keep running
 - Media playback and sponsor rotation run inside the presentation layout during live games
 
@@ -49,7 +49,9 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Upload PNG, JPG and WebP images (up to 25 MB) and MP4 video (up to 500 MB), with thumbnails
 - Built-in categories (Sponsors, Advertisements, Pregame, Team Hype, Player Introductions, Halftime, Timeout, General Promotions) plus your own
 - Search, filter, preview, rename, recategorize and set display times
-- Sponsors with logos, linked advertisements and per-ad display times
+- Sponsors with logos, multiple images/videos with individual durations and reorderable rotation
+- **Live Sponsor presentation mode** — dedicated sponsor panel beside the scoreboard during live games
+- **Video with audible audio** — sponsor and intro videos play with sound enabled
 
 ## Getting started
 
@@ -90,7 +92,7 @@ The navigation at the top of the operator console has:
 | **Game Setup** | Team names, colours, logos, rules, and the scoreboard preset with a live preview |
 | **Configurations** | Save, load, update, rename, duplicate and delete prepared setups |
 | **Media** | Upload and organize images and videos |
-| **Sponsors** | Sponsor names, logos, advertisements and display times |
+| **Sponsors** | Sponsor names, logos, multiple images/videos with per-item durations and reorderable rotation |
 | **History** | Finished games, statistics, CSV export and printable summaries |
 | **Settings** | Defaults for new games, sound, and display preferences |
 
@@ -244,7 +246,10 @@ The unit tests cover scoring, clocks, periods and overtime, fouls, timeouts, pos
 | 4 | Media playback, sponsor rotation and game-day presentation | ✅ Done |
 | 5 | Player roster, introductions, fullscreen and polish | ✅ Done |
 | 6 | Operator UI/UX optimization, navigation improvements and layout refinements | ✅ Done |
-| 7+ | Coming soon | Planned |
+| 7 | Display animation and visual refinements | ✅ Done |
+| 8 | Audio system and sound effects | ✅ Done |
+| 9 | Sponsor and advertising system optimization | ✅ Done |
+| 10+ | Coming soon | Planned |
 
 ## Known limitations
 

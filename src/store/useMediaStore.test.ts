@@ -144,7 +144,7 @@ describe('saved data', () => {
     const { categories, sponsors, items } = (await openTab()).getState();
     expect(categories.map((c) => c.name)).toContain('Sponsors');
     expect(categories.filter((c) => !c.builtIn).map((c) => c.id)).toEqual(['c1']);
-    expect(sponsors).toEqual([{ id: 's1', name: 'Pizza', logoId: null, createdAt: 0 }]);
+    expect(sponsors).toEqual([{ id: 's1', name: 'Pizza', logoId: null, imageIds: [], imageDurations: {}, createdAt: 0 }]);
     expect(items.map((i) => i.id)).toEqual(['a', 'v']);
     expect(items[0]).toMatchObject({ categoryId: 'promotions', sponsorId: null, duration: 1 });
     expect(items[1]).toMatchObject({ naturalDuration: null, duration: 600 });

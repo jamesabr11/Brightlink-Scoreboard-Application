@@ -3,17 +3,7 @@
  * Three canvases, like the live board: wide (16:9), tall (4:3) and portrait.
  * Every mode keeps the same grid areas, so only sizes change per canvas. */
 
-.pm-board {
-  --crest: calc(var(--u) * 16);
-  --name: calc(var(--u) * 5.5);
-  --score: calc(var(--u) * 26);
-  --clock: calc(var(--u) * 15);
-  --period: calc(var(--u) * 6.5);
-  --shot: calc(var(--u) * 9);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) calc(var(--u) * 9);
-  grid-template-areas: 'header header header' 'home center away' 'slot slot slot';
-}
+/* Live mode uses the standard scoreboard.css layouts, not these pm- styles. */
 
 /* Pregame has no score, so it gets the big crests. Halftime shares its panels
  * with a score, so crest and digits are sized to fit together. */
