@@ -4,7 +4,7 @@ A basketball scoreboard and game-day presentation system for school gyms and are
 
 Holy Cross Regional High School red, white and black is the default branding. Team names, colours and logos can be changed for any school.
 
-> **Status:** Phases 1–9 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, operator UI/UX improvements, and sponsor/advertising system optimization are shipped.
+> **Status:** Phases 1–9 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, operator UI/UX improvements, display/animation verification, audio system, and sponsor/advertising system optimization are shipped.
 
 ## Contents
 
@@ -246,7 +246,7 @@ The unit tests cover scoring, clocks, periods and overtime, fouls, timeouts, pos
 | 4 | Media playback, sponsor rotation and game-day presentation | ✅ Done |
 | 5 | Player roster, introductions, fullscreen and polish | ✅ Done |
 | 6 | Operator UI/UX optimization, navigation improvements and layout refinements | ✅ Done |
-| 7 | Display animation and visual refinements | ✅ Done |
+| 7 | Public display verification, animation and timer accuracy optimization | ✅ Done |
 | 8 | Audio system and sound effects | ✅ Done |
 | 9 | Sponsor and advertising system optimization | ✅ Done |
 | 10+ | Coming soon | Planned |
