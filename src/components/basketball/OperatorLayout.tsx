@@ -28,33 +28,38 @@ export const OperatorLayout: React.FC = () => {
   useSounds();
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white p-3">
-      <div className="max-w-7xl mx-auto">
-        <header className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3 print:hidden">
-          <h1 className="flex items-center gap-2 text-xl font-bold">
-            <span aria-hidden className="w-2 h-6 rounded-sm" style={{ background: BRAND.red }} />
-            {BRAND_TEAM.name} Scoreboard
+    <div className="min-h-screen bg-neutral-950 text-white">
+      <header className="border-b border-neutral-800 bg-neutral-950/95 backdrop-blur-sm sticky top-0 z-10 px-4 py-3 print:hidden">
+        <div className="max-w-[1600px] mx-auto flex flex-wrap items-center gap-x-6 gap-y-3">
+          <h1 className="flex items-center gap-2.5 text-xl font-bold whitespace-nowrap">
+            <span aria-hidden className="w-2 h-7 rounded-sm flex-none" style={{ background: BRAND.red }} />
+            <span className="hidden sm:inline">{BRAND_TEAM.name} Scoreboard</span>
+            <span className="sm:hidden">{BRAND_TEAM.abbreviation || BRAND_TEAM.name}</span>
           </h1>
-          <nav aria-label="Main" className="flex flex-wrap items-center gap-1 flex-1">
+          <nav aria-label="Main" className="flex items-center gap-2 flex-1 min-w-0">
             {NAV_GROUPS.map((group, gi) => (
-              <div key={gi} className="flex flex-wrap gap-1">
-                {gi > 0 && <span className="w-px self-stretch bg-neutral-700 mx-1" aria-hidden />}
-                {group.map(({ to, label, icon: Icon }) => (
-                  <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `flex items-center gap-2 rounded px-3 py-2 text-sm font-semibold ${isActive ? 'bg-neutral-100 text-black' : 'text-neutral-200 hover:bg-neutral-800'}`}>
-                    <Icon size={16} />{label}
-                  </NavLink>
-                ))}
+              <div key={gi} className="flex items-center gap-2">
+                {gi > 0 && <span className="w-px h-8 bg-neutral-700 flex-none" aria-hidden />}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {group.map(({ to, label, icon: Icon }) => (
+                    <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold transition-colors whitespace-nowrap ${isActive ? 'bg-neutral-100 text-black' : 'text-neutral-200 hover:bg-neutral-800'}`}>
+                      <Icon size={16} className="flex-none" />{label}
+                    </NavLink>
+                  ))}
+                </div>
               </div>
             ))}
           </nav>
-          <button onClick={() => window.open('/display', '_blank')} className={`${primary} px-3 py-2 text-sm`}>
+          <button onClick={() => window.open('/display', '_blank')} className={`${primary} px-4 py-2 text-sm whitespace-nowrap flex-none`}>
             Open Display <ExternalLink size={16} />
           </button>
-        </header>
-        <main>
+        </div>
+      </header>
+      <main className="px-4 py-4">
+        <div className="max-w-[1600px] mx-auto">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
       <FeedbackHost />
     </div>
   );
