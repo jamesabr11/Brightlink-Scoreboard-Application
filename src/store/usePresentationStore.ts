@@ -2,11 +2,12 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { clockRemaining, stopClock } from '../lib/clock';
 import { safeStorage } from '../lib/storage';
-import { PRESENTATION_MODES } from '../types/presentation';
-import type { Countdown, CountdownId, PresentationMode, PresentationState } from '../types/presentation';
+import { PRESENTATION_MODES, SPONSOR_PLACEMENTS, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../types/presentation';
+import type { Countdown, CountdownId, PresentationMode, PresentationState, SponsorLayout } from '../types/presentation';
 
 interface PresentationStore extends PresentationState {
   setMode: (mode: PresentationMode) => void;
+  setSponsorLayout: (patch: Partial<SponsorLayout>) => void;
   startCountdown: (id: CountdownId) => void;
   pauseCountdown: (id: CountdownId) => void;
   resetCountdown: (id: CountdownId) => void;
@@ -20,13 +21,22 @@ const DEFAULT_SECONDS: Record<CountdownId, number> = { pregame: 10 * 60, halftim
 
 const freshCountdown = (seconds: number): Countdown => ({ duration: seconds, remainingTime: seconds, isRunning: false, startTimestamp: null });
 
+export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'right', size: 35, fit: 'contain' };
+
 const initialState = (): PresentationState => ({
   mode: 'live',
+  sponsorLayout: DEFAULT_SPONSOR_LAYOUT,
   countdowns: { pregame: freshCountdown(DEFAULT_SECONDS.pregame), halftime: freshCountdown(DEFAULT_SECONDS.halftime) },
 });
 
 const seconds = (value: unknown, fallback: number) =>
   typeof value === 'number' && Number.isFinite(value) ? Math.min(MAX_COUNTDOWN_SECONDS, Math.max(0, Math.round(value))) : fallback;
+
+const cleanLayout = (saved: Partial<SponsorLayout> | undefined): SponsorLayout => ({
+  placement: SPONSOR_PLACEMENTS.includes(saved?.placement as never) ? saved!.placement! : DEFAULT_SPONSOR_LAYOUT.placement,
+  size: typeof saved?.size === 'number' && Number.isFinite(saved.size) ? Math.min(SPONSOR_SIZE_MAX, Math.max(SPONSOR_SIZE_MIN, Math.round(saved.size))) : DEFAULT_SPONSOR_LAYOUT.size,
+  fit: saved?.fit === 'cover' ? 'cover' : 'contain',
+});
 
 // localStorage is untrusted, so nothing from it is used as-is.
 const cleanCountdown = (saved: Partial<Countdown> | undefined, fallback: Countdown): Countdown => {
@@ -54,6 +64,8 @@ export const usePresentationStore = create<PresentationStore>()(
         ...initialState(),
 
         setMode: (mode) => { if (mode !== get().mode) syncAndSet({ mode }); },
+
+        setSponsorLayout: (patch) => syncAndSet({ sponsorLayout: cleanLayout({ ...get().sponsorLayout, ...patch }) }),
 
         startCountdown: (id) => {
           const countdown = get().countdowns[id];
@@ -91,12 +103,13 @@ export const usePresentationStore = create<PresentationStore>()(
     {
       name: 'basketball-presentation',
       storage: safeStorage,
-      partialize: ({ mode, countdowns }) => ({ mode, countdowns }),
+      partialize: ({ mode, countdowns, sponsorLayout }) => ({ mode, countdowns, sponsorLayout }),
       merge: (saved, current) => {
         const state = saved as Partial<PresentationState> | undefined;
         return {
           ...current,
           mode: PRESENTATION_MODES.includes(state?.mode as PresentationMode) ? (state?.mode as PresentationMode) : current.mode,
+          sponsorLayout: cleanLayout(state?.sponsorLayout),
           countdowns: {
             pregame: cleanCountdown(state?.countdowns?.pregame, current.countdowns.pregame),
             halftime: cleanCountdown(state?.countdowns?.halftime, current.countdowns.halftime),

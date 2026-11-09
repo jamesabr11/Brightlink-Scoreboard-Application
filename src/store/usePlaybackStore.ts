@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { PresentationMode } from '../types/presentation';
-import type { MediaItem } from '../types/media';
+import type { MediaItem, Sponsor } from '../types/media';
 
 // Playback queue state. No localStorage persist — playback resets on page reload,
 // which is the right behaviour between game days. BroadcastChannel keeps the
@@ -33,14 +33,27 @@ const MODE_CATEGORIES: Partial<Record<PresentationMode, string[]>> = {
 };
 
 // Returns item ids sorted by creation time, filtered to the categories for mode.
-export const queueForMode = (mode: PresentationMode, items: MediaItem[]): string[] => {
+// Live Sponsor follows each sponsor's own ordered asset list; media in the
+// sponsor categories that no sponsor lists is appended after.
+export const queueForMode = (mode: PresentationMode, items: MediaItem[], sponsors: Sponsor[] = []): string[] => {
   const cats = MODE_CATEGORIES[mode];
   if (!cats) return [];
+  if (mode === 'livesponsor') {
+    const ids = new Set(items.map((item) => item.id));
+    const ordered = [...sponsors].sort((a, b) => a.createdAt - b.createdAt).flatMap((s) => s.imageIds.filter((id) => ids.has(id)));
+    const listed = new Set(ordered);
+    const rest = items.filter((i) => cats.includes(i.categoryId) && !listed.has(i.id)).sort((a, b) => a.createdAt - b.createdAt).map((i) => i.id);
+    return [...new Set([...ordered, ...rest])];
+  }
   return items
     .filter((item) => cats.includes(item.categoryId))
     .sort((a, b) => a.createdAt - b.createdAt)
     .map((item) => item.id);
 };
+
+// Seconds on screen: a sponsor's per-asset override wins over the item's own duration.
+export const durationFor = (item: MediaItem, sponsors: Sponsor[]): number =>
+  sponsors.find((s) => s.imageIds.includes(item.id) && s.imageDurations[item.id])?.imageDurations[item.id] ?? item.duration;
 
 const channel = new BroadcastChannel('playback_sync');
 

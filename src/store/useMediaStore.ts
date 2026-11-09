@@ -92,13 +92,14 @@ export const cleanMediaState = (saved: Partial<MediaState> | undefined): MediaSt
     .map((item) => cleanItem(item, categoryIds, sponsorIds))
     .filter((item): item is MediaItem => item !== null);
   const images = new Set(items.filter((item) => item.kind === 'image').map((item) => item.id));
+  const assets = new Set(items.map((item) => item.id)); // sponsor rotation may include videos
   const sponsors = rawSponsors.map((s) => ({
     id: s.id,
     name: cleanName(s.name),
     logoId: typeof s.logoId === 'string' && images.has(s.logoId) ? s.logoId : null,
-    imageIds: Array.isArray(s.imageIds) ? s.imageIds.filter((id: unknown) => typeof id === 'string' && images.has(id)) : [],
+    imageIds: Array.isArray(s.imageIds) ? s.imageIds.filter((id: unknown) => typeof id === 'string' && assets.has(id)) : [],
     imageDurations: typeof s.imageDurations === 'object' && s.imageDurations !== null
-      ? Object.fromEntries(Object.entries(s.imageDurations).filter(([id, dur]) => images.has(id) && typeof dur === 'number' && dur > 0))
+      ? Object.fromEntries(Object.entries(s.imageDurations).filter(([id, dur]) => assets.has(id) && typeof dur === 'number' && dur > 0))
       : {},
     createdAt: count(s.createdAt),
   }));
@@ -187,11 +188,11 @@ export const useMediaStore = create<MediaStore>()(
             if (name !== undefined) updates.name = name;
             if (patch.logoId !== undefined) updates.logoId = patch.logoId;
             if (patch.imageIds !== undefined) {
-              updates.imageIds = patch.imageIds.filter((id: string) => items.some((item) => item.id === id && item.kind === 'image'));
+              updates.imageIds = patch.imageIds.filter((id: string) => items.some((item) => item.id === id));
             }
             if (patch.imageDurations !== undefined) {
               updates.imageDurations = Object.fromEntries(
-                Object.entries(patch.imageDurations).filter(([id, dur]) => items.some((item) => item.id === id && item.kind === 'image') && typeof dur === 'number' && dur > 0)
+                Object.entries(patch.imageDurations).filter(([id, dur]) => items.some((item) => item.id === id) && typeof dur === 'number' && dur > 0)
               );
             }
             return { ...s, ...updates };
@@ -208,7 +209,7 @@ export const useMediaStore = create<MediaStore>()(
 
       addSponsorImage: (sponsorId, mediaId) => {
         const { sponsors, items } = get();
-        if (!items.some((item) => item.id === mediaId && item.kind === 'image')) return;
+        if (!items.some((item) => item.id === mediaId)) return;
         set({
           sponsors: sponsors.map((s) => {
             if (s.id !== sponsorId || s.imageIds.includes(mediaId)) return s;

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Handshake, ImagePlus, Plus, Trash2, Upload, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Handshake, ImagePlus, Plus, Trash2, Upload, X } from 'lucide-react';
 import { askConfirm, notify } from '../../lib/feedback';
 import { formatSeconds, MEDIA_ACCEPT, MEDIA_TYPES, mediaType } from '../../lib/media';
 import { useMediaStore } from '../../store/useMediaStore';
@@ -21,14 +21,10 @@ const SponsorCard: React.FC<{ sponsor: Sponsor; onOpen: (id: string) => void }> 
   const adInput = useRef<HTMLInputElement>(null);
 
   const logo = items.find((item) => item.id === sponsor.logoId);
-  // Get all images linked to this sponsor in display order: logo first, then imageIds
-  const sponsorMediaIds = [
-    sponsor.logoId,
-    ...sponsor.imageIds,
-  ].filter((id): id is string => Boolean(id));
-  const sponsorImages = sponsorMediaIds.map((id) => items.find((item) => item.id === id)).filter((item): item is MediaItem => Boolean(item));
+  // The rotation: imageIds in display order (the logo is shown separately as the badge)
+  const sponsorImages = sponsor.imageIds.map((id) => items.find((item) => item.id === id)).filter((item): item is MediaItem => Boolean(item));
   const allImages = items.filter((item) => item.kind === 'image');
-  const linkable = allImages.filter((item) => item.sponsorId !== sponsor.id && item.id !== sponsor.logoId && !sponsor.imageIds.includes(item.id));
+  const linkable = items.filter((item) => !sponsor.imageIds.includes(item.id));
 
   // Total display time for all sponsor images
   const total = sponsorImages.reduce((sum, img) => {
@@ -120,7 +116,7 @@ const SponsorCard: React.FC<{ sponsor: Sponsor; onOpen: (id: string) => void }> 
       <div className="space-y-3 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-neutral-300">
-            Sponsor Images <span className="normal-case tracking-normal text-neutral-400">· {sponsorImages.length === 0 ? 'none yet' : `${sponsorImages.length}, ${formatSeconds(total)} in total`}</span>
+            Sponsor Rotation <span className="normal-case tracking-normal text-neutral-400">· {sponsorImages.length === 0 ? 'none yet' : `${sponsorImages.length}, ${formatSeconds(total)} in total`}</span>
           </h3>
           <div className="flex flex-wrap gap-2">
             <select
@@ -142,7 +138,6 @@ const SponsorCard: React.FC<{ sponsor: Sponsor; onOpen: (id: string) => void }> 
         {sponsorImages.length > 0 && (
           <ul className="divide-y divide-neutral-800">
             {sponsorImages.map((img, idx) => {
-              const isLogo = idx === 0 && img.id === sponsor.logoId;
               const duration = sponsor.imageDurations[img.id] ?? img.duration;
               return (
                 <li key={img.id} className="grid items-center gap-3 py-3 sm:grid-cols-[8rem_1fr_6rem_auto_auto_auto]">
@@ -152,7 +147,6 @@ const SponsorCard: React.FC<{ sponsor: Sponsor; onOpen: (id: string) => void }> 
                   <div className="min-w-0">
                     <div className="truncate font-semibold flex items-center gap-2">
                       {img.name}
-                      {isLogo && <span className="text-xs bg-brand/20 text-brand px-1.5 py-0.5 rounded">Logo</span>}
                     </div>
                     <div className="text-xs text-neutral-400">{img.kind === 'video' ? 'Video' : 'Image'} · {img.width} × {img.height}</div>
                   </div>
@@ -164,11 +158,9 @@ const SponsorCard: React.FC<{ sponsor: Sponsor; onOpen: (id: string) => void }> 
                     className="w-24"
                   />
                   <div className="flex gap-1">
-                    <button onClick={() => handleMoveUp(idx)} disabled={idx === 0} aria-label="Move up" className={`${neutral} p-2`}><ChevronLeft size={16} /></button>
-                    <button onClick={() => handleMoveDown(idx)} disabled={idx === sponsor.imageIds.length - 1} aria-label="Move down" className={`${neutral} p-2`}><ChevronRight size={16} /></button>
-                    {!isLogo && (
-                      <button onClick={() => handleRemoveSponsorImage(img.id)} aria-label={`Remove ${img.name} from ${sponsor.name}`} className={`${negative} p-2`}><X size={16} /></button>
-                    )}
+                    <button onClick={() => handleMoveUp(idx)} disabled={idx === 0} aria-label="Move up" title="Move earlier" className={`${neutral} p-2`}><ChevronUp size={16} /></button>
+                    <button onClick={() => handleMoveDown(idx)} disabled={idx === sponsor.imageIds.length - 1} aria-label="Move down" title="Move later" className={`${neutral} p-2`}><ChevronDown size={16} /></button>
+                    <button onClick={() => handleRemoveSponsorImage(img.id)} aria-label={`Remove ${img.name} from ${sponsor.name}`} className={`${negative} p-2`}><X size={16} /></button>
                   </div>
                 </li>
               );
@@ -222,7 +214,7 @@ export const SponsorsPage: React.FC = () => {
           </label>
           <button type="submit" className={`${brand} px-4 py-2`}><Plus size={16} />Add Sponsor</button>
         </form>
-        <p className="mt-2 text-xs text-neutral-400">Each sponsor gets a logo and multiple images/videos with individual display times. Images rotate in order. Sponsor uploads are filed under Sponsors in the Media Library.</p>
+        <p className="mt-2 text-xs text-neutral-400">Each sponsor gets a logo and a rotation of images and videos, each with its own display time. Use the arrows to reorder. Sponsor uploads are filed under Sponsors in the Media Library.</p>
       </Panel>
 
       {sorted.length === 0 ? (

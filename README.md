@@ -41,7 +41,7 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Reduced-motion preferences are respected; fonts are bundled, so it works offline
 
 **Presentation modes**
-- Pregame (matchup and tip-off countdown), Live (the scoreboard), Live Sponsor (scoreboard with dedicated sponsor panel), Stadium (arena layout with score, clocks, period and a media area), Halftime (first-half score and a second-half countdown), Introductions and Fullscreen
+- Pregame (matchup and tip-off countdown), Live (the scoreboard), Live Sponsor (Stadium scoreboard with a resizable sponsor media area), Stadium (arena layout with score, clocks, period and a media area), Halftime (first-half score and a second-half countdown), Introductions and Fullscreen
 - Switch modes in one click from the operator screen; the display follows. Switching never changes the game, and the clocks keep running
 - Media playback and sponsor rotation run inside the presentation layout during live games
 
@@ -50,7 +50,7 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Built-in categories (Sponsors, Advertisements, Pregame, Team Hype, Player Introductions, Halftime, Timeout, General Promotions) plus your own
 - Search, filter, preview, rename, recategorize and set display times
 - Sponsors with logos, multiple images/videos with individual durations and reorderable rotation
-- **Live Sponsor presentation mode** — dedicated sponsor panel beside the scoreboard during live games
+- **Live Sponsor presentation mode** — the scoreboard plus a media area the operator can place (right, left, top or bottom), resize (20–60%) and scale (Fit or Fill) from the Display Mode panel. It plays each sponsor's rotation in the order and for the durations set on the Sponsors page
 - **Video with audible audio** — sponsor and intro videos play with sound enabled
 
 ## Getting started
