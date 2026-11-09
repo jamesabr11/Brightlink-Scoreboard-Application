@@ -1,5 +1,5 @@
 import { usePresentationStore } from '../../store/usePresentationStore';
-import { PRESENTATION_MODES } from '../../types/presentation';
+import { PRESENTATION_MODES, SPONSOR_PLACEMENTS, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../../types/presentation';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
 import { ClockDisplay } from './ClockDisplay';
 import { IntroPanel } from './IntroPanel';
@@ -10,7 +10,7 @@ import { Pause, Play, RotateCcw } from 'lucide-react';
 
 const LABELS: Record<PresentationMode, string> = {
   pregame: 'Pregame', live: 'Live', stadium: 'Stadium', halftime: 'Halftime',
-  intro: 'Introductions', fullscreen: 'Fullscreen',
+  intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Live Sponsor',
 };
 const COUNTDOWN_FOR: Partial<Record<PresentationMode, { id: CountdownId; title: string }>> = {
   pregame: { id: 'pregame', title: 'Tip-off countdown' },
@@ -38,6 +38,30 @@ const CountdownControls: React.FC<{ id: CountdownId; title: string }> = ({ id, t
   );
 };
 
+const SponsorLayoutControls: React.FC = () => {
+  const { placement, size, fit } = usePresentationStore((state) => state.sponsorLayout);
+  const set = usePresentationStore((state) => state.setSponsorLayout);
+  return (
+    <div className="mt-3 grid gap-3 md:grid-cols-[auto_1fr_auto] items-end" role="group" aria-label="Sponsor media area">
+      <div>
+        <span className="block text-xs text-neutral-400 mb-1">Placement</span>
+        <div className="flex gap-2">
+          {SPONSOR_PLACEMENTS.map((p) => (
+            <button key={p} onClick={() => set({ placement: p })} aria-pressed={placement === p} className={`${placement === p ? `${buttonBase} bg-[var(--brand)] ring-2 ring-white` : neutral} px-3 py-2 text-sm capitalize`}>{p}</button>
+          ))}
+        </div>
+      </div>
+      <label className="block text-xs text-neutral-400">
+        Media area size: {size}%
+        <input type="range" min={SPONSOR_SIZE_MIN} max={SPONSOR_SIZE_MAX} step={5} value={size} onChange={(e) => set({ size: Number(e.target.value) })} className="mt-2 w-full" />
+      </label>
+      <button onClick={() => set({ fit: fit === 'contain' ? 'cover' : 'contain' })} className={`${neutral} px-3 py-2 text-sm`} title="Fit shows the whole image; Fill crops the edges to fill the area">
+        Scaling: {fit === 'contain' ? 'Fit' : 'Fill'}
+      </button>
+    </div>
+  );
+};
+
 export const PresentationPanel: React.FC = () => {
   const mode = usePresentationStore((state) => state.mode);
   const setMode = usePresentationStore((state) => state.setMode);
@@ -58,6 +82,7 @@ export const PresentationPanel: React.FC = () => {
           ))}
         </div>
         {countdown && <CountdownControls {...countdown} />}
+        {mode === 'livesponsor' && <SponsorLayoutControls />}
       </Panel>
       {mode === 'intro' && <IntroPanel />}
       <PlaybackPanel />

@@ -21,7 +21,15 @@ export const BUILT_IN_CATEGORIES: MediaCategory[] = [
 ];
 
 export type ItemPatch = Partial<Pick<MediaItem, 'name' | 'categoryId' | 'duration' | 'sponsorId'>>;
-export type SponsorPatch = Partial<Pick<Sponsor, 'name' | 'logoId'>>;
+export type SponsorPatch = Partial<Pick<Sponsor, 'name' | 'logoId' | 'imageIds' | 'imageDurations'>>;
+
+// Get media IDs for a sponsor in display order: logo first, then ads
+export const getSponsorMediaIds = (sponsor: Sponsor): string[] => {
+  const result: string[] = [];
+  if (sponsor.logoId) result.push(sponsor.logoId);
+  result.push(...sponsor.imageIds);
+  return result;
+};
 
 interface MediaState {
   items: MediaItem[];
@@ -39,6 +47,10 @@ interface MediaStore extends MediaState {
   addSponsor: (name: string) => string | null;
   updateSponsor: (id: string, patch: SponsorPatch) => boolean;
   removeSponsor: (id: string) => void;
+  addSponsorImage: (sponsorId: string, mediaId: string) => void;
+  removeSponsorImage: (sponsorId: string, mediaId: string) => void;
+  moveSponsorImage: (sponsorId: string, fromIndex: number, toIndex: number) => void;
+  setSponsorImageDuration: (sponsorId: string, mediaId: string, duration: number) => void;
 }
 
 const MAX_NAME = 80;
@@ -80,10 +92,15 @@ export const cleanMediaState = (saved: Partial<MediaState> | undefined): MediaSt
     .map((item) => cleanItem(item, categoryIds, sponsorIds))
     .filter((item): item is MediaItem => item !== null);
   const images = new Set(items.filter((item) => item.kind === 'image').map((item) => item.id));
+  const assets = new Set(items.map((item) => item.id)); // sponsor rotation may include videos
   const sponsors = rawSponsors.map((s) => ({
     id: s.id,
     name: cleanName(s.name),
     logoId: typeof s.logoId === 'string' && images.has(s.logoId) ? s.logoId : null,
+    imageIds: Array.isArray(s.imageIds) ? s.imageIds.filter((id: unknown) => typeof id === 'string' && assets.has(id)) : [],
+    imageDurations: typeof s.imageDurations === 'object' && s.imageDurations !== null
+      ? Object.fromEntries(Object.entries(s.imageDurations).filter(([id, dur]) => assets.has(id) && typeof dur === 'number' && dur > 0))
+      : {},
     createdAt: count(s.createdAt),
   }));
   return { items, categories, sponsors };
@@ -155,7 +172,7 @@ export const useMediaStore = create<MediaStore>()(
         const { sponsors } = get();
         if (!clean || sponsors.some((s) => sameName(s.name, clean))) return null;
         const id = newId();
-        set({ sponsors: [...sponsors, { id, name: clean, logoId: null, createdAt: Date.now() }] });
+        set({ sponsors: [...sponsors, { id, name: clean, logoId: null, imageIds: [], imageDurations: {}, createdAt: Date.now() }] });
         return id;
       },
 
@@ -165,7 +182,21 @@ export const useMediaStore = create<MediaStore>()(
         if (name !== undefined && (!name || sponsors.some((s) => s.id !== id && sameName(s.name, name)))) return false;
         if (patch.logoId && !items.some((item) => item.id === patch.logoId && item.kind === 'image')) return false;
         set({
-          sponsors: sponsors.map((s) => (s.id === id ? { ...s, ...(name !== undefined && { name }), ...(patch.logoId !== undefined && { logoId: patch.logoId }) } : s)),
+          sponsors: sponsors.map((s) => {
+            if (s.id !== id) return s;
+            const updates: Partial<Sponsor> = {};
+            if (name !== undefined) updates.name = name;
+            if (patch.logoId !== undefined) updates.logoId = patch.logoId;
+            if (patch.imageIds !== undefined) {
+              updates.imageIds = patch.imageIds.filter((id: string) => items.some((item) => item.id === id));
+            }
+            if (patch.imageDurations !== undefined) {
+              updates.imageDurations = Object.fromEntries(
+                Object.entries(patch.imageDurations).filter(([id, dur]) => items.some((item) => item.id === id) && typeof dur === 'number' && dur > 0)
+              );
+            }
+            return { ...s, ...updates };
+          }),
         });
         return true;
       },
@@ -175,6 +206,58 @@ export const useMediaStore = create<MediaStore>()(
         sponsors: get().sponsors.filter((s) => s.id !== id),
         items: get().items.map((item) => (item.sponsorId === id ? { ...item, sponsorId: null } : item)),
       }),
+
+      addSponsorImage: (sponsorId, mediaId) => {
+        const { sponsors, items } = get();
+        if (!items.some((item) => item.id === mediaId)) return;
+        set({
+          sponsors: sponsors.map((s) => {
+            if (s.id !== sponsorId || s.imageIds.includes(mediaId)) return s;
+            return { ...s, imageIds: [...s.imageIds, mediaId] };
+          }),
+        });
+      },
+
+      removeSponsorImage: (sponsorId, mediaId) => {
+        const { sponsors } = get();
+        set({
+          sponsors: sponsors.map((s) => {
+            if (s.id !== sponsorId) return s;
+            const newIds = s.imageIds.filter((id) => id !== mediaId);
+            const newDurations = { ...s.imageDurations };
+            delete newDurations[mediaId];
+            return { ...s, imageIds: newIds, imageDurations: newDurations };
+          }),
+        });
+      },
+
+      moveSponsorImage: (sponsorId, fromIndex, toIndex) => {
+        const { sponsors } = get();
+        set({
+          sponsors: sponsors.map((s) => {
+            if (s.id !== sponsorId) return s;
+            const ids = [...s.imageIds];
+            if (fromIndex < 0 || fromIndex >= ids.length || toIndex < 0 || toIndex >= ids.length) return s;
+            const [moved] = ids.splice(fromIndex, 1);
+            ids.splice(toIndex, 0, moved);
+            return { ...s, imageIds: ids };
+          }),
+        });
+      },
+
+      setSponsorImageDuration: (sponsorId, mediaId, duration) => {
+        const { sponsors } = get();
+        set({
+          sponsors: sponsors.map((s) => {
+            if (s.id !== sponsorId) return s;
+            const cleaned = typeof duration === 'number' && duration > 0 ? duration : 10; // default 10s
+            return {
+              ...s,
+              imageDurations: { ...s.imageDurations, [mediaId]: cleaned },
+            };
+          }),
+        });
+      },
     }),
     {
       name: STORAGE_KEY,

@@ -3,13 +3,10 @@
  * Three canvases, like the live board: wide (16:9), tall (4:3) and portrait.
  * Every mode keeps the same grid areas, so only sizes change per canvas. */
 
+/* Live mode uses the standard scoreboard.css layouts, not these pm- styles. */
+
+/* Wide (16:9) default for Pregame and Halftime: header, three columns, media strip. */
 .pm-board {
-  --crest: calc(var(--u) * 16);
-  --name: calc(var(--u) * 5.5);
-  --score: calc(var(--u) * 26);
-  --clock: calc(var(--u) * 15);
-  --period: calc(var(--u) * 6.5);
-  --shot: calc(var(--u) * 9);
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) calc(var(--u) * 9);
   grid-template-areas: 'header header header' 'home center away' 'slot slot slot';
@@ -18,7 +15,27 @@
 /* Pregame has no score, so it gets the big crests. Halftime shares its panels
  * with a score, so crest and digits are sized to fit together. */
 .pm-board[data-mode='pregame'] { --crest: calc(var(--u) * 15); --name: calc(var(--u) * 5.5); }
-.pm-board[data-mode='halftime'] { --crest: calc(var(--u) * 7); --name: calc(var(--u) * 4.2); --score: calc(var(--u) * 15); }
+.pm-board[data-mode='halftime'] { --crest: calc(var(--u) * 6); --name: calc(var(--u) * 3.6); --score: calc(var(--u) * 13); }
+
+/* Live Sponsor: Stadium blocks plus a resizable media area. The tracks (sizes)
+ * are set inline by LiveSponsorView; only the areas change with placement.
+ * Specificity beats the generic 4:3 and portrait rules below. */
+.pm-board[data-mode='livesponsor'] {
+  --crest: calc(var(--u) * 8);
+  --name: calc(var(--u) * 4);
+  --score: calc(var(--u) * 20);
+  --clock: calc(var(--u) * 12);
+  --shot: calc(var(--u) * 7);
+  grid-template-columns: minmax(0, 1fr);
+}
+.pm-board[data-mode='livesponsor'][data-place='bottom'] { grid-template-areas: 'home center away' 'slot slot slot'; grid-template-columns: 1fr 0.8fr 1fr; }
+.pm-board[data-mode='livesponsor'][data-place='top'] { grid-template-areas: 'slot slot slot' 'home center away'; grid-template-columns: 1fr 0.8fr 1fr; }
+.pm-board[data-mode='livesponsor'][data-place='right'] { grid-template-areas: 'home away slot' 'center center slot'; }
+.pm-board[data-mode='livesponsor'][data-place='left'] { grid-template-areas: 'slot home away' 'slot center center'; }
+.pm-board[data-mode='livesponsor'] .sb-team .sb-team-head { flex-direction: row; max-width: 100%; }
+.pm-board[data-mode='livesponsor'] .pm-center { flex-direction: row; flex-wrap: wrap; gap: calc(var(--u) * 2); padding: calc(var(--u) * 1); }
+.pm-board[data-mode='livesponsor'][data-place='bottom'] .pm-center,
+.pm-board[data-mode='livesponsor'][data-place='top'] .pm-center { flex-direction: column; }
 
 /* Stadium has no header: the teams get the room. */
 .pm-board[data-mode='stadium'] {
@@ -84,14 +101,38 @@
   border-radius: var(--radius);
 }
 
-/* Media content fills the slot without overflowing. */
+/* Media content fills the slot without overflowing. Live Sponsor can switch
+ * to cover (fills the area, crops edges). Each new item fades in. */
 .pm-media-img,
 .pm-media-video {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
+  animation: pm-fade 0.5s ease-out;
 }
+.pm-slot[data-fit='cover'] .pm-media-img,
+.pm-slot[data-fit='cover'] .pm-media-video { object-fit: cover; }
+@keyframes pm-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pm-media-img, .pm-media-video { animation: none; } }
+
+.pm-slot { position: relative; }
+.pm-sponsor-badge {
+  position: absolute;
+  left: calc(var(--u) * 1);
+  bottom: calc(var(--u) * 1);
+  max-width: 70%;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.4);
+  background: rgb(0 0 0 / 0.7);
+  color: #fff;
+  border-radius: calc(var(--u) * 0.6);
+  font-size: calc(var(--u) * 2.2);
+  font-weight: 700;
+}
+.pm-sponsor-badge img { height: calc(var(--u) * 3.5); width: auto; max-width: calc(var(--u) * 8); object-fit: contain; }
 
 /* ── Fullscreen mode ───────────────────────────────────────────────── */
 /* Single media item fills the entire board. */

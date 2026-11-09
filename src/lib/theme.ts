@@ -76,6 +76,15 @@ export const THEMES: Record<ThemeId, ThemePreset> = {
     accent: BRAND.red,
     dark: { bg: BRAND.black, panel: '#1c1c1c', border: '#3a3a3a', text: '#ffffff', muted: '#b8b8b8', warning: WARNING },
   },
+  livesponsor: {
+    label: 'Live Sponsor',
+    description: 'Professional commercial display: scoreboard with dedicated sponsor panel on the right.',
+    layout: 'livesponsor',
+    font: 'athletic',
+    background: 'solid',
+    accent: BRAND.red,
+    dark: { bg: BRAND.black, panel: '#1c1c1c', border: '#3a3a3a', text: '#ffffff', muted: '#b8b8b8', warning: WARNING },
+  },
   custom: {
     label: 'Custom',
     description: 'Pick your own colors, layout, font and background.',
@@ -93,6 +102,7 @@ export const LAYOUTS: Record<LayoutId, { label: string; description: string }> =
   tournament: { label: 'Tournament', description: 'Event header band, large logos, possession, bonus and a full team stats row.' },
   minimal: { label: 'Minimal', description: 'Scores, clock, shot clock and period. Nothing else.' },
   broadcast: { label: 'Broadcast', description: 'Stacked team rows with fouls, timeouts and bonus, beside the period, clock and shot clock.' },
+  livesponsor: { label: 'Live Sponsor', description: 'Professional commercial display with scoreboard and dedicated sponsor panel.' },
 };
 
 // digitScale (measured: Bebas digits are 0.40em wide, Inter 0.67em, mono 0.60em) evens out how wide each face's numbers are, so a score or clock fits its box in any font.

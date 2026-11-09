@@ -1,6 +1,9 @@
 import { useBasketballStore } from '../../store/useBasketballStore';
+import { useMediaStore } from '../../store/useMediaStore';
+import { usePlaybackStore } from '../../store/usePlaybackStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import { halfPeriods, pointsThrough } from '../../lib/periodScores';
+import { useMediaUrl } from './useMedia';
 import { themeStyle } from '../../lib/theme';
 import type { ScoreboardTheme } from '../../types/basketball';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
@@ -11,16 +14,17 @@ import './presentation.css';
 
 // Pregame, Stadium and Halftime are built from the same blocks as the live
 // scoreboard (exported by Scoreboard.tsx), so branding, themes and sizing stay
-// in one place. Live mode is the unchanged Scoreboard.
+// in one place. Live mode is the unchanged Scoreboard. Live Sponsor adds a resizable
+// sponsor media area to the Stadium scoreboard.
 
 type Side = 'home' | 'away';
 
-export const Stage: React.FC<{ theme: ScoreboardTheme; mode: PresentationMode; children: React.ReactNode }> = ({ theme, mode, children }) => {
+export const Stage: React.FC<{ theme: ScoreboardTheme; mode: PresentationMode; place?: string; style?: React.CSSProperties; children: React.ReactNode }> = ({ theme, mode, place, style, children }) => {
   const home = useBasketballStore((state) => state.homeTeam.primaryColor);
   const away = useBasketballStore((state) => state.awayTeam.primaryColor);
   return (
     <div className="sb-stage" data-testid={`${mode}-view`} style={themeStyle(theme)}>
-      <div className="sb-board pm-board" data-mode={mode} style={{ '--home': home, '--away': away } as React.CSSProperties}>
+      <div className="sb-board pm-board" data-mode={mode} data-place={place} style={{ '--home': home, '--away': away, ...style } as React.CSSProperties}>
         <span className="sb-stripe" aria-hidden />
         {children}
       </div>
@@ -111,3 +115,52 @@ export const HalftimeView: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) =>
     <MediaSlot region="sponsor" />
   </Stage>
 );
+
+// Live Sponsor mode: the Stadium scoreboard plus a media area the operator can
+// resize and move (presentation store → sponsorLayout, synced to the display).
+const SponsorBadge: React.FC = () => {
+  const { queue, currentIndex } = usePlaybackStore();
+  const items = useMediaStore((state) => state.items);
+  const sponsors = useMediaStore((state) => state.sponsors);
+  const id = currentIndex >= 0 ? queue[currentIndex] : undefined;
+  const sponsor = sponsors.find((s) => id && (s.imageIds.includes(id) || items.find((i) => i.id === id)?.sponsorId === s.id));
+  const { url } = useMediaUrl(sponsor?.logoId ?? null, 'files');
+  if (!sponsor) return null;
+  return (
+    <div className="pm-sponsor-badge">
+      {url && <img src={url} alt="" />}
+      <span className="sb-truncate">{sponsor.name}</span>
+    </div>
+  );
+};
+
+export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) => {
+  const { placement, size, fit } = usePresentationStore((state) => state.sponsorLayout);
+  const side = placement === 'left' || placement === 'right';
+  const rest = 100 - size;
+  // Grid tracks come from the operator's size; areas from the placement (presentation.css).
+  const tracks = (side ? { gridTemplateColumns: placement === 'right' ? `${rest / 2}fr ${rest / 2}fr ${size}fr` : `${size}fr ${rest / 2}fr ${rest / 2}fr`, gridTemplateRows: '1fr 0.55fr' }
+    : { gridTemplateRows: placement === 'bottom' ? `${rest}fr ${size}fr` : `${size}fr ${rest}fr` }) as React.CSSProperties;
+  const team = (s: Side) => (
+    <TeamBlock side={s}>
+      <div className="sb-team-head"><Crest side={s} /><Ident side={s} ball /></div>
+      <Score side={s} />
+      <div className="pm-meta"><Fouls side={s} /><Timeouts side={s} /><Bonus side={s} /></div>
+    </TeamBlock>
+  );
+  return (
+    <Stage theme={theme} mode="livesponsor" place={placement} style={tracks}>
+      {team('home')}
+      <section className="pm-center" aria-label="Game clock">
+        <Period />
+        <GameClock />
+        <ShotClock />
+      </section>
+      {team('away')}
+      <aside className="pm-slot" data-region="sponsor" data-fit={fit} aria-label="Sponsor area">
+        <MediaPlayer />
+        <SponsorBadge />
+      </aside>
+    </Stage>
+  );
+};

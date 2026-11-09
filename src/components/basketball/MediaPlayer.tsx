@@ -28,6 +28,7 @@ const ImageMedia: React.FC<MediaProps> = ({ item: _item, isPlaying: _isPlaying, 
   if (!url) return null;
   return (
     <img
+      key={_item.id}
       src={url}
       alt={_item.name}
       className="pm-media-img"
@@ -54,9 +55,16 @@ const VideoMedia: React.FC<MediaProps & { onError: () => void }> = ({ item, isPl
     }
   }, [isPlaying, url, onError]);
 
+  // Ensure audio is enabled (not muted) for sponsor/intro videos
+  useEffect(() => {
+    const video = ref.current;
+    if (video) video.muted = false;
+  }, []);
+
   if (!url) return null;
   return (
     <video
+      key={item.id}
       ref={ref}
       src={url}
       // onEnded is intentionally not wired to advance(): the timer in
