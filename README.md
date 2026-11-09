@@ -4,7 +4,7 @@ A basketball scoreboard and game-day presentation system for school gyms and are
 
 Holy Cross Regional High School red, white and black is the default branding. Team names, colours and logos can be changed for any school.
 
-> **Status:** Phases 1–5 complete. The core scoreboard, media library, presentation modes, media playback and final polish are all shipped. New phases coming soon.
+> **Status:** Phases 1–6 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, and operator UI/UX improvements are shipped. New phases coming soon.
 
 ## Contents
 
@@ -27,9 +27,11 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Game clock and shot clock with start, pause, reset and corrections down to a tenth of a second
 - Periods and overtime, with configurable league rules
 - Undo for the last 50 actions, and a recent-actions log
-- Keyboard shortcuts for scoring, both clocks, possession and undo
+- Keyboard shortcuts for scoring, both clocks, possession and undo (collapsible shortcuts panel)
 - Saved game configurations, finished-game history with CSV export, and printable summaries
 - Optional period, game-end and shot-clock warning sounds
+- Grouped navigation with visual separators for quick scanning
+- Optimized layout utilizing full screen width on wider displays
 
 **Public display**
 - Five scoreboard presets that use different layouts, not just different colours (see [Scoreboard presets](#scoreboard-presets))
@@ -241,7 +243,8 @@ The unit tests cover scoring, clocks, periods and overtime, fouls, timeouts, pos
 | 3 | Pregame, Live, Stadium and Halftime presentation modes | ✅ Done |
 | 4 | Media playback, sponsor rotation and game-day presentation | ✅ Done |
 | 5 | Player roster, introductions, fullscreen and polish | ✅ Done |
-| 6+ | Coming soon | Planned |
+| 6 | Operator UI/UX optimization, navigation improvements and layout refinements | ✅ Done |
+| 7+ | Coming soon | Planned |
 
 ## Known limitations
 

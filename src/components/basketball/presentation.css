@@ -126,7 +126,9 @@
   display: none;
 }
 
-/* Container for a single intro card. */
+/* Container for a single intro card.
+ * --intro-text is set by IntroViews.tsx via readableOn() so text stays
+ * readable regardless of whether the team's primary color is light or dark. */
 .pm-intro {
   flex: 1;
   position: relative;
@@ -136,7 +138,7 @@
   justify-content: center;
   gap: calc(var(--u) * 2);
   overflow: hidden;
-  color: #fff;
+  color: var(--intro-text, #fff);
   text-align: center;
   padding: calc(var(--u) * 4);
 }
@@ -150,7 +152,7 @@
   opacity: 0.1;
   user-select: none;
   pointer-events: none;
-  color: #fff;
+  color: var(--intro-text, #fff);
 }
 
 .pm-intro-eyebrow {
@@ -189,7 +191,7 @@
   height: calc(var(--u) * 18);
   border-radius: 50%;
   object-fit: cover;
-  border: calc(var(--u) * 0.4) solid rgba(255,255,255,0.4);
+  border: calc(var(--u) * 0.4) solid color-mix(in srgb, var(--intro-text, #fff) 40%, transparent);
 }
 
 .pm-intro-crest {
