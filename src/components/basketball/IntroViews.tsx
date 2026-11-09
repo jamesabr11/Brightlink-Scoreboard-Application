@@ -4,6 +4,7 @@ import { useBasketballStore } from '../../store/useBasketballStore';
 import { useIntroStore } from '../../store/useIntroStore';
 import { useRosterStore } from '../../store/useRosterStore';
 import { loadPhoto } from '../../lib/rosterPhotos';
+import { readableOn } from '../../lib/theme';
 import { MediaPlayer } from './MediaPlayer';
 import { Stage } from './PresentationViews';
 import { TeamLogo } from './ui';
@@ -79,10 +80,13 @@ export const IntroView: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) => {
   const player = playerIndex >= 0 ? (introPlayers[playerIndex] ?? null) : null;
 
   const bgColor = currentTeam?.primaryColor ?? '#111111';
+  // Derive readable text color so teams with a light primary (e.g. white Visitors)
+  // don't produce invisible white-on-white text. The CSS rules use --intro-text.
+  const textColor = readableOn(bgColor);
 
   return (
     <Stage theme={theme} mode="intro">
-      <div style={{ flex: 1, background: bgColor, display: 'flex', alignItems: 'stretch' }}>
+      <div style={{ flex: 1, background: bgColor, '--intro-text': textColor, display: 'flex', alignItems: 'stretch' } as React.CSSProperties}>
         <AnimatePresence mode="wait">
           <motion.div
             key={`${team}-${playerIndex}`}

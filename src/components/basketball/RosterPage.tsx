@@ -246,7 +246,7 @@ export const RosterPage: React.FC = () => (
   <div className="space-y-4">
     <div className="flex items-center justify-between mb-1">
       <h2 className="text-lg font-bold text-white">Roster Management</h2>
-      <p className="text-sm text-neutral-400">Star players are highlighted on intro cards. Drag order sets intro sequence.</p>
+      <p className="text-sm text-neutral-400">Star (★) players are introduced first. Use ↑↓ to set the intro order.</p>
     </div>
     <div className="grid lg:grid-cols-2 gap-4">
       <RosterSection side="home" />

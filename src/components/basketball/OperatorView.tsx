@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { inBonus, isGameActive, useBasketballStore } from '../../store/useBasketballStore';
 import { askConfirm, notify } from '../../lib/feedback';
 import { ClockDisplay } from './ClockDisplay';
@@ -5,7 +6,7 @@ import { SHORTCUTS, keyName, shortcutKey, useShortcuts } from './shortcuts';
 import { negative, neutral, positive, primary, buttonBase } from './styles';
 import { Panel, TeamLogo } from './ui';
 import { PresentationPanel } from './PresentationPanel';
-import { Flag, Play, Pause, Plus, Minus, RotateCcw, Undo2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Flag, Play, Pause, Plus, Minus, RotateCcw, Undo2 } from 'lucide-react';
 
 const Kbd: React.FC<{ id: string }> = ({ id }) => (
   <kbd className="text-[10px] font-mono font-normal text-white bg-black/40 rounded px-1 py-0.5">{shortcutKey(id)}</kbd>
@@ -99,6 +100,7 @@ const GameActions: React.FC = () => {
 
 export const OperatorView: React.FC = () => {
   const store = useBasketballStore();
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   useShortcuts();
 
   const { shotClockDuration, shotClockShort } = store.gameConfig;
@@ -179,16 +181,26 @@ export const OperatorView: React.FC = () => {
 
       <div className="grid lg:grid-cols-3 gap-3 mt-3">
         <div className="lg:col-span-2">
-          <Panel title="Keyboard Shortcuts">
-            <ul className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm text-neutral-300">
-              {SHORTCUTS.map((s) => (
-                <li key={s.id} className="flex items-center gap-2"><kbd className="font-mono text-xs bg-neutral-700 rounded px-1.5 py-0.5 text-white">{keyName(s.key)}</kbd>{s.label}</li>
-              ))}
-            </ul>
-          </Panel>
+          <div className="bg-neutral-900 border border-neutral-700 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setShortcutsOpen((o) => !o)}
+              aria-expanded={shortcutsOpen}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
+            >
+              <span>Keyboard Shortcuts</span>
+              {shortcutsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            {shortcutsOpen && (
+              <ul className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm text-neutral-300 px-4 pb-4">
+                {SHORTCUTS.map((s) => (
+                  <li key={s.id} className="flex items-center gap-2"><kbd className="font-mono text-xs bg-neutral-700 rounded px-1.5 py-0.5 text-white">{keyName(s.key)}</kbd>{s.label}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
         <Panel title={`Recent Actions (${store.history.length}/50)`}>
-          <ol className="text-sm text-neutral-300 h-24 overflow-y-auto" tabIndex={0} aria-label="Recent actions">
+          <ol className="text-sm text-neutral-300 h-28 overflow-y-auto" tabIndex={0} aria-label="Recent actions">
             {store.history.length === 0 && <li className="text-neutral-400">No actions yet</li>}
             {store.history.map((entry, index) => (
               <li key={index} className="truncate">
