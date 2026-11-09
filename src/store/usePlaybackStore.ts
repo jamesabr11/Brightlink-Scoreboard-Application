@@ -25,11 +25,11 @@ export interface PlaybackStore extends PlaybackState {
 const initialState = (): PlaybackState => ({ queue: [], currentIndex: -1, isPlaying: false });
 
 // Which categories' media belongs in each mode's slot.
-// Live mode has no auto-queue: the operator picks manually.
 const MODE_CATEGORIES: Partial<Record<PresentationMode, string[]>> = {
   pregame:  ['pregame', 'sponsors', 'advertisements'],
   halftime: ['halftime', 'sponsors', 'advertisements'],
   stadium:  ['advertisements', 'promotions', 'hype'],
+  livesponsor: ['sponsors', 'advertisements'],
 };
 
 // Returns item ids sorted by creation time, filtered to the categories for mode.

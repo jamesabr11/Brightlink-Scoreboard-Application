@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { useBasketballStore } from '../../store/useBasketballStore';
 import { useMediaStore } from '../../store/useMediaStore';
-import { usePlaybackStore } from '../../store/usePlaybackStore';
+import { usePlaybackStore, queueForMode } from '../../store/usePlaybackStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import { halfPeriods, pointsThrough } from '../../lib/periodScores';
 import { useMediaUrl } from './useMedia';
@@ -123,13 +124,24 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme }> = ({ theme })
   const away = useBasketballStore((state) => state.awayTeam.primaryColor);
   const items = useMediaStore((state) => state.items);
   const sponsors = useMediaStore((state) => state.sponsors);
-  const queue = usePlaybackStore((state) => state.queue);
-  const currentIndex = usePlaybackStore((state) => state.currentIndex);
+  const { queue, currentIndex, setQueue } = usePlaybackStore();
+  const setMode = usePresentationStore((state) => state.setMode);
 
   // Get current sponsor data from queue
   const currentSponsorId = queue[currentIndex];
   const currentItem = currentSponsorId ? items.find((i) => i.id === currentSponsorId) : undefined;
   const sponsor = currentItem?.sponsorId ? sponsors.find((s) => s.id === currentItem.sponsorId) : undefined;
+
+  // Auto-queue sponsor and advertisement media for Live Sponsor mode when not already queued
+  useEffect(() => {
+    const itemsForQueue = queueForMode('livesponsor', items);
+    if (itemsForQueue.length > 0 && queue.length === 0) {
+      setQueue(itemsForQueue, true);
+    } else if (itemsForQueue.length === 0 && queue.length === 0) {
+      // No media available, fall back to Live mode
+      setMode('live');
+    }
+  }, []);
 
   return (
     <div className="sb-stage" data-testid="livesponsor-view" style={themeStyle(theme)}>
@@ -161,17 +173,19 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme }> = ({ theme })
 };
 
 // Sponsor panel component showing current sponsor logo and image
+// Sponsor panel component showing current sponsor logo and image
 const SponsorPanel: React.FC<{ sponsor: Sponsor | undefined; item: MediaItem | undefined }> = ({ sponsor, item }) => {
-  const { url, missing } = useMediaUrl(item?.id ?? null, 'files');
+  const { url: itemUrl, missing } = useMediaUrl(item?.id ?? null, 'files');
+  const { url: logoUrl } = useMediaUrl(sponsor?.logoId ?? null, 'files');
 
-  if (missing || !url) {
+  if (missing || !itemUrl) {
     // Fallback if media is missing
     return (
       <div className="sb-sponsor-panel">
         <div className="sb-sponsor-image" />
         <div className="sb-sponsor-badge">
-          {sponsor?.logoId ? (
-            <SponsorLogo logoId={sponsor.logoId} />
+          {sponsor?.logoId && logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="sb-sponsor-logo" />
           ) : null}
           <span className="sb-sponsor-name">{sponsor?.name ?? 'Sponsor'}</span>
         </div>
@@ -183,14 +197,16 @@ const SponsorPanel: React.FC<{ sponsor: Sponsor | undefined; item: MediaItem | u
     <div className="sb-sponsor-panel">
       <div className="sb-sponsor-image">
         {item?.kind === 'video' ? (
-          <video src={url} className="sb-sponsor-image" autoPlay playsInline loop controls muted={false} />
+          <video src={itemUrl} className="sb-sponsor-image" autoPlay playsInline loop controls muted={false} />
         ) : (
-          <img src={url} alt={item?.name ?? 'Sponsor'} className="sb-sponsor-image" />
+          <img src={itemUrl} alt={item?.name ?? 'Sponsor'} className="sb-sponsor-image" />
         )}
       </div>
       {sponsor?.logoId || sponsor?.name ? (
         <div className="sb-sponsor-badge">
-          {sponsor.logoId ? <SponsorLogo logoId={sponsor.logoId} /> : null}
+          {sponsor.logoId && logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="sb-sponsor-logo" />
+          ) : null}
           <span className="sb-sponsor-name">{sponsor.name}</span>
         </div>
       ) : null}
@@ -199,7 +215,7 @@ const SponsorPanel: React.FC<{ sponsor: Sponsor | undefined; item: MediaItem | u
 };
 
 // Individual sponsor logo
-const SponsorLogo: React.FC<{ logoId: string }> = ({ logoId }) => {
+export const SponsorLogo: React.FC<{ logoId: string }> = ({ logoId }) => {
   const { url } = useMediaUrl(logoId, 'files');
   return url ? <img src={url} alt="Logo" className="sb-sponsor-logo" /> : null;
 };
