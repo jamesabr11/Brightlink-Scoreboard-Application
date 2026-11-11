@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { ExternalLink, FolderOpen, Gauge, Handshake, History, Images, Settings, SlidersHorizontal, Users } from 'lucide-react';
+import { ExternalLink, FolderOpen, Gauge, Handshake, History, Images, LayoutTemplate, Settings, SlidersHorizontal, Users } from 'lucide-react';
 import { BRAND, BRAND_TEAM } from '../../lib/branding';
 import { primary } from './styles';
 import { FeedbackHost } from './ui';
@@ -17,6 +17,7 @@ const NAV_GROUPS = [
   [
     { to: '/media', label: 'Media', icon: Images },
     { to: '/sponsors', label: 'Sponsors', icon: Handshake },
+    { to: '/layout', label: 'Layout', icon: LayoutTemplate },
   ],
   [
     { to: '/history', label: 'History', icon: History },

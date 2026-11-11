@@ -38,7 +38,7 @@ const CountdownControls: React.FC<{ id: CountdownId; title: string }> = ({ id, t
   );
 };
 
-const SponsorLayoutControls: React.FC = () => {
+export const SponsorLayoutControls: React.FC = () => {
   const { placement, size, fit } = usePresentationStore((state) => state.sponsorLayout);
   const set = usePresentationStore((state) => state.setSponsorLayout);
   return (
