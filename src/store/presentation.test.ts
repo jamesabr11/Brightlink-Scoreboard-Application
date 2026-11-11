@@ -184,4 +184,11 @@ describe('sponsor layout sections', () => {
     operator.show.getState().setSponsorLayout({ rects: { home: { x: 95, y: -4, w: 30, h: 20 }, bogus: { x: 1, y: 1, w: 9, h: 9 }, away: { x: 'a' } } as never });
     expect(display.show.getState().sponsorLayout.rects).toEqual({ home: { x: 70, y: 0, w: 30, h: 20 } });
   });
+
+  it('drops manual positions saved before layout versioning but keeps media assignments', async () => {
+    localStorage.setItem('basketball-presentation', JSON.stringify({ state: { sponsorLayout: { sections: 2, media: [['a'], ['b']], rects: { home: { x: 0, y: 0, w: 40, h: 40 } } } }, version: 0 }));
+    const { show } = await openTab();
+    expect(show.getState().sponsorLayout.rects).toEqual({});
+    expect(show.getState().sponsorLayout.media).toEqual([['a'], ['b'], []]);
+  });
 });

@@ -129,6 +129,12 @@ export const usePresentationStore = create<PresentationStore>()(
     {
       name: 'basketball-presentation',
       storage: safeStorage,
+      // v1: manual element positions saved by the first free-layout builds are dropped once, back to the default layout.
+      version: 1,
+      migrate: (saved) => {
+        const state = (saved ?? {}) as Partial<PresentationState>;
+        return { ...state, sponsorLayout: { ...state.sponsorLayout, rects: {} } };
+      },
       partialize: ({ mode, countdowns, sponsorLayout }) => ({ mode, countdowns, sponsorLayout }),
       merge: (saved, current) => {
         const state = saved as Partial<PresentationState> | undefined;

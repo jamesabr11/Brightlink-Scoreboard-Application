@@ -158,7 +158,11 @@ const SectionRotator: React.FC<{ ids: string[] }> = ({ ids }) => {
 
 // `preview` draws the empty section panels only; the Layout Editor overlays its own thumbnails, so nothing plays.
 // Free layout: an element sits at its rect (% of the canvas) with the usual gap kept around it.
-const freeStyle = (r?: LayoutRect): React.CSSProperties | undefined => r && ({
+// `ref` is the width (stage units) the block's contents are designed for: the block gets its own --u from its
+// width and height (at 16:9, 64cqh is 36 stage units), so everything inside re-fits it. Resolved against the
+// stage like the board's own --u, which is why the block itself is not a container.
+const freeStyle = (r?: LayoutRect, ref?: number): React.CSSProperties | undefined => r && ({
+  ...(ref ? { '--u': `min(${r.width / ref}cqw, ${r.height / 64}cqh)` } : {}),
   position: 'absolute', gridArea: 'auto', margin: 0, boxSizing: 'border-box',
   left: `calc(${r.left}% + var(--u) * 0.4)`, top: `calc(${r.top}% + var(--u) * 0.4)`,
   width: `calc(${r.width}% - var(--u) * 0.8)`, height: `calc(${r.height}% - var(--u) * 0.8)`,
@@ -188,14 +192,14 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boole
   const { placement, size } = layout;
   const free = isFree(layout);
   const rects = free ? layoutRects(layout) : [];
-  const at = (id: string) => freeStyle(rects.find((r) => r.id === id));
+  const at = (id: string, ref: number) => freeStyle(rects.find((r) => r.id === id), ref);
   const side = placement === 'left' || placement === 'right';
   const rest = 100 - size;
   // Grid tracks come from the operator's size; areas from the placement (presentation.css).
   const tracks = (side ? { gridTemplateColumns: placement === 'right' ? `${rest / 2}fr ${rest / 2}fr ${size}fr` : `${size}fr ${rest / 2}fr ${rest / 2}fr`, gridTemplateRows: '1fr 0.55fr' }
     : { gridTemplateRows: placement === 'bottom' ? `${rest}fr ${size}fr` : `${size}fr ${rest}fr` }) as React.CSSProperties;
   const team = (s: Side) => (
-    <TeamBlock side={s} style={at(s)}>
+    <TeamBlock side={s} style={at(s, 32.5)}>
       <div className="sb-team-head"><Crest side={s} /><Ident side={s} ball /></div>
       <Score side={s} />
       <div className="pm-meta"><Fouls side={s} /><Timeouts side={s} /><Bonus side={s} /></div>
@@ -204,7 +208,7 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boole
   return (
     <Stage theme={theme} mode="livesponsor" place={free ? 'free' : placement} style={free ? undefined : tracks}>
       {team('home')}
-      <section className="pm-center" style={at('center')} aria-label="Game clock">
+      <section className="pm-center" style={at('center', 28.6)} aria-label="Game clock">
         <Period />
         <GameClock />
         <ShotClock />
