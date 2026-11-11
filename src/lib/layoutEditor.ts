@@ -73,7 +73,7 @@ export function layoutRects(layout: SponsorLayout): LayoutRect[] {
 export const isFree = ({ rects }: SponsorLayout) => Object.keys(rects).length > 0;
 
 export type Handle = 'move' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
-export const MIN_BOX = 8; // percent: the smallest an element can be resized to
+export const MIN_BOX = 12; // percent: the smallest an element can be resized to
 const SNAP = 0.5;
 const snap = (v: number) => Math.round(v / SNAP) * SNAP;
 

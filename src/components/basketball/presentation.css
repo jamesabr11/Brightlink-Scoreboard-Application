@@ -38,13 +38,22 @@
 .pm-board[data-mode='livesponsor'][data-place='top'] .pm-center { flex-direction: column; }
 
 /* Free layout (elements moved or resized in the Layout Editor): every element is
- * placed absolutely from its saved rect, so the text of each block is sized from
- * the block itself and re-fits whatever size it is given. The default layouts
- * above keep their stage-relative sizing. */
+ * placed absolutely from its saved rect. Each block is its own size container and
+ * everything inside it (crest, name, score, clocks, stats) is sized from the block
+ * through its own --u, so it re-fits any width or height without clipping, and the
+ * crest stays square. Block padding and gaps are zeroed and moved onto the children
+ * for the same reason: the block cannot read its own container units. The default
+ * layouts above keep their stage-relative sizing. */
 .pm-board[data-mode='livesponsor'][data-place='free'] { display: block; padding: 0; }
-.pm-board[data-mode='livesponsor'][data-place='free'] .pm-center { flex-direction: column; flex-wrap: nowrap; }
 .pm-board[data-mode='livesponsor'][data-place='free'] .sb-team,
-.pm-board[data-mode='livesponsor'][data-place='free'] .pm-center { container: blk / size; }
+.pm-board[data-mode='livesponsor'][data-place='free'] .pm-center { container: blk / size; padding: 0; gap: 0; overflow: hidden; }
+.pm-board[data-mode='livesponsor'][data-place='free'] .pm-center { flex-direction: column; flex-wrap: nowrap; }
+.pm-board[data-mode='livesponsor'][data-place='free'] .sb-team > *,
+.pm-board[data-mode='livesponsor'][data-place='free'] .pm-center > * {
+  min-width: 0;
+  max-width: calc(100% - var(--u) * 3);
+  margin: calc(var(--u) * 0.6) calc(var(--u) * 1.5);
+}
 .pm-board[data-mode='livesponsor'][data-place='free'] .sb-team > * {
   --u: min(1cqw / 32.5, 1cqh / 36);
   --crest: calc(var(--u) * 8);
@@ -56,6 +65,10 @@
   --clock: calc(var(--u) * 12);
   --shot: calc(var(--u) * 7);
 }
+/* Small labels keep a readable floor, but a lower one than the full board. */
+.pm-board[data-mode='livesponsor'][data-place='free'] .sb-eyebrow { font-size: max(8px, calc(var(--u) * 1.05)); }
+.pm-board[data-mode='livesponsor'][data-place='free'] .pm-meta { flex-wrap: wrap; gap: calc(var(--u) * 1) calc(var(--u) * 2); }
+.pm-board[data-mode='livesponsor'][data-place='free'] .sb-team-head { flex-wrap: nowrap; }
 
 /* Stadium has no header: the teams get the room. */
 .pm-board[data-mode='stadium'] {

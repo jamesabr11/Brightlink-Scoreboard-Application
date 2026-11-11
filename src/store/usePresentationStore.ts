@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { clockRemaining, stopClock } from '../lib/clock';
 import { safeStorage } from '../lib/storage';
+import { MIN_BOX } from '../lib/layoutEditor';
 import { PRESENTATION_MODES, SPONSOR_ARRANGES, SPONSOR_ELEMENTS, SPONSOR_MAX_SECTIONS, SPONSOR_PLACEMENTS, SPONSOR_SHARE_MAX, SPONSOR_SHARE_MIN, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../types/presentation';
 import type { Countdown, CountdownId, PresentationMode, PresentationState, SponsorLayout } from '../types/presentation';
 
@@ -38,7 +39,7 @@ const cleanRects = (saved: unknown): SponsorLayout['rects'] => {
   const n = (v: unknown, lo: number, hi: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(Math.min(hi, Math.max(lo, v)) * 10) / 10 : null);
   for (const id of SPONSOR_ELEMENTS) {
     const r = (saved as Record<string, Record<string, unknown> | undefined>)[id];
-    const w = n(r?.w, 5, 100), h = n(r?.h, 5, 100);
+    const w = n(r?.w, MIN_BOX, 100), h = n(r?.h, MIN_BOX, 100);
     if (w === null || h === null) continue;
     const x = n(r?.x, 0, 100 - w), y = n(r?.y, 0, 100 - h);
     if (x !== null && y !== null) out[id] = { x, y, w, h };
