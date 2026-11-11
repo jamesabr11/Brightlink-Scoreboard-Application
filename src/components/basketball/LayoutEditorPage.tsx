@@ -11,6 +11,7 @@ import { buttonBase, neutral } from './styles';
 import { LayoutPreview } from './LayoutPreview';
 import { MediaThumb } from './MediaParts';
 import { NumberField, Panel } from './ui';
+import { SavedLayoutsPanel } from './SavedLayoutsPanel';
 
 const pct = (n: number) => `${Math.round(n * 10) / 10}%`;
 const pick = (on: boolean) => `${on ? `${buttonBase} bg-[var(--brand)] ring-2 ring-white` : neutral} px-3 py-2 text-sm capitalize`;
@@ -105,7 +106,7 @@ export const LayoutEditorPage: React.FC = () => {
   const [layout, setLayout] = useLayout();
   const theme = useBasketballStore((s) => s.gameConfig.theme);
   const reset = async () => {
-    const ok = await askConfirm({ title: 'Reset the layout?', message: 'Positions, sizes, placement, sections and scaling go back to the defaults for the selected scoreboard preset. Your media assignments and game settings are kept.', confirmLabel: 'Reset to Defaults', danger: true });
+    const ok = await askConfirm({ title: 'Reset the layout?', message: 'Positions, sizes, placement, sections and scaling go back to the defaults for the selected scoreboard preset. Your media assignments and game settings are kept. A saved layout changes only when you press Save changes.', confirmLabel: 'Reset to Defaults', danger: true });
     if (!ok) return;
     setLayout(defaultGeometry(theme.layout));
     setSelected('sponsor');
@@ -152,6 +153,7 @@ export const LayoutEditorPage: React.FC = () => {
           </ul>
         </Panel>
         <div className="space-y-3">
+          <SavedLayoutsPanel />
           <Panel title="Properties">
             <div className="space-y-3">
               <div><span className={label}>Name</span><div className={field}>{sel.name}</div></div>

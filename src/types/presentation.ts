@@ -1,3 +1,5 @@
+import type { ScoreboardTheme } from './basketball';
+
 export const PRESENTATION_MODES = ['pregame', 'live', 'stadium', 'halftime', 'intro', 'fullscreen', 'livesponsor'] as const;
 export type PresentationMode = (typeof PRESENTATION_MODES)[number];
 
@@ -23,6 +25,7 @@ export interface SponsorLayout {
   split: number[]; // relative share of each section (SPONSOR_MAX_SECTIONS weights)
   arrange: SponsorArrange; // direction the sections are divided in
   media: string[][]; // Media Library ids assigned to each section (ids only, never blobs)
+  preset: string; // the scoreboard preset ('themeId:layout') this geometry belongs to; a different preset replaces it
   rects: Partial<Record<SponsorElement, LayoutBox>>; // manual positions; any entry switches the display to free layout
 }
 export const SPONSOR_ELEMENTS = ['home', 'center', 'away', 'section0', 'section1', 'section2'] as const;
@@ -38,7 +41,14 @@ export const SPONSOR_SIZE_MAX = 60;
 
 // What the public display shows. Deliberately separate from game state: nothing
 // here can change a score, clock, foul, timeout, period or the undo history.
+// A named custom layout: geometry, sections and media ids (never blobs) plus the scoreboard appearance it was made for.
+export interface SavedLayout { id: string; name: string; layout: SponsorLayout; theme: ScoreboardTheme }
+export const MAX_SAVED_LAYOUTS = 50;
+export const MAX_LAYOUT_NAME = 40;
+
 export interface PresentationState {
+  savedLayouts: SavedLayout[];
+  activeLayoutId: string | null; // the saved layout being edited; null for the unsaved default
   mode: PresentationMode;
   countdowns: Record<CountdownId, Countdown>;
   sponsorLayout: SponsorLayout;

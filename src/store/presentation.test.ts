@@ -204,4 +204,56 @@ describe('sponsor layout sections', () => {
     game.getState().updateGameConfig({ theme: { ...game.getState().gameConfig.theme, accent: '#123456' } });
     expect(show.getState().sponsorLayout.rects).toHaveProperty('away');
   });
+
+  describe('saved layouts', () => {
+    it('keep independent copies, unique names, and survive a restart', async () => {
+      const { game, show } = await openTab();
+      const theme = game.getState().gameConfig.theme;
+      const s = () => show.getState();
+      s().setSponsorLayout({ sections: 2, media: [['a'], ['b'], []], rects: { home: { x: 0, y: 0, w: 40, h: 40 } } });
+      s().saveLayout('Game night', theme);
+      s().saveLayout(' game NIGHT ', theme);
+      expect(s().savedLayouts.map((l) => l.name)).toEqual(['Game night', 'game NIGHT (2)']);
+      const [first, second] = s().savedLayouts;
+      s().setSponsorLayout({ sections: 3, rects: {}, media: [['z'], [], []] });
+      expect(s().savedLayouts[0].layout).toMatchObject({ sections: 2, media: [['a'], ['b'], []], rects: { home: { x: 0, y: 0, w: 40, h: 40 } } });
+      s().duplicateSavedLayout(first.id);
+      expect(s().savedLayouts[2]).toMatchObject({ name: 'Game night copy', layout: first.layout });
+      s().renameSavedLayout(second.id, 'Game night');
+      expect(s().savedLayouts[1].name).toBe('Game night (2)');
+      s().renameSavedLayout(second.id, 'Practice');
+
+      const next = await openTab();
+      expect(next.show.getState().savedLayouts.map((l) => l.name)).toEqual(['Game night', 'Practice', 'Game night copy']);
+      next.show.getState().deleteSavedLayout(first.id);
+      expect(next.show.getState().savedLayouts).toHaveLength(2);
+    });
+
+    it('loading one restores its layout and appearance everywhere, and edits stay in the working copy', async () => {
+      const operator = await openTab();
+      const display = await openTab();
+      const theme = operator.game.getState().gameConfig.theme;
+      const s = operator.show.getState();
+      s.setSponsorLayout({ media: [['a'], [], []], rects: { away: { x: 50, y: 0, w: 30, h: 30 } } });
+      s.saveLayout('Mine', theme);
+      const id = operator.show.getState().savedLayouts[0].id;
+      operator.game.getState().updateGameConfig({ theme: { ...theme, themeId: 'broadcast', layout: 'broadcast' } });
+      expect(operator.show.getState().sponsorLayout.rects).toEqual({});
+      operator.show.getState().loadSavedLayout(id);
+      expect(operator.show.getState().sponsorLayout).toMatchObject({ media: [['a'], [], []], rects: { away: { x: 50, y: 0, w: 30, h: 30 } } });
+      expect(operator.game.getState().gameConfig.theme.themeId).toBe(theme.themeId);
+      expect(display.show.getState().sponsorLayout.rects).toHaveProperty('away');
+      expect(display.show.getState().activeLayoutId).toBe(id);
+      operator.show.getState().setSponsorLayout({ rects: {} });
+      expect(operator.show.getState().savedLayouts[0].layout.rects).toHaveProperty('away');
+    });
+
+    it('cleans stored layouts', async () => {
+      localStorage.setItem('basketball-presentation', JSON.stringify({ state: { savedLayouts: [{ id: 'x', name: 5 }, { id: 'ok', name: 'Fine', layout: { sections: 9 }, theme: { themeId: 'nope' } }, { id: 'ok', name: 'Dup' }], activeLayoutId: 'gone' }, version: 1 }));
+      const { show } = await openTab();
+      expect(show.getState().savedLayouts).toHaveLength(1);
+      expect(show.getState().savedLayouts[0].layout.sections).toBe(3);
+      expect(show.getState().activeLayoutId).toBeNull();
+    });
+  });
 });

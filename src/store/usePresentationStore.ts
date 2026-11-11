@@ -1,16 +1,23 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { clockRemaining, stopClock } from '../lib/clock';
-import { safeStorage } from '../lib/storage';
+import { newId, safeStorage } from '../lib/storage';
+import { cleanTheme } from '../lib/theme';
 import { MIN_BOX } from '../lib/layoutEditor';
-import { PRESENTATION_MODES, SPONSOR_ARRANGES, SPONSOR_ELEMENTS, SPONSOR_MAX_SECTIONS, SPONSOR_PLACEMENTS, SPONSOR_SHARE_MAX, SPONSOR_SHARE_MIN, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../types/presentation';
+import { MAX_LAYOUT_NAME, MAX_SAVED_LAYOUTS, PRESENTATION_MODES, SPONSOR_ARRANGES, SPONSOR_ELEMENTS, SPONSOR_MAX_SECTIONS, SPONSOR_PLACEMENTS, SPONSOR_SHARE_MAX, SPONSOR_SHARE_MIN, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../types/presentation';
 import { useBasketballStore } from './useBasketballStore';
-import type { LayoutId } from '../types/basketball';
-import type { Countdown, CountdownId, PresentationMode, PresentationState, SponsorLayout } from '../types/presentation';
+import type { LayoutId, ScoreboardTheme } from '../types/basketball';
+import type { Countdown, CountdownId, PresentationMode, PresentationState, SavedLayout, SponsorLayout } from '../types/presentation';
 
 interface PresentationStore extends PresentationState {
   setMode: (mode: PresentationMode) => void;
   setSponsorLayout: (patch: Partial<SponsorLayout>) => void;
+  saveLayout: (name: string, theme: ScoreboardTheme) => void;
+  updateSavedLayout: (id: string, theme: ScoreboardTheme) => void;
+  renameSavedLayout: (id: string, name: string) => void;
+  duplicateSavedLayout: (id: string) => void;
+  deleteSavedLayout: (id: string) => void;
+  loadSavedLayout: (id: string) => void;
   startCountdown: (id: CountdownId) => void;
   pauseCountdown: (id: CountdownId) => void;
   resetCountdown: (id: CountdownId) => void;
@@ -24,7 +31,7 @@ const DEFAULT_SECONDS: Record<CountdownId, number> = { pregame: 10 * 60, halftim
 
 const freshCountdown = (seconds: number): Countdown => ({ duration: seconds, remainingTime: seconds, isRunning: false, startTimestamp: null });
 
-export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'bottom', size: 35, fit: 'contain', sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []], rects: {} };
+export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'bottom', size: 35, fit: 'contain', sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []], preset: '', rects: {} };
 
 /**
  * The Live Sponsor geometry a scoreboard preset starts from (placement, media size, no manual positions).
@@ -44,6 +51,8 @@ export const defaultGeometry = (layout: LayoutId): Partial<SponsorLayout> => ({ 
 const initialState = (): PresentationState => ({
   mode: 'live',
   sponsorLayout: DEFAULT_SPONSOR_LAYOUT,
+  savedLayouts: [],
+  activeLayoutId: null,
   countdowns: { pregame: freshCountdown(DEFAULT_SECONDS.pregame), halftime: freshCountdown(DEFAULT_SECONDS.halftime) },
 });
 
@@ -78,8 +87,32 @@ const cleanLayout = (saved: Partial<SponsorLayout> | undefined): SponsorLayout =
     const ids = saved?.media?.[i];
     return Array.isArray(ids) ? ids.filter((id) => typeof id === 'string').slice(0, 20) : [];
   }),
+  preset: typeof saved?.preset === 'string' ? saved.preset.slice(0, 40) : '',
   rects: cleanRects(saved?.rects),
 });
+
+export const presetKey = (theme: ScoreboardTheme) => `${theme.themeId}:${theme.layout}`;
+
+/** Names are trimmed, capped and kept unique (case-insensitive); a clash gets " (2)", " (3)"... */
+const uniqueName = (raw: string, layouts: SavedLayout[], exceptId?: string) => {
+  const base = raw.trim().slice(0, MAX_LAYOUT_NAME) || 'Layout';
+  const taken = new Set(layouts.filter((l) => l.id !== exceptId).map((l) => l.name.toLowerCase()));
+  let name = base;
+  for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${base.slice(0, MAX_LAYOUT_NAME - 4)} (${n})`;
+  return name;
+};
+export const layoutNameTaken = (layouts: SavedLayout[], name: string, exceptId?: string) =>
+  layouts.some((l) => l.id !== exceptId && l.name.toLowerCase() === name.trim().toLowerCase());
+
+const cleanSaved = (saved: unknown): SavedLayout[] => {
+  if (!Array.isArray(saved)) return [];
+  const out: SavedLayout[] = [];
+  for (const item of saved.slice(0, MAX_SAVED_LAYOUTS) as Partial<SavedLayout>[]) {
+    if (typeof item?.id !== 'string' || typeof item.name !== 'string' || out.some((l) => l.id === item.id)) continue;
+    out.push({ id: item.id, name: uniqueName(item.name, out), layout: cleanLayout(item.layout), theme: cleanTheme(item.theme) });
+  }
+  return out;
+};
 
 // localStorage is untrusted, so nothing from it is used as-is.
 const cleanCountdown = (saved: Partial<Countdown> | undefined, fallback: Countdown): Countdown => {
@@ -109,6 +142,41 @@ export const usePresentationStore = create<PresentationStore>()(
         setMode: (mode) => { if (mode !== get().mode) syncAndSet({ mode }); },
 
         setSponsorLayout: (patch) => syncAndSet({ sponsorLayout: cleanLayout({ ...get().sponsorLayout, ...patch }) }),
+
+        // Saved layouts are independent copies: editing the live layout never touches one until it is saved again.
+        saveLayout: (name, theme) => {
+          const { savedLayouts, sponsorLayout } = get();
+          if (savedLayouts.length >= MAX_SAVED_LAYOUTS) return;
+          const saved: SavedLayout = { id: newId(), name: uniqueName(name, savedLayouts), layout: cleanLayout({ ...sponsorLayout, preset: presetKey(theme) }), theme: cleanTheme(theme) };
+          syncAndSet({ savedLayouts: [...savedLayouts, saved], activeLayoutId: saved.id, sponsorLayout: saved.layout });
+        },
+        updateSavedLayout: (id, theme) => {
+          const { savedLayouts, sponsorLayout } = get();
+          const layout = cleanLayout({ ...sponsorLayout, preset: presetKey(theme) });
+          syncAndSet({ savedLayouts: savedLayouts.map((l) => (l.id === id ? { ...l, layout, theme: cleanTheme(theme) } : l)), sponsorLayout: layout });
+        },
+        renameSavedLayout: (id, name) => {
+          const { savedLayouts } = get();
+          syncAndSet({ savedLayouts: savedLayouts.map((l) => (l.id === id ? { ...l, name: uniqueName(name, savedLayouts, id) } : l)) });
+        },
+        duplicateSavedLayout: (id) => {
+          const { savedLayouts } = get();
+          const from = savedLayouts.find((l) => l.id === id);
+          if (!from || savedLayouts.length >= MAX_SAVED_LAYOUTS) return;
+          const copy: SavedLayout = { id: newId(), name: uniqueName(`${from.name} copy`, savedLayouts), layout: cleanLayout(from.layout), theme: cleanTheme(from.theme) };
+          syncAndSet({ savedLayouts: [...savedLayouts, copy] });
+        },
+        deleteSavedLayout: (id) => {
+          const { savedLayouts, activeLayoutId } = get();
+          syncAndSet({ savedLayouts: savedLayouts.filter((l) => l.id !== id), activeLayoutId: activeLayoutId === id ? null : activeLayoutId });
+        },
+        // The layout goes live (and to /display) together with the appearance it was saved with.
+        loadSavedLayout: (id) => {
+          const saved = get().savedLayouts.find((l) => l.id === id);
+          if (!saved) return;
+          syncAndSet({ sponsorLayout: cleanLayout({ ...saved.layout, preset: presetKey(saved.theme) }), activeLayoutId: id });
+          useBasketballStore.getState().updateGameConfig({ theme: saved.theme });
+        },
 
         startCountdown: (id) => {
           const countdown = get().countdowns[id];
@@ -152,13 +220,17 @@ export const usePresentationStore = create<PresentationStore>()(
         const state = (saved ?? {}) as Partial<PresentationState>;
         return { ...state, sponsorLayout: { ...state.sponsorLayout, rects: {} } };
       },
-      partialize: ({ mode, countdowns, sponsorLayout }) => ({ mode, countdowns, sponsorLayout }),
+      partialize: ({ mode, countdowns, sponsorLayout, savedLayouts, activeLayoutId }) => ({ mode, countdowns, sponsorLayout, savedLayouts, activeLayoutId }),
       merge: (saved, current) => {
         const state = saved as Partial<PresentationState> | undefined;
         return {
           ...current,
           mode: PRESENTATION_MODES.includes(state?.mode as PresentationMode) ? (state?.mode as PresentationMode) : current.mode,
           sponsorLayout: cleanLayout(state?.sponsorLayout),
+          ...(() => {
+            const savedLayouts = cleanSaved(state?.savedLayouts);
+            return { savedLayouts, activeLayoutId: savedLayouts.some((l) => l.id === state?.activeLayoutId) ? (state?.activeLayoutId ?? null) : null };
+          })(),
           countdowns: {
             pregame: cleanCountdown(state?.countdowns?.pregame, current.countdowns.pregame),
             halftime: cleanCountdown(state?.countdowns?.halftime, current.countdowns.halftime),
@@ -173,13 +245,17 @@ if (typeof window !== 'undefined') {
   const ticker = setInterval(() => usePresentationStore.getState().tick(), 250);
   // Choosing a different scoreboard preset in Game Setup loads that preset's layout into the editor,
   // replacing manual positions; later edits are kept until the next preset change or a reset.
-  const presetKey = () => { const { themeId, layout } = useBasketballStore.getState().gameConfig.theme; return `${themeId}:${layout}`; };
-  let preset = presetKey();
+  // Each tab applies the same change itself (no broadcast), so a display tab can never overwrite the operator's layout.
+  // A layout that already belongs to the new preset (a saved layout being loaded) is left alone.
+  let lastPreset = presetKey(useBasketballStore.getState().gameConfig.theme);
   const unsubscribe = useBasketballStore.subscribe(() => {
-    const next = presetKey();
-    if (next === preset) return;
-    preset = next;
-    usePresentationStore.getState().setSponsorLayout(presetGeometry(useBasketballStore.getState().gameConfig.theme.layout));
+    const { theme } = useBasketballStore.getState().gameConfig;
+    const next = presetKey(theme);
+    if (next === lastPreset) return;
+    lastPreset = next;
+    const { sponsorLayout } = usePresentationStore.getState();
+    if (sponsorLayout.preset === next) return;
+    usePresentationStore.setState({ sponsorLayout: cleanLayout({ ...sponsorLayout, ...presetGeometry(theme.layout), preset: next }) });
   });
   import.meta.hot?.dispose(() => { clearInterval(ticker); unsubscribe(); channel.close(); });
 }
