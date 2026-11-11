@@ -56,6 +56,13 @@
 .pm-board[data-mode='livesponsor'][data-place='free'] .sb-eyebrow { font-size: max(8px, calc(var(--u) * 1.05)); }
 .pm-board[data-mode='livesponsor'][data-place='free'] .pm-meta { flex-wrap: wrap; }
 
+/* Preset looks (data-layout) only restyle the team blocks; sizes stay tuned for a block, not a full board. */
+.pm-board[data-mode='livesponsor'][data-layout] { --slab: calc(var(--u) * 12); --stat: calc(var(--u) * 2.4); }
+.pm-board[data-mode='livesponsor'][data-layout='minimal'] { --score: calc(var(--u) * 20); --name: calc(var(--u) * 3.4); }
+.pm-board[data-mode='livesponsor'][data-layout='broadcast'] { --crest: calc(var(--u) * 5); --name: calc(var(--u) * 3.4); --score: calc(var(--u) * 11); }
+.pm-board[data-mode='livesponsor'][data-place='free'][data-layout='minimal'] .sb-team { --score: calc(var(--u) * 20); --name: calc(var(--u) * 3.4); }
+.pm-board[data-mode='livesponsor'][data-place='free'][data-layout='broadcast'] .sb-team { --crest: calc(var(--u) * 5); --name: calc(var(--u) * 3.4); --score: calc(var(--u) * 11); }
+
 /* Stadium has no header: the teams get the room. */
 .pm-board[data-mode='stadium'] {
   --crest: calc(var(--u) * 11);

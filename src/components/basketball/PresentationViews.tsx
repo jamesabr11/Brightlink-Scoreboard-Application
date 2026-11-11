@@ -21,12 +21,12 @@ import './presentation.css';
 
 type Side = 'home' | 'away';
 
-export const Stage: React.FC<{ theme: ScoreboardTheme; mode: PresentationMode; place?: string; style?: React.CSSProperties; children: React.ReactNode }> = ({ theme, mode, place, style, children }) => {
+export const Stage: React.FC<{ theme: ScoreboardTheme; mode: PresentationMode; place?: string; look?: string; style?: React.CSSProperties; children: React.ReactNode }> = ({ theme, mode, place, look, style, children }) => {
   const home = useBasketballStore((state) => state.homeTeam.primaryColor);
   const away = useBasketballStore((state) => state.awayTeam.primaryColor);
   return (
     <div className="sb-stage" data-testid={`${mode}-view`} style={themeStyle(theme)}>
-      <div className="sb-board pm-board" data-mode={mode} data-place={place} style={{ '--home': home, '--away': away, ...style } as React.CSSProperties}>
+      <div className="sb-board pm-board" data-mode={mode} data-place={place} data-layout={look} style={{ '--home': home, '--away': away, ...style } as React.CSSProperties}>
         <span className="sb-stripe" aria-hidden />
         {children}
       </div>
@@ -203,15 +203,22 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boole
   const fr = (n: number) => `minmax(0, ${n}fr)`;
   const tracks = (side ? { gridTemplateColumns: (placement === 'right' ? [rest / 2, rest / 2, size] : [size, rest / 2, rest / 2]).map(fr).join(' '), gridTemplateRows: `${fr(1)} ${fr(0.55)}` }
     : { gridTemplateRows: (placement === 'bottom' ? [rest, size] : [size, rest]).map(fr).join(' ') }) as React.CSSProperties;
-  const team = (s: Side) => (
-    <TeamBlock side={s} style={at(s)}>
-      <div className="sb-team-head"><Crest side={s} /><Ident side={s} ball /></div>
-      <Score side={s} />
-      <div className="pm-meta"><Fouls side={s} /><Timeouts side={s} /><Bonus side={s} /></div>
-    </TeamBlock>
-  );
+  // The selected scoreboard appearance (Game Setup) decides the team block's look and contents. Classic and
+  // Live Sponsor keep the base Stadium block; the others take their scoreboard.css block styling via data-layout.
+  const look = (['modern', 'minimal', 'tournament', 'broadcast'] as const).find((l) => l === theme.layout);
+  const meta = (s: Side, cls: string) => <div className={cls}><Fouls side={s} /><Timeouts side={s} /><Bonus side={s} /></div>;
+  const body = (s: Side) => {
+    switch (look) {
+      case 'modern': return <><div className="sb-team-head"><Crest side={s} /><Ident side={s} ball /></div><Score side={s} />{meta(s, 'sb-team-meta')}</>;
+      case 'minimal': return <><Ident side={s} ball /><Score side={s} /></>;
+      case 'tournament': return <><Crest side={s} /><Ident side={s} /><Score side={s} /></>;
+      case 'broadcast': return <><Crest side={s} /><Ident side={s} ball />{meta(s, 'sb-team-meta')}<Score side={s} /></>;
+      default: return <><div className="sb-team-head"><Crest side={s} /><Ident side={s} ball /></div><Score side={s} />{meta(s, 'pm-meta')}</>;
+    }
+  };
+  const team = (s: Side) => <TeamBlock side={s} style={at(s)}>{body(s)}</TeamBlock>;
   return (
-    <Stage theme={theme} mode="livesponsor" place={free ? 'free' : placement} style={free ? undefined : tracks}>
+    <Stage theme={theme} mode="livesponsor" place={free ? 'free' : placement} look={look} style={free ? undefined : tracks}>
       {team('home')}
       <section className="pm-center" style={at('center')} aria-label="Game clock">
         <Period />
