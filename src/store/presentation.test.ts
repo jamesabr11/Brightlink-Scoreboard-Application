@@ -177,4 +177,11 @@ describe('sponsor layout sections', () => {
     expect(layout.split).toEqual([80, 10, 40]);
     expect(layout.media).toEqual([['a'], [], []]);
   });
+
+  it('cleans manual element positions from storage and syncs them', async () => {
+    const operator = await openTab();
+    const display = await openTab();
+    operator.show.getState().setSponsorLayout({ rects: { home: { x: 95, y: -4, w: 30, h: 20 }, bogus: { x: 1, y: 1, w: 9, h: 9 }, away: { x: 'a' } } as never });
+    expect(display.show.getState().sponsorLayout.rects).toEqual({ home: { x: 70, y: 0, w: 30, h: 20 } });
+  });
 });

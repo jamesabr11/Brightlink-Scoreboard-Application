@@ -37,6 +37,26 @@
 .pm-board[data-mode='livesponsor'][data-place='bottom'] .pm-center,
 .pm-board[data-mode='livesponsor'][data-place='top'] .pm-center { flex-direction: column; }
 
+/* Free layout (elements moved or resized in the Layout Editor): every element is
+ * placed absolutely from its saved rect, so the text of each block is sized from
+ * the block itself and re-fits whatever size it is given. The default layouts
+ * above keep their stage-relative sizing. */
+.pm-board[data-mode='livesponsor'][data-place='free'] { display: block; padding: 0; }
+.pm-board[data-mode='livesponsor'][data-place='free'] .pm-center { flex-direction: column; flex-wrap: nowrap; }
+.pm-board[data-mode='livesponsor'][data-place='free'] .sb-team,
+.pm-board[data-mode='livesponsor'][data-place='free'] .pm-center { container: blk / size; }
+.pm-board[data-mode='livesponsor'][data-place='free'] .sb-team > * {
+  --u: min(1cqw / 32.5, 1cqh / 36);
+  --crest: calc(var(--u) * 8);
+  --name: calc(var(--u) * 4);
+  --score: calc(var(--u) * 17);
+}
+.pm-board[data-mode='livesponsor'][data-place='free'] .pm-center > * {
+  --u: min(1cqw / 28.6, 1cqh / 36);
+  --clock: calc(var(--u) * 12);
+  --shot: calc(var(--u) * 7);
+}
+
 /* Stadium has no header: the teams get the room. */
 .pm-board[data-mode='stadium'] {
   --crest: calc(var(--u) * 11);

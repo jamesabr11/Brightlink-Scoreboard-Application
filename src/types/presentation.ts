@@ -23,7 +23,11 @@ export interface SponsorLayout {
   split: number[]; // relative share of each section (SPONSOR_MAX_SECTIONS weights)
   arrange: SponsorArrange; // direction the sections are divided in
   media: string[][]; // Media Library ids assigned to each section (ids only, never blobs)
+  rects: Partial<Record<SponsorElement, LayoutBox>>; // manual positions; any entry switches the display to free layout
 }
+export const SPONSOR_ELEMENTS = ['home', 'center', 'away', 'section0', 'section1', 'section2'] as const;
+export type SponsorElement = (typeof SPONSOR_ELEMENTS)[number];
+export interface LayoutBox { x: number; y: number; w: number; h: number } // percent of the 16:9 canvas
 export const SPONSOR_ARRANGES = ['auto', 'rows', 'columns'] as const; // auto: rows beside the board, columns above/below
 export type SponsorArrange = (typeof SPONSOR_ARRANGES)[number];
 export const SPONSOR_MAX_SECTIONS = 3;

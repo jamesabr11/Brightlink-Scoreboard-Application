@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { clockRemaining, stopClock } from '../lib/clock';
 import { safeStorage } from '../lib/storage';
-import { PRESENTATION_MODES, SPONSOR_ARRANGES, SPONSOR_MAX_SECTIONS, SPONSOR_PLACEMENTS, SPONSOR_SHARE_MAX, SPONSOR_SHARE_MIN, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../types/presentation';
+import { PRESENTATION_MODES, SPONSOR_ARRANGES, SPONSOR_ELEMENTS, SPONSOR_MAX_SECTIONS, SPONSOR_PLACEMENTS, SPONSOR_SHARE_MAX, SPONSOR_SHARE_MIN, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../types/presentation';
 import type { Countdown, CountdownId, PresentationMode, PresentationState, SponsorLayout } from '../types/presentation';
 
 interface PresentationStore extends PresentationState {
@@ -21,7 +21,7 @@ const DEFAULT_SECONDS: Record<CountdownId, number> = { pregame: 10 * 60, halftim
 
 const freshCountdown = (seconds: number): Countdown => ({ duration: seconds, remainingTime: seconds, isRunning: false, startTimestamp: null });
 
-export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'bottom', size: 35, fit: 'contain', sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []] };
+export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'bottom', size: 35, fit: 'contain', sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []], rects: {} };
 
 const initialState = (): PresentationState => ({
   mode: 'live',
@@ -31,6 +31,20 @@ const initialState = (): PresentationState => ({
 
 const seconds = (value: unknown, fallback: number) =>
   typeof value === 'number' && Number.isFinite(value) ? Math.min(MAX_COUNTDOWN_SECONDS, Math.max(0, Math.round(value))) : fallback;
+
+const cleanRects = (saved: unknown): SponsorLayout['rects'] => {
+  const out: SponsorLayout['rects'] = {};
+  if (typeof saved !== 'object' || saved === null) return out;
+  const n = (v: unknown, lo: number, hi: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(Math.min(hi, Math.max(lo, v)) * 10) / 10 : null);
+  for (const id of SPONSOR_ELEMENTS) {
+    const r = (saved as Record<string, Record<string, unknown> | undefined>)[id];
+    const w = n(r?.w, 5, 100), h = n(r?.h, 5, 100);
+    if (w === null || h === null) continue;
+    const x = n(r?.x, 0, 100 - w), y = n(r?.y, 0, 100 - h);
+    if (x !== null && y !== null) out[id] = { x, y, w, h };
+  }
+  return out;
+};
 
 const cleanLayout = (saved: Partial<SponsorLayout> | undefined): SponsorLayout => ({
   placement: SPONSOR_PLACEMENTS.includes(saved?.placement as never) ? saved!.placement! : DEFAULT_SPONSOR_LAYOUT.placement,
@@ -46,6 +60,7 @@ const cleanLayout = (saved: Partial<SponsorLayout> | undefined): SponsorLayout =
     const ids = saved?.media?.[i];
     return Array.isArray(ids) ? ids.filter((id) => typeof id === 'string').slice(0, 20) : [];
   }),
+  rects: cleanRects(saved?.rects),
 });
 
 // localStorage is untrusted, so nothing from it is used as-is.

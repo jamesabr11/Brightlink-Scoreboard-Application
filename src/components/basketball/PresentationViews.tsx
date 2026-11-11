@@ -10,7 +10,7 @@ import type { ScoreboardTheme } from '../../types/basketball';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
 import { ClockDisplay } from './ClockDisplay';
 import { ImageMedia, MediaPlayer, VideoMedia } from './MediaPlayer';
-import { sectionDirection, sectionShares } from '../../lib/layoutEditor';
+import { isFree, layoutRects, sectionDirection, sectionId, sectionShares, type LayoutRect } from '../../lib/layoutEditor';
 import { Bonus, Crest, Fouls, GameClock, Ident, Period, Score, ShotClock, TeamBlock, Timeouts } from './Scoreboard';
 import './presentation.css';
 
@@ -157,13 +157,22 @@ const SectionRotator: React.FC<{ ids: string[] }> = ({ ids }) => {
 };
 
 // `preview` draws the empty section panels only; the Layout Editor overlays its own thumbnails, so nothing plays.
+// Free layout: an element sits at its rect (% of the canvas) with the usual gap kept around it.
+const freeStyle = (r?: LayoutRect): React.CSSProperties | undefined => r && ({
+  position: 'absolute', gridArea: 'auto', margin: 0, boxSizing: 'border-box',
+  left: `calc(${r.left}% + var(--u) * 0.4)`, top: `calc(${r.top}% + var(--u) * 0.4)`,
+  width: `calc(${r.width}% - var(--u) * 0.8)`, height: `calc(${r.height}% - var(--u) * 0.8)`,
+});
+
 const SponsorSections: React.FC<{ preview?: boolean }> = ({ preview }) => {
   const layout = usePresentationStore((state) => state.sponsorLayout);
   const rows = sectionDirection(layout) === 'rows';
+  const free = isFree(layout);
+  const rects = free ? layoutRects(layout) : [];
   return (
-    <aside className="pm-slot" data-region="sponsor" data-fit={layout.fit} data-sections={layout.sections} style={{ flexDirection: rows ? 'column' : 'row' }} aria-label="Sponsor area">
+    <aside className="pm-slot" data-region="sponsor" data-fit={layout.fit} data-sections={layout.sections} style={free ? { position: 'absolute', inset: 0, gridArea: 'auto', pointerEvents: 'none' } : { flexDirection: rows ? 'column' : 'row' }} aria-label="Sponsor area">
       {sectionShares(layout).map((share, i) => (
-        <div key={i} className="pm-section" style={{ flex: `${share} 1 0` }}>
+        <div key={i} className="pm-section" style={free ? freeStyle(rects.find((r) => r.id === sectionId(i))) : { flex: `${share} 1 0` }}>
           {preview ? null : layout.media[i].length > 0
             ? <SectionRotator ids={layout.media[i]} />
             // An unassigned first section keeps the original sponsor rotation.
@@ -175,23 +184,27 @@ const SponsorSections: React.FC<{ preview?: boolean }> = ({ preview }) => {
 };
 
 export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boolean }> = ({ theme, preview }) => {
-  const { placement, size } = usePresentationStore((state) => state.sponsorLayout);
+  const layout = usePresentationStore((state) => state.sponsorLayout);
+  const { placement, size } = layout;
+  const free = isFree(layout);
+  const rects = free ? layoutRects(layout) : [];
+  const at = (id: string) => freeStyle(rects.find((r) => r.id === id));
   const side = placement === 'left' || placement === 'right';
   const rest = 100 - size;
   // Grid tracks come from the operator's size; areas from the placement (presentation.css).
   const tracks = (side ? { gridTemplateColumns: placement === 'right' ? `${rest / 2}fr ${rest / 2}fr ${size}fr` : `${size}fr ${rest / 2}fr ${rest / 2}fr`, gridTemplateRows: '1fr 0.55fr' }
     : { gridTemplateRows: placement === 'bottom' ? `${rest}fr ${size}fr` : `${size}fr ${rest}fr` }) as React.CSSProperties;
   const team = (s: Side) => (
-    <TeamBlock side={s}>
+    <TeamBlock side={s} style={at(s)}>
       <div className="sb-team-head"><Crest side={s} /><Ident side={s} ball /></div>
       <Score side={s} />
       <div className="pm-meta"><Fouls side={s} /><Timeouts side={s} /><Bonus side={s} /></div>
     </TeamBlock>
   );
   return (
-    <Stage theme={theme} mode="livesponsor" place={placement} style={tracks}>
+    <Stage theme={theme} mode="livesponsor" place={free ? 'free' : placement} style={free ? undefined : tracks}>
       {team('home')}
-      <section className="pm-center" aria-label="Game clock">
+      <section className="pm-center" style={at('center')} aria-label="Game clock">
         <Period />
         <GameClock />
         <ShotClock />

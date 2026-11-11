@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SPONSOR_LAYOUT } from '../store/usePresentationStore';
-import { layoutRects, sectionShares } from './layoutEditor';
+import { dragBox, isFree, layoutRects, MIN_BOX, overlaps, sectionShares } from './layoutEditor';
 
 describe('layoutRects', () => {
   it.each(['right', 'left', 'top', 'bottom'] as const)('%s: elements tile the canvas', (placement) => {
@@ -26,5 +26,31 @@ describe('layoutRects', () => {
     const [a, b] = layoutRects({ ...DEFAULT_SPONSOR_LAYOUT, sections: 2, split: [50, 50, 20], arrange: 'columns' }).filter((e) => e.id.startsWith('section'));
     expect(a.width).toBeCloseTo(b.width);
     expect(a.height).toBe(b.height);
+  });
+
+  it('manual rects replace the computed position and switch to free layout', () => {
+    const layout = { ...DEFAULT_SPONSOR_LAYOUT, rects: { home: { x: 5, y: 5, w: 30, h: 30 } } };
+    expect(isFree(DEFAULT_SPONSOR_LAYOUT)).toBe(false);
+    expect(isFree(layout)).toBe(true);
+    const home = layoutRects(layout).find((e) => e.id === 'home')!;
+    expect([home.left, home.top, home.width, home.height]).toEqual([5, 5, 30, 30]);
+  });
+});
+
+describe('dragBox', () => {
+  const box = { x: 10, y: 10, w: 30, h: 20 };
+  it('moves, snapped and kept on the canvas', () => {
+    expect(dragBox('move', box, 3.2, -50)).toEqual({ x: 13, y: 0, w: 30, h: 20 });
+    expect(dragBox('move', box, 500, 500)).toEqual({ x: 70, y: 80, w: 30, h: 20 });
+  });
+  it('resizes from any edge and never below the minimum', () => {
+    expect(dragBox('se', box, 10, 5)).toEqual({ x: 10, y: 10, w: 40, h: 25 });
+    expect(dragBox('nw', box, -5, -5)).toEqual({ x: 5, y: 5, w: 35, h: 25 });
+    expect(dragBox('e', box, -100, 0).w).toBe(MIN_BOX);
+    expect(dragBox('w', box, 100, 0)).toMatchObject({ x: 40 - MIN_BOX, w: MIN_BOX });
+  });
+  it('overlap ignores touching edges', () => {
+    expect(overlaps(box, { x: 40, y: 10, w: 10, h: 10 })).toBe(false);
+    expect(overlaps(box, { x: 39, y: 10, w: 10, h: 10 })).toBe(true);
   });
 });

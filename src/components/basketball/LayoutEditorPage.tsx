@@ -3,12 +3,13 @@ import { ArrowDown, ArrowUp, X } from 'lucide-react';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import { useBasketballStore } from '../../store/useBasketballStore';
 import { useMediaStore } from '../../store/useMediaStore';
-import { areaRects, layoutRects, sectionShares, type ElementId } from '../../lib/layoutEditor';
+import { areaRects, boxOf, isFree, layoutRects, MIN_BOX, overlaps, sectionShares, type ElementId } from '../../lib/layoutEditor';
+import type { LayoutBox, SponsorElement } from '../../types/presentation';
 import { SPONSOR_ARRANGES, SPONSOR_MAX_SECTIONS, SPONSOR_PLACEMENTS, SPONSOR_SHARE_MAX, SPONSOR_SHARE_MIN, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../../types/presentation';
 import { buttonBase, neutral } from './styles';
 import { LayoutPreview } from './LayoutPreview';
 import { MediaThumb } from './MediaParts';
-import { Panel } from './ui';
+import { NumberField, Panel } from './ui';
 
 const pct = (n: number) => `${Math.round(n * 10) / 10}%`;
 const pick = (on: boolean) => `${on ? `${buttonBase} bg-[var(--brand)] ring-2 ring-white` : neutral} px-3 py-2 text-sm capitalize`;
@@ -37,6 +38,7 @@ const AreaControls: React.FC = () => {
       <label className="block text-xs text-neutral-400">Media area size: {size}%
         <input type="range" min={SPONSOR_SIZE_MIN} max={SPONSOR_SIZE_MAX} step={5} value={size} onChange={(e) => set({ size: Number(e.target.value) })} className="mt-2 w-full" />
       </label>
+      {isFree(layout) && <button onClick={() => set({ rects: {} })} className={`${neutral} px-3 py-2 text-sm`} title="Go back to the automatic placement, size and sections layout">Reset element positions</button>}
       <button onClick={() => set({ fit: fit === 'contain' ? 'cover' : 'contain' })} className={`${neutral} px-3 py-2 text-sm`} title="Fit shows the whole image; Fill crops the edges to fill the area">Scaling: {fit === 'contain' ? 'Fit' : 'Fill'}</button>
       <div><span className={label}>Sections</span><div className="flex gap-2">{Array.from({ length: SPONSOR_MAX_SECTIONS }, (_, i) => i + 1).map((n) => <button key={n} onClick={() => set({ sections: n })} aria-pressed={sections === n} className={pick(sections === n)}>{n}</button>)}</div></div>
       {sections > 1 && (
@@ -99,15 +101,25 @@ const SectionControls: React.FC<{ index: number }> = ({ index }) => {
 };
 
 export const LayoutEditorPage: React.FC = () => {
-  const [layout] = useLayout();
+  const [layout, setLayout] = useLayout();
   const theme = useBasketballStore((s) => s.gameConfig.theme);
   const [selected, setSelected] = useState<ElementId>('sponsor');
   const rects = layoutRects(layout);
+  const setBox = (id: SponsorElement, box: LayoutBox) => setLayout({ rects: { ...layout.rects, [id]: box } });
   const area = areaRects(layout).find((r) => r.id === 'sponsor')!;
   // A section that no longer exists (sections reduced) falls back to the media area.
   const sel = selected === 'sponsor' ? { ...area, name: 'Media Area' } : rects.find((r) => r.id === selected) ?? { ...area, name: 'Media Area' };
   const sectionIndex = sel.id.startsWith('section') ? Number(sel.id.slice(7)) : -1;
   const field = 'rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-300';
+  const element = sel.id !== 'sponsor' ? (sel.id as SponsorElement) : null;
+  // Typed position/size fields: kept on the canvas, at least MIN_BOX big, and clear of other elements.
+  const edit = (key: keyof LayoutBox, value: number) => {
+    if (!element || !Number.isFinite(value)) return;
+    const b: LayoutBox = { ...boxOf(sel as never), [key]: value };
+    b.w = Math.min(100, Math.max(MIN_BOX, b.w)); b.h = Math.min(100, Math.max(MIN_BOX, b.h));
+    b.x = Math.min(100 - b.w, Math.max(0, b.x)); b.y = Math.min(100 - b.h, Math.max(0, b.y));
+    if (!rects.some((r) => r.id !== element && overlaps(b, boxOf(r)))) setBox(element, b);
+  };
   const elements = [...rects.filter((r) => !r.id.startsWith('section')).slice(0, 3), { ...area, name: 'Media Area' }, ...rects.filter((r) => r.id.startsWith('section'))];
   return (
     <div className="space-y-3">
@@ -117,7 +129,7 @@ export const LayoutEditorPage: React.FC = () => {
       </div>
       <div className="grid gap-3 lg:grid-cols-[1fr_340px]">
         <Panel title="Live Sponsor Layout">
-          <LayoutPreview layout={layout} theme={theme} live selected={selected === 'sponsor' ? undefined : selected} onSelect={setSelected} media />
+          <LayoutPreview layout={layout} theme={theme} live selected={selected === 'sponsor' ? undefined : selected} onSelect={setSelected} onRect={setBox} media />
           <ul className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Elements">
             {elements.map((r) => (
               <li key={r.id} className="flex-1 min-w-fit">
@@ -133,8 +145,10 @@ export const LayoutEditorPage: React.FC = () => {
             <div className="space-y-3">
               <div><span className={label}>Name</span><div className={field}>{sel.name}</div></div>
               <div className="grid grid-cols-2 gap-2">
-                {([['Top', sel.top], ['Left', sel.left], ['Width', sel.width], ['Height', sel.height]] as const).map(([l, v]) => (
-                  <div key={l}><span className={label}>{l}</span><div className={field}>{pct(v)}</div></div>
+                {([['Top', sel.top, 'y'], ['Left', sel.left, 'x'], ['Width', sel.width, 'w'], ['Height', sel.height, 'h']] as const).map(([l, v, k]) => (
+                  element
+                    ? <NumberField key={`${sel.id}${k}`} label={`${l} %`} min={0} value={Math.round(v * 10) / 10} onChange={(n) => edit(k, n)} />
+                    : <div key={l}><span className={label}>{l}</span><div className={field}>{pct(v)}</div></div>
                 ))}
               </div>
               {sel.id === 'sponsor' && <AreaControls />}

@@ -43,10 +43,10 @@ const teamVars = (team: Team) =>
 
 const nameSize = (name: string) => (name.length > 18 ? 'small' : name.length > 11 ? 'medium' : 'large');
 
-export const TeamBlock: React.FC<{ side: Side; children: React.ReactNode }> = ({ side, children }) => {
+export const TeamBlock: React.FC<{ side: Side; style?: React.CSSProperties; children: React.ReactNode }> = ({ side, style, children }) => {
   const team = useTeam(side);
   return (
-    <section className="sb-team" data-side={side} style={teamVars(team)} aria-label={`${side} team`}>
+    <section className="sb-team" data-side={side} style={{ ...teamVars(team), ...style }} aria-label={`${side} team`}>
       {children}
     </section>
   );

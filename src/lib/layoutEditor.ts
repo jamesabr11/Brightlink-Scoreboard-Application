@@ -1,4 +1,4 @@
-import type { SponsorLayout } from '../types/presentation';
+import type { LayoutBox, SponsorElement, SponsorLayout } from '../types/presentation';
 
 export type ElementId = 'home' | 'center' | 'away' | 'sponsor' | 'section0' | 'section1' | 'section2';
 export interface LayoutRect { id: ElementId; name: string; color: string; top: number; left: number; width: number; height: number }
@@ -62,5 +62,36 @@ export function layoutRects(layout: SponsorLayout): LayoutRect[] {
     offset += share;
     return rect;
   });
-  return [...base.filter((e) => e.id !== 'sponsor'), ...sections];
+  // Manual positions (drag and resize) replace the computed ones.
+  return [...base.filter((e) => e.id !== 'sponsor'), ...sections].map((e) => {
+    const o = layout.rects[e.id as SponsorElement];
+    return o ? { ...e, left: o.x, top: o.y, width: o.w, height: o.h } : e;
+  });
 }
+
+/** True once any element has been moved or resized by hand: the display then positions every element absolutely. */
+export const isFree = ({ rects }: SponsorLayout) => Object.keys(rects).length > 0;
+
+export type Handle = 'move' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+export const MIN_BOX = 8; // percent: the smallest an element can be resized to
+const SNAP = 0.5;
+const snap = (v: number) => Math.round(v / SNAP) * SNAP;
+
+/** Moves or resizes `from` by a pointer delta (percent of the canvas), snapped, kept inside the canvas and above MIN_BOX. */
+export function dragBox(handle: Handle, from: LayoutBox, dx: number, dy: number): LayoutBox {
+  if (handle === 'move') {
+    return { ...from, x: snap(Math.min(100 - from.w, Math.max(0, from.x + dx))), y: snap(Math.min(100 - from.h, Math.max(0, from.y + dy))) };
+  }
+  let l = from.x, t = from.y, r = from.x + from.w, b = from.y + from.h;
+  if (handle.includes('w')) l = Math.min(r - MIN_BOX, Math.max(0, snap(l + dx)));
+  if (handle.includes('e')) r = Math.max(l + MIN_BOX, Math.min(100, snap(r + dx)));
+  if (handle.includes('n')) t = Math.min(b - MIN_BOX, Math.max(0, snap(t + dy)));
+  if (handle.includes('s')) b = Math.max(t + MIN_BOX, Math.min(100, snap(b + dy)));
+  return { x: l, y: t, w: r - l, h: b - t };
+}
+
+/** Whether two boxes share area (touching edges is fine). */
+export const overlaps = (a: LayoutBox, b: LayoutBox) =>
+  a.x < b.x + b.w - 1e-6 && b.x < a.x + a.w - 1e-6 && a.y < b.y + b.h - 1e-6 && b.y < a.y + a.h - 1e-6;
+
+export const boxOf = (r: LayoutRect): LayoutBox => ({ x: r.left, y: r.top, w: r.width, h: r.height });
