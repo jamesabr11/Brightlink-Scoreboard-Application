@@ -248,6 +248,10 @@ The unit tests cover scoring, clocks, periods and overtime, fouls, timeouts, pos
 
 `npm run build` produces a static site in `dist/`. Any static host works, but it must serve `index.html` for every path, because the app uses routes such as `/display` and `/history`. Without that, those pages return 404 when opened directly or refreshed.
 
+### Continuous integration
+
+`.github/workflows/ci.yml` (shown as **CI** in the GitHub Actions tab) runs on pushes to any branch except `dev` and `Main`, and on pull requests targeting `dev` or `Main`. On Node.js 22 it runs `npm ci`, `npm run lint`, `npm run typecheck`, `npm test` and `npm run build`; the first failing step fails the run. It only validates: it does not deploy, release or merge.
+
 ### Development notes
 
 `package.json` overrides `minimatch` to `^11.0.3` to fix advisory GHSA-g3hv-75wg-m249, because ESLint and typescript-eslint still declare version 10. It only affects lint tooling. Remove the override once `eslint`, `@eslint/config-array` and `@typescript-eslint/typescript-estree` all declare `minimatch` 11 or later.
