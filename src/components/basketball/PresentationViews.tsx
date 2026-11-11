@@ -10,7 +10,7 @@ import type { ScoreboardTheme } from '../../types/basketball';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
 import { ClockDisplay } from './ClockDisplay';
 import { ImageMedia, MediaPlayer, VideoMedia } from './MediaPlayer';
-import { isFree, layoutRects, sectionDirection, sectionId, sectionShares, type LayoutRect } from '../../lib/layoutEditor';
+import { isFree, layoutRects, sectionDirection, sectionId, sectionShares, stackedTeams, STACK_ROWS, type LayoutRect } from '../../lib/layoutEditor';
 import { Bonus, Crest, Fouls, GameClock, Ident, Period, Score, ShotClock, TeamBlock, Timeouts } from './Scoreboard';
 import './presentation.css';
 
@@ -201,7 +201,9 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boole
   // minmax(0, ...) on every track: without it a track's minimum is its content (a large image or a long clock),
   // which would grow the media row or column and shrink the scoreboard instead of keeping the saved proportions.
   const fr = (n: number) => `minmax(0, ${n}fr)`;
-  const tracks = (side ? { gridTemplateColumns: (placement === 'right' ? [rest / 2, rest / 2, size] : [size, rest / 2, rest / 2]).map(fr).join(' '), gridTemplateRows: `${fr(1)} ${fr(0.55)}` }
+  const stack = stackedTeams(layout);
+  const [a, b] = stack ? [rest * STACK_ROWS, rest * (1 - STACK_ROWS)] : [rest / 2, rest / 2];
+  const tracks = (side ? { gridTemplateColumns: (placement === 'right' ? [a, b, size] : [size, a, b]).map(fr).join(' '), gridTemplateRows: stack ? `${fr(1)} ${fr(1)}` : `${fr(1)} ${fr(0.55)}` }
     : { gridTemplateRows: (placement === 'bottom' ? [rest, size] : [size, rest]).map(fr).join(' ') }) as React.CSSProperties;
   // The selected scoreboard appearance (Game Setup) decides the team block's look and contents. Classic and
   // Live Sponsor keep the base Stadium block; the others take their scoreboard.css block styling via data-layout.
@@ -218,7 +220,7 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boole
   };
   const team = (s: Side) => <TeamBlock side={s} style={at(s)}>{body(s)}</TeamBlock>;
   return (
-    <Stage theme={theme} mode="livesponsor" place={free ? 'free' : placement} look={look} style={free ? undefined : tracks}>
+    <Stage theme={theme} mode="livesponsor" place={free ? 'free' : stack ? `${placement}-stack` : placement} look={look} style={free ? undefined : tracks}>
       {team('home')}
       <section className="pm-center" style={at('center')} aria-label="Game clock">
         <Period />

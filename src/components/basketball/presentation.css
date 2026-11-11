@@ -32,6 +32,9 @@
 .pm-board[data-mode='livesponsor'][data-place='top'] { grid-template-areas: 'slot slot slot' 'home center away'; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr); }
 .pm-board[data-mode='livesponsor'][data-place='right'] { grid-template-areas: 'home away slot' 'center center slot'; }
 .pm-board[data-mode='livesponsor'][data-place='left'] { grid-template-areas: 'slot home away' 'slot center center'; }
+.pm-board[data-mode='livesponsor'][data-place='right-stack'] { grid-template-areas: 'home center slot' 'away center slot'; }
+.pm-board[data-mode='livesponsor'][data-place='left-stack'] { grid-template-areas: 'slot home center' 'slot away center'; }
+.pm-board[data-mode='livesponsor'][data-place$='-stack'] .pm-center { flex-direction: column; flex-wrap: nowrap; }
 .pm-board[data-mode='livesponsor'] .sb-team .sb-team-head { flex-direction: row; max-width: 100%; }
 .pm-board[data-mode='livesponsor'] .pm-center { flex-direction: row; flex-wrap: wrap; gap: calc(var(--u) * 2); padding: calc(var(--u) * 1); }
 .pm-board[data-mode='livesponsor'][data-place='bottom'] .pm-center,
@@ -59,9 +62,9 @@
 /* Preset looks (data-layout) only restyle the team blocks; sizes stay tuned for a block, not a full board. */
 .pm-board[data-mode='livesponsor'][data-layout] { --slab: calc(var(--u) * 12); --stat: calc(var(--u) * 2.4); }
 .pm-board[data-mode='livesponsor'][data-layout='minimal'] { --score: calc(var(--u) * 20); --name: calc(var(--u) * 3.4); }
-.pm-board[data-mode='livesponsor'][data-layout='broadcast'] { --crest: calc(var(--u) * 5); --name: calc(var(--u) * 3.4); --score: calc(var(--u) * 11); }
+.pm-board[data-mode='livesponsor'][data-layout='broadcast'] { --crest: calc(var(--u) * 7); --name: calc(var(--u) * 4.4); --score: calc(var(--u) * 15); --slab: calc(var(--u) * 15); }
 .pm-board[data-mode='livesponsor'][data-place='free'][data-layout='minimal'] .sb-team { --score: calc(var(--u) * 20); --name: calc(var(--u) * 3.4); }
-.pm-board[data-mode='livesponsor'][data-place='free'][data-layout='broadcast'] .sb-team { --crest: calc(var(--u) * 5); --name: calc(var(--u) * 3.4); --score: calc(var(--u) * 11); }
+.pm-board[data-mode='livesponsor'][data-place='free'][data-layout='broadcast'] .sb-team { --crest: calc(var(--u) * 7); --name: calc(var(--u) * 4.4); --score: calc(var(--u) * 15); --slab: calc(var(--u) * 15); }
 
 /* Stadium has no header: the teams get the room. */
 .pm-board[data-mode='stadium'] {

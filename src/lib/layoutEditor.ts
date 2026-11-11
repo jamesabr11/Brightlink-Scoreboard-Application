@@ -24,12 +24,25 @@ export function sectionShares({ sections, split }: SponsorLayout): number[] {
   return weights.map((w) => (w / total) * 100);
 }
 
+/** Broadcast is built as stacked team rows beside a clock column, so beside the media the teams stack instead of sitting side by side. The layout's `preset` key ('themeId:layout') carries the appearance, so saved layouts keep it. */
+export const stackedTeams = ({ preset, placement }: SponsorLayout) => preset.endsWith(':broadcast') && (placement === 'left' || placement === 'right');
+/** Share of the scoreboard width taken by the team rows when stacked (the clock column gets the rest). */
+export const STACK_ROWS = 0.68;
+
 // Mirrors the Live Sponsor grid in presentation.css / LiveSponsorView; all values are % of the canvas.
-function baseRects({ placement, size }: SponsorLayout): LayoutRect[] {
+function baseRects(layout: SponsorLayout): LayoutRect[] {
+  const { placement, size } = layout;
   const rest = 100 - size;
   const r = (id: 'home' | 'center' | 'away' | 'sponsor', left: number, top: number, width: number, height: number): LayoutRect => ({ id, ...META[id], left, top, width, height });
   if (placement === 'left' || placement === 'right') {
     const row = 100 / 1.55, half = rest / 2, x = placement === 'right' ? 0 : size;
+    if (stackedTeams(layout)) {
+      const rows = rest * STACK_ROWS;
+      return [
+        r('home', x, 0, rows, 50), r('away', x, 50, rows, 50), r('center', x + rows, 0, rest - rows, 100),
+        r('sponsor', placement === 'right' ? rest : 0, 0, size, 100),
+      ];
+    }
     return [
       r('home', x, 0, half, row), r('away', x + half, 0, half, row), r('center', x, row, rest, 100 - row),
       r('sponsor', placement === 'right' ? rest : 0, 0, size, 100),
