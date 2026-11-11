@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SPONSOR_LAYOUT } from '../store/usePresentationStore';
+import { DEFAULT_SPONSOR_LAYOUT, presetGeometry } from '../store/usePresentationStore';
 import { dragBox, isFree, layoutRects, MIN_BOX, overlaps, sectionShares } from './layoutEditor';
 
 describe('layoutRects', () => {
@@ -34,6 +34,25 @@ describe('layoutRects', () => {
     expect(isFree(layout)).toBe(true);
     const home = layoutRects(layout).find((e) => e.id === 'home')!;
     expect([home.left, home.top, home.width, home.height]).toEqual([5, 5, 30, 30]);
+  });
+});
+
+describe('every placement', () => {
+  const combos = (['right', 'left', 'top', 'bottom'] as const).flatMap((placement) => ([1, 2, 3] as const).flatMap((sections) => (['auto', 'rows', 'columns'] as const).map((arrange) => ({ placement, sections, arrange }))));
+  it.each(combos)('%j: elements tile the canvas without overlapping', (c) => {
+    const rects = layoutRects({ ...DEFAULT_SPONSOR_LAYOUT, ...c, size: 40 });
+    expect(rects).toHaveLength(3 + c.sections);
+    expect(rects.reduce((s, e) => s + e.width * e.height, 0)).toBeCloseTo(10000, 3);
+    rects.forEach((a, i) => rects.slice(i + 1).forEach((b) => expect(overlaps({ x: a.left, y: a.top, w: a.width, h: a.height }, { x: b.left, y: b.top, w: b.width, h: b.height })).toBe(false)));
+  });
+  it('the scoreboard keeps its size as the media sections are divided', () => {
+    for (const placement of ['right', 'left', 'top', 'bottom'] as const) {
+      const board = (sections: 1 | 2 | 3) => layoutRects({ ...DEFAULT_SPONSOR_LAYOUT, placement, sections }).filter((e) => !e.id.startsWith('section'));
+      expect(board(3)).toEqual(board(1));
+    }
+  });
+  it('preset geometry gives a valid placement', () => {
+    for (const id of ['classic', 'modern', 'minimal', 'tournament', 'broadcast', 'livesponsor'] as const) expect(['right', 'left', 'top', 'bottom']).toContain(presetGeometry(id).placement);
   });
 });
 

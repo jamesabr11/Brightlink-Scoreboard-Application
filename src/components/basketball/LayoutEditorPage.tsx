@@ -5,7 +5,7 @@ import { askConfirm, notify } from '../../lib/feedback';
 import { useBasketballStore } from '../../store/useBasketballStore';
 import { useMediaStore } from '../../store/useMediaStore';
 import { areaRects, boxOf, isFree, layoutRects, MIN_BOX, overlaps, sectionShares, type ElementId } from '../../lib/layoutEditor';
-import type { LayoutBox, SponsorElement } from '../../types/presentation';
+import type { LayoutBox, SponsorElement, SponsorLayout } from '../../types/presentation';
 import { SPONSOR_ARRANGES, SPONSOR_MAX_SECTIONS, SPONSOR_PLACEMENTS, SPONSOR_SHARE_MAX, SPONSOR_SHARE_MIN, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../../types/presentation';
 import { buttonBase, neutral } from './styles';
 import { LayoutPreview } from './LayoutPreview';
@@ -19,13 +19,16 @@ const label = 'block text-xs text-neutral-400 mb-1';
 
 const useLayout = () => [usePresentationStore((s) => s.sponsorLayout), usePresentationStore((s) => s.setSponsorLayout)] as const;
 
+// Sizes and shares move the media sections, so their manual positions go; the scoreboard blocks keep theirs.
+const withoutSections = (rects: SponsorLayout['rects']) => Object.fromEntries(Object.entries(rects).filter(([id]) => !id.startsWith('section')));
+
 const ShareSlider: React.FC<{ index: number }> = ({ index }) => {
   const [layout, set] = useLayout();
   const share = sectionShares(layout)[index];
   return (
     <label className="block text-xs text-neutral-400">
       {layout.sections === 1 ? 'Section' : `Media ${index + 1}`} share: {Math.round(share)}%
-      <input type="range" min={SPONSOR_SHARE_MIN} max={SPONSOR_SHARE_MAX} step={5} value={layout.split[index]} onChange={(e) => set({ split: layout.split.map((v, i) => (i === index ? Number(e.target.value) : v)) })} className="mt-2 w-full" />
+      <input type="range" min={SPONSOR_SHARE_MIN} max={SPONSOR_SHARE_MAX} step={5} value={layout.split[index]} onChange={(e) => set({ split: layout.split.map((v, i) => (i === index ? Number(e.target.value) : v)), rects: withoutSections(layout.rects) })} className="mt-2 w-full" />
     </label>
   );
 };
@@ -34,18 +37,23 @@ const ShareSlider: React.FC<{ index: number }> = ({ index }) => {
 const AreaControls: React.FC = () => {
   const [layout, set] = useLayout();
   const { placement, size, fit, sections, arrange } = layout;
+  // Placement, arrangement and section count re-lay out the whole display, so manual positions are reset (after asking).
+  const rearrange = async (patch: Partial<SponsorLayout>) => {
+    if (isFree(layout) && !(await askConfirm({ title: 'Rearrange the layout?', message: 'This re-lays out the whole display, so your manual element positions are reset. Media assignments are kept.', confirmLabel: 'Rearrange', danger: true }))) return;
+    set({ ...patch, rects: {} });
+  };
   return (
     <div className="space-y-3" role="group" aria-label="Sponsor media area">
-      <div><span className={label}>Placement</span><div className="flex flex-wrap gap-2">{SPONSOR_PLACEMENTS.map((p) => <button key={p} onClick={() => set({ placement: p })} aria-pressed={placement === p} className={pick(placement === p)}>{p}</button>)}</div></div>
+      <div><span className={label}>Placement</span><div className="flex flex-wrap gap-2">{SPONSOR_PLACEMENTS.map((p) => <button key={p} onClick={() => void rearrange({ placement: p })} aria-pressed={placement === p} className={pick(placement === p)}>{p}</button>)}</div></div>
       <label className="block text-xs text-neutral-400">Media area size: {size}%
-        <input type="range" min={SPONSOR_SIZE_MIN} max={SPONSOR_SIZE_MAX} step={5} value={size} onChange={(e) => set({ size: Number(e.target.value) })} className="mt-2 w-full" />
+        <input type="range" min={SPONSOR_SIZE_MIN} max={SPONSOR_SIZE_MAX} step={5} value={size} onChange={(e) => set({ size: Number(e.target.value), rects: withoutSections(layout.rects) })} className="mt-2 w-full" />
       </label>
       {isFree(layout) && <button onClick={() => set({ rects: {} })} className={`${neutral} px-3 py-2 text-sm`} title="Go back to the automatic placement, size and sections layout">Reset element positions</button>}
       <button onClick={() => set({ fit: fit === 'contain' ? 'cover' : 'contain' })} className={`${neutral} px-3 py-2 text-sm`} title="Fit shows the whole image; Fill crops the edges to fill the area">Scaling: {fit === 'contain' ? 'Fit' : 'Fill'}</button>
-      <div><span className={label}>Sections</span><div className="flex gap-2">{Array.from({ length: SPONSOR_MAX_SECTIONS }, (_, i) => i + 1).map((n) => <button key={n} onClick={() => set({ sections: n })} aria-pressed={sections === n} className={pick(sections === n)}>{n}</button>)}</div></div>
+      <div><span className={label}>Sections</span><div className="flex gap-2">{Array.from({ length: SPONSOR_MAX_SECTIONS }, (_, i) => i + 1).map((n) => <button key={n} onClick={() => void rearrange({ sections: n })} aria-pressed={sections === n} className={pick(sections === n)}>{n}</button>)}</div></div>
       {sections > 1 && (
         <>
-          <div><span className={label}>Arrangement</span><div className="flex gap-2">{SPONSOR_ARRANGES.map((a) => <button key={a} onClick={() => set({ arrange: a })} aria-pressed={arrange === a} className={pick(arrange === a)}>{a}</button>)}</div></div>
+          <div><span className={label}>Arrangement</span><div className="flex gap-2">{SPONSOR_ARRANGES.map((a) => <button key={a} onClick={() => void rearrange({ arrange: a })} aria-pressed={arrange === a} className={pick(arrange === a)}>{a}</button>)}</div></div>
           {Array.from({ length: sections }, (_, i) => <ShareSlider key={i} index={i} />)}
         </>
       )}

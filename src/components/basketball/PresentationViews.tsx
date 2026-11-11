@@ -198,8 +198,11 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boole
   const side = placement === 'left' || placement === 'right';
   const rest = 100 - size;
   // Grid tracks come from the operator's size; areas from the placement (presentation.css).
-  const tracks = (side ? { gridTemplateColumns: placement === 'right' ? `${rest / 2}fr ${rest / 2}fr ${size}fr` : `${size}fr ${rest / 2}fr ${rest / 2}fr`, gridTemplateRows: '1fr 0.55fr' }
-    : { gridTemplateRows: placement === 'bottom' ? `${rest}fr ${size}fr` : `${size}fr ${rest}fr` }) as React.CSSProperties;
+  // minmax(0, ...) on every track: without it a track's minimum is its content (a large image or a long clock),
+  // which would grow the media row or column and shrink the scoreboard instead of keeping the saved proportions.
+  const fr = (n: number) => `minmax(0, ${n}fr)`;
+  const tracks = (side ? { gridTemplateColumns: (placement === 'right' ? [rest / 2, rest / 2, size] : [size, rest / 2, rest / 2]).map(fr).join(' '), gridTemplateRows: `${fr(1)} ${fr(0.55)}` }
+    : { gridTemplateRows: (placement === 'bottom' ? [rest, size] : [size, rest]).map(fr).join(' ') }) as React.CSSProperties;
   const team = (s: Side) => (
     <TeamBlock side={s} style={at(s)}>
       <div className="sb-team-head"><Crest side={s} /><Ident side={s} ball /></div>
