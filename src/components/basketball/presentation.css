@@ -26,6 +26,7 @@
   --score: calc(var(--u) * 17); /* three digits still fit a team block at the widest media size */
   --clock: calc(var(--u) * 12);
   --shot: calc(var(--u) * 7);
+  --stat: calc(var(--u) * 4.6); /* the Classic stats size: without it the foul numbers have no size here */
   grid-template-columns: minmax(0, 1fr);
 }
 .pm-board[data-mode='livesponsor'][data-place='bottom'] { grid-template-areas: 'home center away' 'slot slot slot'; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr); }
@@ -47,6 +48,7 @@
  * var(--u) is resolved where a custom property is declared. */
 .pm-board[data-mode='livesponsor'][data-place='free'] { display: block; padding: 0; }
 .pm-board[data-mode='livesponsor'][data-place='free'] .pm-center { flex-direction: column; flex-wrap: nowrap; overflow: hidden; }
+.pm-board[data-mode='livesponsor'][data-place='free']:not([data-layout]) .sb-team { --stat: calc(var(--u) * 4.6); }
 .pm-board[data-mode='livesponsor'][data-place='free'] .sb-team {
   --crest: calc(var(--u) * 8);
   --name: calc(var(--u) * 4);

@@ -612,23 +612,11 @@
 }
 
 /* Fouls, timeouts and bonus labels stay readable at any fullscreen size, and a stat never overlaps its neighbour. */
-.sb-team-meta .sb-eyebrow,
-.sb-team-stats .sb-eyebrow {
+.sb-team-meta .sb-eyebrow {
   font-size: max(12px, calc(var(--u) * 1.3));
 }
 
-/* Traditional (Holy Cross Classic): the stats row sits under a large score, so its labels are larger still. */
-.sb-board[data-layout='classic'] .sb-team-stats .sb-eyebrow,
-.sb-board[data-layout='classic'] .sb-team-stats .sb-bonus {
-  font-size: max(17px, calc(var(--u) * 1.9 + 3px));
-}
-
-.sb-board[data-layout='classic'] .sb-team-stats {
-  --stat: calc(var(--u) * 5.6 + 3px);
-}
-
-.sb-team-meta .sb-bonus,
-.sb-team-stats .sb-bonus {
+.sb-team-meta .sb-bonus {
   font-size: max(12px, calc(var(--u) * 1.3));
   white-space: nowrap;
 }
