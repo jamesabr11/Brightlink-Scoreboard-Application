@@ -52,7 +52,7 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Built-in categories (Sponsors, Advertisements, Pregame, Team Hype, Player Introductions, Halftime, Timeout, General Promotions) plus your own
 - Search, filter, preview, rename, recategorize and set display times
 - Sponsors with logos, multiple images/videos with individual durations and reorderable rotation
-- **Live Sponsor presentation mode** — the scoreboard plus a media area the operator can place (right, left, top or bottom), resize (20–60%) and scale (Fit or Fill) from the Display Mode panel. Scoreboard text (names, scores, clocks) is sized from its own block, so it re-fits automatically when the media area, placement or screen shape changes; the Layout Editor canvas uses the same rules. It plays each sponsor's rotation in the order and for the durations set on the Sponsors page
+- **Live Sponsor presentation mode** — the scoreboard plus a media area the operator can place (right, left, top or bottom), resize (20–60%) and scale (Fit or Fill) from the Display Mode panel. It plays each sponsor's rotation in the order and for the durations set on the Sponsors page
 - **Video with audible audio** — sponsor and intro videos play with sound enabled
 
 ## Getting started
