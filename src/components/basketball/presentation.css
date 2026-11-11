@@ -23,19 +23,50 @@
 .pm-board[data-mode='livesponsor'] {
   --crest: calc(var(--u) * 8);
   --name: calc(var(--u) * 4);
-  --score: calc(var(--u) * 20);
+  --score: calc(var(--u) * 17); /* three digits still fit a team block at the widest media size */
   --clock: calc(var(--u) * 12);
   --shot: calc(var(--u) * 7);
+  --stat: calc(var(--u) * 4.6); /* the Classic stats size: without it the foul numbers have no size here */
   grid-template-columns: minmax(0, 1fr);
 }
-.pm-board[data-mode='livesponsor'][data-place='bottom'] { grid-template-areas: 'home center away' 'slot slot slot'; grid-template-columns: 1fr 0.8fr 1fr; }
-.pm-board[data-mode='livesponsor'][data-place='top'] { grid-template-areas: 'slot slot slot' 'home center away'; grid-template-columns: 1fr 0.8fr 1fr; }
+.pm-board[data-mode='livesponsor'][data-place='bottom'] { grid-template-areas: 'home center away' 'slot slot slot'; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr); }
+.pm-board[data-mode='livesponsor'][data-place='top'] { grid-template-areas: 'slot slot slot' 'home center away'; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr); }
 .pm-board[data-mode='livesponsor'][data-place='right'] { grid-template-areas: 'home away slot' 'center center slot'; }
 .pm-board[data-mode='livesponsor'][data-place='left'] { grid-template-areas: 'slot home away' 'slot center center'; }
+.pm-board[data-mode='livesponsor'][data-place='right-stack'] { grid-template-areas: 'home center slot' 'away center slot'; }
+.pm-board[data-mode='livesponsor'][data-place='left-stack'] { grid-template-areas: 'slot home center' 'slot away center'; }
+.pm-board[data-mode='livesponsor'][data-place$='-stack'] .pm-center { flex-direction: column; flex-wrap: nowrap; }
 .pm-board[data-mode='livesponsor'] .sb-team .sb-team-head { flex-direction: row; max-width: 100%; }
 .pm-board[data-mode='livesponsor'] .pm-center { flex-direction: row; flex-wrap: wrap; gap: calc(var(--u) * 2); padding: calc(var(--u) * 1); }
 .pm-board[data-mode='livesponsor'][data-place='bottom'] .pm-center,
 .pm-board[data-mode='livesponsor'][data-place='top'] .pm-center { flex-direction: column; }
+
+/* Free layout (elements moved or resized in the Layout Editor): every element is
+ * placed absolutely from its saved rect, and each team and clock block gets its own
+ * --u inline (PresentationViews), so its padding, gaps, crest, name, score and clocks
+ * all scale with the block. The variables below are re-declared on the block because
+ * var(--u) is resolved where a custom property is declared. */
+.pm-board[data-mode='livesponsor'][data-place='free'] { display: block; padding: 0; }
+.pm-board[data-mode='livesponsor'][data-place='free'] .pm-center { flex-direction: column; flex-wrap: nowrap; overflow: hidden; }
+.pm-board[data-mode='livesponsor'][data-place='free']:not([data-layout]) .sb-team { --stat: calc(var(--u) * 4.6); }
+.pm-board[data-mode='livesponsor'][data-place='free'] .sb-team {
+  --crest: calc(var(--u) * 8);
+  --name: calc(var(--u) * 4);
+  --score: calc(var(--u) * 17);
+}
+.pm-board[data-mode='livesponsor'][data-place='free'] .pm-center {
+  --clock: calc(var(--u) * 12);
+  --shot: calc(var(--u) * 7);
+}
+.pm-board[data-mode='livesponsor'][data-place='free'] .sb-eyebrow { font-size: max(8px, calc(var(--u) * 1.05)); }
+.pm-board[data-mode='livesponsor'][data-place='free'] .pm-meta { flex-wrap: wrap; }
+
+/* Preset looks (data-layout) only restyle the team blocks; sizes stay tuned for a block, not a full board. */
+.pm-board[data-mode='livesponsor'][data-layout] { --slab: calc(var(--u) * 12); --stat: calc(var(--u) * 2.4); }
+.pm-board[data-mode='livesponsor'][data-layout='minimal'] { --score: calc(var(--u) * 20); --name: calc(var(--u) * 3.4); }
+.pm-board[data-mode='livesponsor'][data-layout='broadcast'] { --crest: calc(var(--u) * 7); --name: calc(var(--u) * 4.4); --score: calc(var(--u) * 15); --slab: calc(var(--u) * 15); }
+.pm-board[data-mode='livesponsor'][data-place='free'][data-layout='minimal'] .sb-team { --score: calc(var(--u) * 20); --name: calc(var(--u) * 3.4); }
+.pm-board[data-mode='livesponsor'][data-place='free'][data-layout='broadcast'] .sb-team { --crest: calc(var(--u) * 7); --name: calc(var(--u) * 4.4); --score: calc(var(--u) * 15); --slab: calc(var(--u) * 15); }
 
 /* Stadium has no header: the teams get the room. */
 .pm-board[data-mode='stadium'] {
@@ -117,6 +148,20 @@
 @media (prefers-reduced-motion: reduce) { .pm-media-img, .pm-media-video { animation: none; } }
 
 .pm-slot { position: relative; }
+/* Live Sponsor: each media section is its own panel inside the sponsor area. */
+.pm-slot[data-region='sponsor'] { background: none; border: 0; border-radius: 0; gap: calc(var(--u) * 0.6); align-items: stretch; }
+.pm-section {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--sb-panel);
+  border: var(--hair) solid var(--sb-border);
+  border-radius: var(--radius);
+}
 .pm-sponsor-badge {
   position: absolute;
   left: calc(var(--u) * 1);

@@ -3,6 +3,7 @@ import { ConfigsPage } from "./components/basketball/ConfigsPage";
 import { RosterPage } from "./components/basketball/RosterPage";
 import { DisplayView } from "./components/basketball/DisplayView";
 import { HistoryPage } from "./components/basketball/HistoryPage";
+import { LayoutEditorPage } from "./components/basketball/LayoutEditorPage";
 import { MediaPage } from "./components/basketball/MediaPage";
 import { SponsorsPage } from "./components/basketball/SponsorsPage";
 import { OperatorLayout } from "./components/basketball/OperatorLayout";
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/configs" element={<ConfigsPage />} />
           <Route path="/media" element={<MediaPage />} />
           <Route path="/sponsors" element={<SponsorsPage />} />
+          <Route path="/layout" element={<LayoutEditorPage />} />
           <Route path="/roster" element={<RosterPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/settings" element={<SettingsPage />} />

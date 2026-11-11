@@ -4,7 +4,7 @@ A basketball scoreboard and game-day presentation system for school gyms and are
 
 Holy Cross Regional High School red, white and black is the default branding. Team names, colours and logos can be changed for any school.
 
-> **Status:** Phases 1–9 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, operator UI/UX improvements, display/animation verification, audio system, and sponsor/advertising system optimization are shipped.
+> **Status:** Phases 1–10 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, operator UI/UX improvements, display/animation verification, audio system, sponsor/advertising system optimization, and the customizable Live Sponsor Layout Editor are shipped.
 
 ## Contents
 
@@ -44,13 +44,15 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Pregame (matchup and tip-off countdown), Live (the scoreboard), Live Sponsor (Stadium scoreboard with a resizable sponsor media area), Stadium (arena layout with score, clocks, period and a media area), Halftime (first-half score and a second-half countdown), Introductions and Fullscreen
 - Switch modes in one click from the operator screen; the display follows. Switching never changes the game, and the clocks keep running
 - Media playback and sponsor rotation run inside the presentation layout during live games
+- **Layout Editor** (`/layout`, its own navigation section): design the Live Sponsor display with drag-and-drop, resizing, up to three media sections and named saved layouts. See [Layout Editor](#layout-editor)
+- Saved configurations show a thumbnail of the display layout in the team colours, with a Preview button to enlarge it before loading
 
 **Media library and sponsors**
 - Upload PNG, JPG and WebP images (up to 25 MB) and MP4 video (up to 500 MB), with thumbnails
 - Built-in categories (Sponsors, Advertisements, Pregame, Team Hype, Player Introductions, Halftime, Timeout, General Promotions) plus your own
 - Search, filter, preview, rename, recategorize and set display times
 - Sponsors with logos, multiple images/videos with individual durations and reorderable rotation
-- **Live Sponsor presentation mode** — the scoreboard plus a media area the operator can place (right, left, top or bottom), resize (20–60%) and scale (Fit or Fill) from the Display Mode panel. It plays each sponsor's rotation in the order and for the durations set on the Sponsors page
+- **Live Sponsor presentation mode** — the scoreboard plus a media area (up to three sections) arranged in the [Layout Editor](#layout-editor). Without assigned media, the first section plays each sponsor's rotation in the order and for the durations set on the Sponsors page
 - **Video with audible audio** — sponsor and intro videos play with sound enabled
 
 ## Getting started
@@ -114,6 +116,20 @@ Changes appear in the live preview and reach the display when you click **Apply 
 ### Display modes
 
 The **Display Mode** panel at the top of the Scoreboard page switches the public display between Pregame, Live, Stadium, Halftime, Introductions and Fullscreen. Pregame and Halftime have an operator-controlled countdown (start, pause, reset, ±1 minute, and a length in minutes; 0 hides it). Halftime shows the score as of the end of the first half, kept per period so it stays correct after Undo. In Stadium mode the shot clock follows the *Show shot clock* display setting.
+
+### Layout Editor
+
+The Layout Editor (`/layout`) is the one place to customize the display. It edits the **Live Sponsor** preset only; Pregame, Stadium and Halftime are unchanged. Everything you do appears on the public `/display` route in Live Sponsor mode.
+
+- **Canvas.** Shows the real Live Sponsor scoreboard in the appearance chosen in Game Setup (colours, typography, background, team areas and clocks), with selectable areas on top. Media does not play in the editor; each section shows its first item or an "Empty" placeholder.
+- **Elements.** Select Home Team, Clocks, Away Team, Media Area or Media 1–3 from the row under the canvas or on the canvas. The Properties panel shows the selection's Top, Left, Width and Height (%).
+- **Media area.** Place it right, left, top or bottom (default: the full-width scoreboard with the media below it), set its size (20–60%) and Fit or Fill scaling, and split it into 1–3 sections arranged as rows or columns with a share slider for each. Changing placement, arrangement or section count re-lays out the display and, after a confirmation, resets manual positions.
+- **Media sections.** Assign images and videos from the Media Library to each section, reorder or remove them, and see them in place. On the display each section cycles its media using each item's display time; videos play with audio and advance when they end. An empty first section keeps the sponsor rotation from the Playback panel. Only media ids are stored, never files.
+- **Drag and resize.** Drag an element to move it, drag its handles or type values in Properties to resize it. Elements snap to 0.5%, stay on the 16:9 canvas, cannot overlap and cannot shrink below 12%. Once an element has been moved, every block is placed from its saved rect and its text (names, scores, clocks, crest) scales with the block, so branding stays proportioned and unclipped. "Reset element positions" returns to the automatic layout.
+- **Presets.** Choosing a different scoreboard preset in Game Setup loads that preset's layout geometry here (Broadcast starts with the media beside the board, the others below it); colours, typography and branding always follow the preset. The editor, the configuration thumbnails and `/display` all read the applied preset (`gameConfig.theme`, set by **Apply to Display**) and update when it changes. Arena, Minimal, Tournament and Broadcast also restyle the team blocks (filled team-colour panels, name and score only, centred crest and score, or crest, name, stats and a score slab); Traditional, Live Sponsor and Custom use the base Stadium block. Fouls, timeouts and bonus labels in the team blocks have a 12px floor and grow with the board, and the Broadcast, Arena and Live Sponsor stat rows wrap instead of overlapping. Broadcast keeps its own structure beside the media: the home and away rows stack on the left of a clock column (the editor's boxes, the preview and `/display` use the same geometry), and every box stays draggable and resizable. Your edits are kept until the next preset change or a reset.
+- **Reset to Defaults.** Restores the selected preset's geometry, sections and scaling after a confirmation; media assignments and game settings are kept.
+- **Saved layouts.** Save the current layout under a unique name, rename, duplicate, delete (with confirmation) or load one into the editor and the display. Each remembers its scoreboard appearance, positions and sizes, sections, proportions and media assignments, and loading it applies that appearance. The canvas is a working copy: a saved layout changes only when you press **Save changes**. Layouts persist locally across restarts and stay in sync between the operator and display tabs.
+- **Previews.** Saved configurations show a thumbnail of the display layout in the team colours (with a Preview button to enlarge it) from the same geometry, so it matches the canvas and `/display`.
 
 ### During the game
 
@@ -249,7 +265,8 @@ The unit tests cover scoring, clocks, periods and overtime, fouls, timeouts, pos
 | 7 | Public display verification, animation and timer accuracy optimization | ✅ Done |
 | 8 | Audio system and sound effects | ✅ Done |
 | 9 | Sponsor and advertising system optimization | ✅ Done |
-| 10+ | Coming soon | Planned |
+| 10 | Customizable Live Sponsor Layout Editor: drag-and-drop, resizing, media sections and saved layouts | ✅ Done |
+| 11+ | Coming soon | Planned |
 
 ## Known limitations
 

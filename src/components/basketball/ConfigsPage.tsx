@@ -1,17 +1,23 @@
 import { useState } from 'react';
-import { Copy, Pencil, Save, Trash2, Upload } from 'lucide-react';
+import { Copy, Eye, EyeOff, Pencil, Save, Trash2, Upload } from 'lucide-react';
 import { isGameActive, referencedLogos, useBasketballStore } from '../../store/useBasketballStore';
 import { askConfirm, notify } from '../../lib/feedback';
 import { pruneLogos } from '../../lib/logos';
 import { LAYOUTS, THEMES } from '../../lib/theme';
 import type { GameConfig } from '../../types/basketball';
 import { input, negative, neutral, primary } from './styles';
+import { usePresentationStore } from '../../store/usePresentationStore';
+import { LayoutPreview } from './LayoutPreview';
 import { Panel, TeamLogo } from './ui';
 
 const ConfigCard: React.FC<{ config: GameConfig }> = ({ config }) => {
   const store = useBasketballStore();
   const [newName, setNewName] = useState<string | null>(null);
+  const [preview, setPreview] = useState(false);
+  const layout = usePresentationStore((state) => state.sponsorLayout);
   const active = store.gameConfig.id === config.id;
+  const colors = { home: config.homeTeam.primaryColor, away: config.awayTeam.primaryColor };
+  const names = { home: config.homeTeam.name, away: config.awayTeam.name };
 
   const rename = () => {
     const name = newName?.trim();
@@ -62,6 +68,9 @@ const ConfigCard: React.FC<{ config: GameConfig }> = ({ config }) => {
           <button type="button" onClick={() => setNewName(null)} className={`${neutral} px-3 py-2`}>Cancel</button>
         </form>
       )}
+      <div className={preview ? 'my-2' : 'my-2 max-w-48'}>
+        <LayoutPreview layout={layout} theme={config.theme} colors={colors} names={names} compact={!preview} media />
+      </div>
       <div className="flex items-center gap-2 my-2 text-sm">
         <TeamLogo id={config.homeTeam.logo} alt="" className="w-6 h-6 object-contain" />
         <span className="w-3 h-3 rounded-full flex-none" style={{ background: config.homeTeam.primaryColor }} />
@@ -75,6 +84,7 @@ const ConfigCard: React.FC<{ config: GameConfig }> = ({ config }) => {
         {config.numberOfPeriods} × {config.periodDuration} min, {config.overtimeDuration} min OT · Shot clock {config.shotClockDuration}/{config.shotClockShort} · Bonus {config.foulsForBonus} · {config.maxTimeouts} timeouts · {THEMES[config.theme.themeId].label}, {LAYOUTS[config.theme.layout].label} layout
       </p>
       <div className="flex flex-wrap gap-2">
+        <button onClick={() => setPreview((v) => !v)} aria-pressed={preview} aria-label={`${preview ? 'Hide' : 'Preview'} layout for ${config.name}`} className={`${neutral} px-3 py-2 text-sm`}>{preview ? <EyeOff size={16} /> : <Eye size={16} />}Preview</button>
         <button onClick={load} aria-label={`Load ${config.name}`} className={`${primary} px-3 py-2 text-sm`}><Upload size={16} />Load</button>
         <button onClick={overwrite} aria-label={`Update ${config.name} from current setup`} className={`${neutral} px-3 py-2 text-sm`}><Save size={16} />Update</button>
         <button onClick={() => setNewName(config.name)} aria-label={`Rename ${config.name}`} className={`${neutral} px-3 py-2 text-sm`}><Pencil size={16} />Rename</button>

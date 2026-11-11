@@ -3,12 +3,14 @@ import { useMediaStore } from '../../store/useMediaStore';
 import { usePlaybackStore } from '../../store/usePlaybackStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import { halfPeriods, pointsThrough } from '../../lib/periodScores';
+import { useCallback, useEffect, useState } from 'react';
 import { useMediaUrl } from './useMedia';
 import { themeStyle } from '../../lib/theme';
 import type { ScoreboardTheme } from '../../types/basketball';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
 import { ClockDisplay } from './ClockDisplay';
-import { MediaPlayer } from './MediaPlayer';
+import { ImageMedia, MediaPlayer, VideoMedia } from './MediaPlayer';
+import { isFree, layoutRects, sectionDirection, sectionId, sectionShares, stackedTeams, STACK_ROWS, type LayoutRect } from '../../lib/layoutEditor';
 import { Bonus, Crest, Fouls, GameClock, Ident, Period, Score, ShotClock, TeamBlock, Timeouts } from './Scoreboard';
 import './presentation.css';
 
@@ -19,12 +21,12 @@ import './presentation.css';
 
 type Side = 'home' | 'away';
 
-export const Stage: React.FC<{ theme: ScoreboardTheme; mode: PresentationMode; place?: string; style?: React.CSSProperties; children: React.ReactNode }> = ({ theme, mode, place, style, children }) => {
+export const Stage: React.FC<{ theme: ScoreboardTheme; mode: PresentationMode; place?: string; look?: string; style?: React.CSSProperties; children: React.ReactNode }> = ({ theme, mode, place, look, style, children }) => {
   const home = useBasketballStore((state) => state.homeTeam.primaryColor);
   const away = useBasketballStore((state) => state.awayTeam.primaryColor);
   return (
     <div className="sb-stage" data-testid={`${mode}-view`} style={themeStyle(theme)}>
-      <div className="sb-board pm-board" data-mode={mode} data-place={place} style={{ '--home': home, '--away': away, ...style } as React.CSSProperties}>
+      <div className="sb-board pm-board" data-mode={mode} data-place={place} data-layout={look} style={{ '--home': home, '--away': away, ...style } as React.CSSProperties}>
         <span className="sb-stripe" aria-hidden />
         {children}
       </div>
@@ -134,33 +136,99 @@ const SponsorBadge: React.FC = () => {
   );
 };
 
-export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) => {
-  const { placement, size, fit } = usePresentationStore((state) => state.sponsorLayout);
+// A section's assigned media, cycling through each item for its own display time.
+// Videos play with audio and advance when they end (they loop if they're alone).
+const SectionRotator: React.FC<{ ids: string[] }> = ({ ids }) => {
+  const items = useMediaStore((state) => state.items);
+  const list = ids.flatMap((id) => items.find((i) => i.id === id) ?? []);
+  const [index, setIndex] = useState(0);
+  const next = useCallback(() => setIndex((i) => i + 1), []);
+  const item = list.length > 0 ? list[index % list.length] : null;
+  const timed = item !== null && item.kind === 'image' && list.length > 1;
+  useEffect(() => {
+    if (!timed) return;
+    const timer = setTimeout(next, Math.max(1, item.duration) * 1000);
+    return () => clearTimeout(timer);
+  }, [timed, item, index, next]);
+  if (!item) return null;
+  return item.kind === 'image'
+    ? <ImageMedia key={index} item={item} isPlaying onMissing={next} />
+    : <VideoMedia key={index} item={item} isPlaying onMissing={next} onError={next} onEnded={next} loop={list.length === 1} />;
+};
+
+// `preview` draws the empty section panels only; the Layout Editor overlays its own thumbnails, so nothing plays.
+// Free layout: an element sits at its rect (% of the canvas) with the usual gap kept around it.
+// A team or clock block gets its own --u, scaled from the board's (min(1cqw, 1.7778cqh)) by how its width and
+// height compare with the same block in the automatic layout. An untouched block therefore renders exactly as in
+// the default layout, and a resized one re-fits. cq units resolve against the stage here, which is why the block
+// itself is not a container.
+const freeStyle = (r?: LayoutRect, auto?: LayoutRect): React.CSSProperties | undefined => r && ({
+  ...(auto ? { '--u': `min(${r.width / auto.width}cqw, ${(r.height / auto.height) * 1.7778}cqh)` } : {}),
+  position: 'absolute', gridArea: 'auto', margin: 0, boxSizing: 'border-box',
+  left: `calc(${r.left}% + var(--u) * 0.4)`, top: `calc(${r.top}% + var(--u) * 0.4)`,
+  width: `calc(${r.width}% - var(--u) * 0.8)`, height: `calc(${r.height}% - var(--u) * 0.8)`,
+});
+
+const SponsorSections: React.FC<{ preview?: boolean }> = ({ preview }) => {
+  const layout = usePresentationStore((state) => state.sponsorLayout);
+  const rows = sectionDirection(layout) === 'rows';
+  const free = isFree(layout);
+  const rects = free ? layoutRects(layout) : [];
+  return (
+    <aside className="pm-slot" data-region="sponsor" data-fit={layout.fit} data-sections={layout.sections} style={free ? { position: 'absolute', inset: 0, gridArea: 'auto', pointerEvents: 'none' } : { flexDirection: rows ? 'column' : 'row' }} aria-label="Sponsor area">
+      {sectionShares(layout).map((share, i) => (
+        <div key={i} className="pm-section" style={free ? freeStyle(rects.find((r) => r.id === sectionId(i))) : { flex: `${share} 1 0` }}>
+          {preview ? null : layout.media[i].length > 0
+            ? <SectionRotator ids={layout.media[i]} />
+            // An unassigned first section keeps the original sponsor rotation.
+            : i === 0 && <><MediaPlayer /><SponsorBadge /></>}
+        </div>
+      ))}
+    </aside>
+  );
+};
+
+export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boolean }> = ({ theme, preview }) => {
+  const layout = usePresentationStore((state) => state.sponsorLayout);
+  const { placement, size } = layout;
+  const free = isFree(layout);
+  const rects = free ? layoutRects(layout) : [];
+  const autoRects = free ? layoutRects({ ...layout, rects: {} }) : [];
+  const at = (id: string) => freeStyle(rects.find((r) => r.id === id), autoRects.find((r) => r.id === id));
   const side = placement === 'left' || placement === 'right';
   const rest = 100 - size;
   // Grid tracks come from the operator's size; areas from the placement (presentation.css).
-  const tracks = (side ? { gridTemplateColumns: placement === 'right' ? `${rest / 2}fr ${rest / 2}fr ${size}fr` : `${size}fr ${rest / 2}fr ${rest / 2}fr`, gridTemplateRows: '1fr 0.55fr' }
-    : { gridTemplateRows: placement === 'bottom' ? `${rest}fr ${size}fr` : `${size}fr ${rest}fr` }) as React.CSSProperties;
-  const team = (s: Side) => (
-    <TeamBlock side={s}>
-      <div className="sb-team-head"><Crest side={s} /><Ident side={s} ball /></div>
-      <Score side={s} />
-      <div className="pm-meta"><Fouls side={s} /><Timeouts side={s} /><Bonus side={s} /></div>
-    </TeamBlock>
-  );
+  // minmax(0, ...) on every track: without it a track's minimum is its content (a large image or a long clock),
+  // which would grow the media row or column and shrink the scoreboard instead of keeping the saved proportions.
+  const fr = (n: number) => `minmax(0, ${n}fr)`;
+  const stack = stackedTeams(layout);
+  const [a, b] = stack ? [rest * STACK_ROWS, rest * (1 - STACK_ROWS)] : [rest / 2, rest / 2];
+  const tracks = (side ? { gridTemplateColumns: (placement === 'right' ? [a, b, size] : [size, a, b]).map(fr).join(' '), gridTemplateRows: stack ? `${fr(1)} ${fr(1)}` : `${fr(1)} ${fr(0.55)}` }
+    : { gridTemplateRows: (placement === 'bottom' ? [rest, size] : [size, rest]).map(fr).join(' ') }) as React.CSSProperties;
+  // The selected scoreboard appearance (Game Setup) decides the team block's look and contents. Classic and
+  // Live Sponsor keep the base Stadium block; the others take their scoreboard.css block styling via data-layout.
+  const look = (['modern', 'minimal', 'tournament', 'broadcast'] as const).find((l) => l === theme.layout);
+  const meta = (s: Side, cls: string) => <div className={cls}><Fouls side={s} /><Timeouts side={s} /><Bonus side={s} /></div>;
+  const body = (s: Side) => {
+    switch (look) {
+      case 'modern': return <><div className="sb-team-head"><Crest side={s} /><Ident side={s} ball /></div><Score side={s} />{meta(s, 'sb-team-meta')}</>;
+      case 'minimal': return <><Ident side={s} ball /><Score side={s} /></>;
+      case 'tournament': return <><Crest side={s} /><Ident side={s} /><Score side={s} /></>;
+      case 'broadcast': return <><Crest side={s} /><Ident side={s} ball />{meta(s, 'sb-team-meta')}<Score side={s} /></>;
+      default: return <><div className="sb-team-head"><Crest side={s} /><Ident side={s} ball /></div><Score side={s} />{meta(s, 'pm-meta')}</>;
+    }
+  };
+  const team = (s: Side) => <TeamBlock side={s} style={at(s)}>{body(s)}</TeamBlock>;
   return (
-    <Stage theme={theme} mode="livesponsor" place={placement} style={tracks}>
+    <Stage theme={theme} mode="livesponsor" place={free ? 'free' : stack ? `${placement}-stack` : placement} look={look} style={free ? undefined : tracks}>
       {team('home')}
-      <section className="pm-center" aria-label="Game clock">
+      <section className="pm-center" style={at('center')} aria-label="Game clock">
         <Period />
         <GameClock />
         <ShotClock />
       </section>
       {team('away')}
-      <aside className="pm-slot" data-region="sponsor" data-fit={fit} aria-label="Sponsor area">
-        <MediaPlayer />
-        <SponsorBadge />
-      </aside>
+      <SponsorSections preview={preview} />
     </Stage>
   );
 };
