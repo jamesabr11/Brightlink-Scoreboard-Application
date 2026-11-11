@@ -620,11 +620,11 @@
 /* Traditional (Holy Cross Classic): the stats row sits under a large score, so its labels are larger still. */
 .sb-board[data-layout='classic'] .sb-team-stats .sb-eyebrow,
 .sb-board[data-layout='classic'] .sb-team-stats .sb-bonus {
-  font-size: max(14px, calc(var(--u) * 1.9));
+  font-size: max(17px, calc(var(--u) * 1.9 + 3px));
 }
 
 .sb-board[data-layout='classic'] .sb-team-stats {
-  --stat: calc(var(--u) * 5.6);
+  --stat: calc(var(--u) * 5.6 + 3px);
 }
 
 .sb-team-meta .sb-bonus,
