@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import { layoutRects, type ElementId } from '../../lib/layoutEditor';
 import { SponsorLayoutControls } from './PresentationPanel';
+import { LayoutPreview } from './LayoutPreview';
 import { Panel } from './ui';
 
 const pct = (n: number) => `${Math.round(n * 10) / 10}%`;
@@ -16,23 +17,11 @@ export const LayoutEditorPage: React.FC = () => {
     <div className="space-y-3">
       <div>
         <h2 className="text-xl font-bold">Layout Editor</h2>
-        <p className="text-sm text-neutral-400">Live Sponsor layout. Select an element to see its properties.</p>
+        <p className="text-sm text-neutral-400">Customize how the public display is laid out. Select an element to see its properties.</p>
       </div>
       <div className="grid gap-3 lg:grid-cols-[1fr_320px]">
         <Panel title="Canvas">
-          <div className="relative w-full aspect-video rounded-md border border-neutral-600 bg-neutral-900 overflow-hidden" onClick={() => setSelected('sponsor')} role="group" aria-label="Layout canvas">
-            {rects.map((r) => (
-              <button
-                key={r.id}
-                onClick={(e) => { e.stopPropagation(); setSelected(r.id); }}
-                aria-pressed={selected === r.id}
-                className="absolute flex items-center justify-center text-center text-sm md:text-lg font-semibold text-white/90 border-2 transition-[background-color]"
-                style={{ left: pct(r.left), top: pct(r.top), width: pct(r.width), height: pct(r.height), borderColor: r.color, background: `${r.color}${selected === r.id ? '55' : '22'}`, outline: selected === r.id ? '2px solid #fff' : undefined, outlineOffset: -4 }}
-              >
-                {r.name}
-              </button>
-            ))}
-          </div>
+          <LayoutPreview layout={layout} selected={selected} onSelect={setSelected} />
         </Panel>
         <div className="space-y-3">
           <Panel title="Properties">

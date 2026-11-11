@@ -44,6 +44,8 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Pregame (matchup and tip-off countdown), Live (the scoreboard), Live Sponsor (Stadium scoreboard with a resizable sponsor media area), Stadium (arena layout with score, clocks, period and a media area), Halftime (first-half score and a second-half countdown), Introductions and Fullscreen
 - Switch modes in one click from the operator screen; the display follows. Switching never changes the game, and the clocks keep running
 - Media playback and sponsor rotation run inside the presentation layout during live games
+- Layout Editor (its own navigation section, `/layout`): shows the display layout as selectable Home, Clocks, Away and Sponsor/Media elements with a properties panel. Dragging and resizing are planned for the next stage
+- Saved configurations show a thumbnail of the display layout in the team colours, with a Preview button to enlarge it before loading
 
 **Media library and sponsors**
 - Upload PNG, JPG and WebP images (up to 25 MB) and MP4 video (up to 500 MB), with thumbnails

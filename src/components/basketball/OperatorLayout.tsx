@@ -6,7 +6,7 @@ import { FeedbackHost } from './ui';
 import { useSounds } from './useSounds';
 
 // Groups keep related nav items together so the operator can scan quickly.
-// Scoreboard | Setup | Configs | Roster — then — Media | Sponsors — then — History | Settings
+// Scoreboard | Setup | Configs | Roster — then — Media | Sponsors — then — Layout Editor (display customization) — then — History | Settings
 const NAV_GROUPS = [
   [
     { to: '/', label: 'Scoreboard', icon: Gauge },
@@ -17,7 +17,9 @@ const NAV_GROUPS = [
   [
     { to: '/media', label: 'Media', icon: Images },
     { to: '/sponsors', label: 'Sponsors', icon: Handshake },
-    { to: '/layout', label: 'Layout', icon: LayoutTemplate },
+  ],
+  [
+    { to: '/layout', label: 'Layout Editor', icon: LayoutTemplate },
   ],
   [
     { to: '/history', label: 'History', icon: History },
