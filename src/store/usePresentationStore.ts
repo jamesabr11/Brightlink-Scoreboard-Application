@@ -4,6 +4,8 @@ import { clockRemaining, stopClock } from '../lib/clock';
 import { safeStorage } from '../lib/storage';
 import { MIN_BOX } from '../lib/layoutEditor';
 import { PRESENTATION_MODES, SPONSOR_ARRANGES, SPONSOR_ELEMENTS, SPONSOR_MAX_SECTIONS, SPONSOR_PLACEMENTS, SPONSOR_SHARE_MAX, SPONSOR_SHARE_MIN, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../types/presentation';
+import { useBasketballStore } from './useBasketballStore';
+import type { LayoutId } from '../types/basketball';
 import type { Countdown, CountdownId, PresentationMode, PresentationState, SponsorLayout } from '../types/presentation';
 
 interface PresentationStore extends PresentationState {
@@ -23,6 +25,21 @@ const DEFAULT_SECONDS: Record<CountdownId, number> = { pregame: 10 * 60, halftim
 const freshCountdown = (seconds: number): Countdown => ({ duration: seconds, remainingTime: seconds, isRunning: false, startTimestamp: null });
 
 export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'bottom', size: 35, fit: 'contain', sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []], rects: {} };
+
+/**
+ * The Live Sponsor geometry a scoreboard preset starts from (placement, media size, no manual positions).
+ * Colours, fonts and background always come from the preset itself (lib/theme.ts); only the arrangement lives here.
+ * Broadcast is stacked team rows beside a clock column, so it starts with the media area beside the board.
+ */
+export const presetGeometry = (layout: LayoutId): Pick<SponsorLayout, 'placement' | 'size' | 'arrange' | 'rects'> => ({
+  placement: layout === 'broadcast' ? 'right' : DEFAULT_SPONSOR_LAYOUT.placement,
+  size: DEFAULT_SPONSOR_LAYOUT.size,
+  arrange: 'auto',
+  rects: {},
+});
+
+/** Back to the preset's own layout; media assignments are kept. */
+export const defaultGeometry = (layout: LayoutId): Partial<SponsorLayout> => ({ ...presetGeometry(layout), fit: 'contain', sections: 1, split: DEFAULT_SPONSOR_LAYOUT.split });
 
 const initialState = (): PresentationState => ({
   mode: 'live',
@@ -154,5 +171,15 @@ export const usePresentationStore = create<PresentationStore>()(
 
 if (typeof window !== 'undefined') {
   const ticker = setInterval(() => usePresentationStore.getState().tick(), 250);
-  import.meta.hot?.dispose(() => { clearInterval(ticker); channel.close(); });
+  // Choosing a different scoreboard preset in Game Setup loads that preset's layout into the editor,
+  // replacing manual positions; later edits are kept until the next preset change or a reset.
+  const presetKey = () => { const { themeId, layout } = useBasketballStore.getState().gameConfig.theme; return `${themeId}:${layout}`; };
+  let preset = presetKey();
+  const unsubscribe = useBasketballStore.subscribe(() => {
+    const next = presetKey();
+    if (next === preset) return;
+    preset = next;
+    usePresentationStore.getState().setSponsorLayout(presetGeometry(useBasketballStore.getState().gameConfig.theme.layout));
+  });
+  import.meta.hot?.dispose(() => { clearInterval(ticker); unsubscribe(); channel.close(); });
 }

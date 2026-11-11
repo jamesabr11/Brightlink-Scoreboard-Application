@@ -191,4 +191,17 @@ describe('sponsor layout sections', () => {
     expect(show.getState().sponsorLayout.rects).toEqual({});
     expect(show.getState().sponsorLayout.media).toEqual([['a'], ['b'], []]);
   });
+
+  it('loads the preset layout when the scoreboard preset changes, keeping media and ignoring other edits', async () => {
+    const { game, show } = await openTab();
+    const theme = game.getState().gameConfig.theme;
+    show.getState().setSponsorLayout({ media: [['a'], [], []], rects: { home: { x: 0, y: 0, w: 40, h: 40 } } });
+    game.getState().updateGameConfig({ name: 'Renamed' });
+    expect(show.getState().sponsorLayout.rects).toEqual({ home: { x: 0, y: 0, w: 40, h: 40 } });
+    game.getState().updateGameConfig({ theme: { ...theme, themeId: 'broadcast', layout: 'broadcast' } });
+    expect(show.getState().sponsorLayout).toMatchObject({ placement: 'right', rects: {}, media: [['a'], [], []] });
+    show.getState().setSponsorLayout({ rects: { away: { x: 50, y: 0, w: 30, h: 30 } } });
+    game.getState().updateGameConfig({ theme: { ...game.getState().gameConfig.theme, accent: '#123456' } });
+    expect(show.getState().sponsorLayout.rects).toHaveProperty('away');
+  });
 });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, X } from 'lucide-react';
-import { usePresentationStore } from '../../store/usePresentationStore';
+import { ArrowDown, ArrowUp, RotateCcw, X } from 'lucide-react';
+import { defaultGeometry, usePresentationStore } from '../../store/usePresentationStore';
+import { askConfirm, notify } from '../../lib/feedback';
 import { useBasketballStore } from '../../store/useBasketballStore';
 import { useMediaStore } from '../../store/useMediaStore';
 import { areaRects, boxOf, isFree, layoutRects, MIN_BOX, overlaps, sectionShares, type ElementId } from '../../lib/layoutEditor';
@@ -103,6 +104,13 @@ const SectionControls: React.FC<{ index: number }> = ({ index }) => {
 export const LayoutEditorPage: React.FC = () => {
   const [layout, setLayout] = useLayout();
   const theme = useBasketballStore((s) => s.gameConfig.theme);
+  const reset = async () => {
+    const ok = await askConfirm({ title: 'Reset the layout?', message: 'Positions, sizes, placement, sections and scaling go back to the defaults for the selected scoreboard preset. Your media assignments and game settings are kept.', confirmLabel: 'Reset to Defaults', danger: true });
+    if (!ok) return;
+    setLayout(defaultGeometry(theme.layout));
+    setSelected('sponsor');
+    notify('Layout reset to defaults.');
+  };
   const [selected, setSelected] = useState<ElementId>('sponsor');
   const rects = layoutRects(layout);
   const setBox = (id: SponsorElement, box: LayoutBox) => setLayout({ rects: { ...layout.rects, [id]: box } });
@@ -123,9 +131,12 @@ export const LayoutEditorPage: React.FC = () => {
   const elements = [...rects.filter((r) => !r.id.startsWith('section')).slice(0, 3), { ...area, name: 'Media Area' }, ...rects.filter((r) => r.id.startsWith('section'))];
   return (
     <div className="space-y-3">
-      <div>
-        <h2 className="text-xl font-bold">Layout Editor</h2>
-        <p className="text-sm text-neutral-400">Edits the Live Sponsor display preset, shown on the public display in Live Sponsor mode. Select an element to see its properties.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold">Layout Editor</h2>
+          <p className="text-sm text-neutral-400">Edits the Live Sponsor display preset, shown on the public display in Live Sponsor mode. Select an element to see its properties. Choosing a different scoreboard preset in Game Setup loads that preset's layout here.</p>
+        </div>
+        <button onClick={reset} className={`${neutral} px-4 py-2 text-sm font-semibold ring-1 ring-neutral-500`}><RotateCcw size={16} className="mr-2 inline" />Reset to Defaults</button>
       </div>
       <div className="grid gap-3 lg:grid-cols-[1fr_340px]">
         <Panel title="Live Sponsor Layout">
