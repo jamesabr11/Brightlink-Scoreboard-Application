@@ -166,3 +166,15 @@ describe('countdowns', () => {
     expect(show.getState().countdowns.pregame.duration).toBe(0);
   });
 });
+
+describe('sponsor layout sections', () => {
+  it('limits sections and shares, and syncs media assignments to the display tab', async () => {
+    const operator = await openTab();
+    const display = await openTab();
+    operator.show.getState().setSponsorLayout({ sections: 9, split: [500, 1, 40], media: [['a'], [], [], ['extra']] });
+    const layout = display.show.getState().sponsorLayout;
+    expect(layout.sections).toBe(3);
+    expect(layout.split).toEqual([80, 10, 40]);
+    expect(layout.media).toEqual([['a'], [], []]);
+  });
+});

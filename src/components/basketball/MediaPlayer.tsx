@@ -22,7 +22,7 @@ interface MediaProps {
   onMissing: () => void; // called when the blob was deleted from IndexedDB
 }
 
-const ImageMedia: React.FC<MediaProps> = ({ item: _item, isPlaying: _isPlaying, onMissing }) => {
+export const ImageMedia: React.FC<MediaProps> = ({ item: _item, isPlaying: _isPlaying, onMissing }) => {
   const { url, missing } = useMediaUrl(_item.id, 'files');
   useEffect(() => { if (missing) onMissing(); }, [missing, onMissing]);
   if (!url) return null;
@@ -38,7 +38,7 @@ const ImageMedia: React.FC<MediaProps> = ({ item: _item, isPlaying: _isPlaying, 
   );
 };
 
-const VideoMedia: React.FC<MediaProps & { onError: () => void }> = ({ item, isPlaying, onMissing, onError }) => {
+export const VideoMedia: React.FC<MediaProps & { onError: () => void; onEnded?: () => void; loop?: boolean }> = ({ item, isPlaying, onMissing, onError, onEnded, loop }) => {
   const { url, missing } = useMediaUrl(item.id, 'files');
   const ref = useRef<HTMLVideoElement>(null);
 
@@ -72,6 +72,8 @@ const VideoMedia: React.FC<MediaProps & { onError: () => void }> = ({ item, isPl
       // prevents double-advance when both the operator and display tabs
       // each have a <video> element firing onEnded at the same time.
       onError={onError}
+      onEnded={onEnded}
+      loop={loop}
       playsInline
       className="pm-media-video"
     />

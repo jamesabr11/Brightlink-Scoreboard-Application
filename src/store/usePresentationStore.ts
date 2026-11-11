@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { clockRemaining, stopClock } from '../lib/clock';
 import { safeStorage } from '../lib/storage';
-import { PRESENTATION_MODES, SPONSOR_PLACEMENTS, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../types/presentation';
+import { PRESENTATION_MODES, SPONSOR_ARRANGES, SPONSOR_MAX_SECTIONS, SPONSOR_PLACEMENTS, SPONSOR_SHARE_MAX, SPONSOR_SHARE_MIN, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../types/presentation';
 import type { Countdown, CountdownId, PresentationMode, PresentationState, SponsorLayout } from '../types/presentation';
 
 interface PresentationStore extends PresentationState {
@@ -21,7 +21,7 @@ const DEFAULT_SECONDS: Record<CountdownId, number> = { pregame: 10 * 60, halftim
 
 const freshCountdown = (seconds: number): Countdown => ({ duration: seconds, remainingTime: seconds, isRunning: false, startTimestamp: null });
 
-export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'right', size: 35, fit: 'contain' };
+export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'right', size: 35, fit: 'contain', sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []] };
 
 const initialState = (): PresentationState => ({
   mode: 'live',
@@ -36,6 +36,16 @@ const cleanLayout = (saved: Partial<SponsorLayout> | undefined): SponsorLayout =
   placement: SPONSOR_PLACEMENTS.includes(saved?.placement as never) ? saved!.placement! : DEFAULT_SPONSOR_LAYOUT.placement,
   size: typeof saved?.size === 'number' && Number.isFinite(saved.size) ? Math.min(SPONSOR_SIZE_MAX, Math.max(SPONSOR_SIZE_MIN, Math.round(saved.size))) : DEFAULT_SPONSOR_LAYOUT.size,
   fit: saved?.fit === 'cover' ? 'cover' : 'contain',
+  sections: typeof saved?.sections === 'number' ? Math.min(SPONSOR_MAX_SECTIONS, Math.max(1, Math.round(saved.sections))) : 1,
+  split: DEFAULT_SPONSOR_LAYOUT.split.map((d, i) => {
+    const v = saved?.split?.[i];
+    return typeof v === 'number' && Number.isFinite(v) ? Math.min(SPONSOR_SHARE_MAX, Math.max(SPONSOR_SHARE_MIN, Math.round(v))) : d;
+  }),
+  arrange: SPONSOR_ARRANGES.includes(saved?.arrange as never) ? saved!.arrange! : 'auto',
+  media: DEFAULT_SPONSOR_LAYOUT.media.map((_, i) => {
+    const ids = saved?.media?.[i];
+    return Array.isArray(ids) ? ids.filter((id) => typeof id === 'string').slice(0, 20) : [];
+  }),
 });
 
 // localStorage is untrusted, so nothing from it is used as-is.

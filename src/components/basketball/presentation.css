@@ -23,7 +23,7 @@
 .pm-board[data-mode='livesponsor'] {
   --crest: calc(var(--u) * 8);
   --name: calc(var(--u) * 4);
-  --score: calc(var(--u) * 20);
+  --score: calc(var(--u) * 17); /* three digits still fit a team block at the widest media size */
   --clock: calc(var(--u) * 12);
   --shot: calc(var(--u) * 7);
   grid-template-columns: minmax(0, 1fr);
@@ -117,6 +117,20 @@
 @media (prefers-reduced-motion: reduce) { .pm-media-img, .pm-media-video { animation: none; } }
 
 .pm-slot { position: relative; }
+/* Live Sponsor: each media section is its own panel inside the sponsor area. */
+.pm-slot[data-region='sponsor'] { background: none; border: 0; border-radius: 0; gap: calc(var(--u) * 0.6); align-items: stretch; }
+.pm-section {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--sb-panel);
+  border: var(--hair) solid var(--sb-border);
+  border-radius: var(--radius);
+}
 .pm-sponsor-badge {
   position: absolute;
   left: calc(var(--u) * 1);

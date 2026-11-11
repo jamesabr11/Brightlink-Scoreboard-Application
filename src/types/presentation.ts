@@ -19,7 +19,16 @@ export interface SponsorLayout {
   placement: SponsorPlacement;
   size: number; // percent of the board, SPONSOR_SIZE_MIN..MAX
   fit: 'contain' | 'cover';
+  sections: number; // 1..SPONSOR_MAX_SECTIONS independent media sections
+  split: number[]; // relative share of each section (SPONSOR_MAX_SECTIONS weights)
+  arrange: SponsorArrange; // direction the sections are divided in
+  media: string[][]; // Media Library ids assigned to each section (ids only, never blobs)
 }
+export const SPONSOR_ARRANGES = ['auto', 'rows', 'columns'] as const; // auto: rows beside the board, columns above/below
+export type SponsorArrange = (typeof SPONSOR_ARRANGES)[number];
+export const SPONSOR_MAX_SECTIONS = 3;
+export const SPONSOR_SHARE_MIN = 10;
+export const SPONSOR_SHARE_MAX = 80;
 export const SPONSOR_SIZE_MIN = 20;
 export const SPONSOR_SIZE_MAX = 60;
 

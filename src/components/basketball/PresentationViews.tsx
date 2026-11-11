@@ -3,12 +3,14 @@ import { useMediaStore } from '../../store/useMediaStore';
 import { usePlaybackStore } from '../../store/usePlaybackStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import { halfPeriods, pointsThrough } from '../../lib/periodScores';
+import { useCallback, useEffect, useState } from 'react';
 import { useMediaUrl } from './useMedia';
 import { themeStyle } from '../../lib/theme';
 import type { ScoreboardTheme } from '../../types/basketball';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
 import { ClockDisplay } from './ClockDisplay';
-import { MediaPlayer } from './MediaPlayer';
+import { ImageMedia, MediaPlayer, VideoMedia } from './MediaPlayer';
+import { sectionDirection, sectionShares } from '../../lib/layoutEditor';
 import { Bonus, Crest, Fouls, GameClock, Ident, Period, Score, ShotClock, TeamBlock, Timeouts } from './Scoreboard';
 import './presentation.css';
 
@@ -134,8 +136,45 @@ const SponsorBadge: React.FC = () => {
   );
 };
 
+// A section's assigned media, cycling through each item for its own display time.
+// Videos play with audio and advance when they end (they loop if they're alone).
+const SectionRotator: React.FC<{ ids: string[] }> = ({ ids }) => {
+  const items = useMediaStore((state) => state.items);
+  const list = ids.flatMap((id) => items.find((i) => i.id === id) ?? []);
+  const [index, setIndex] = useState(0);
+  const next = useCallback(() => setIndex((i) => i + 1), []);
+  const item = list.length > 0 ? list[index % list.length] : null;
+  const timed = item !== null && item.kind === 'image' && list.length > 1;
+  useEffect(() => {
+    if (!timed) return;
+    const timer = setTimeout(next, Math.max(1, item.duration) * 1000);
+    return () => clearTimeout(timer);
+  }, [timed, item, index, next]);
+  if (!item) return null;
+  return item.kind === 'image'
+    ? <ImageMedia key={index} item={item} isPlaying onMissing={next} />
+    : <VideoMedia key={index} item={item} isPlaying onMissing={next} onError={next} onEnded={next} loop={list.length === 1} />;
+};
+
+const SponsorSections: React.FC = () => {
+  const layout = usePresentationStore((state) => state.sponsorLayout);
+  const rows = sectionDirection(layout) === 'rows';
+  return (
+    <aside className="pm-slot" data-region="sponsor" data-fit={layout.fit} data-sections={layout.sections} style={{ flexDirection: rows ? 'column' : 'row' }} aria-label="Sponsor area">
+      {sectionShares(layout).map((share, i) => (
+        <div key={i} className="pm-section" style={{ flex: `${share} 1 0` }}>
+          {layout.media[i].length > 0
+            ? <SectionRotator ids={layout.media[i]} />
+            // An unassigned first section keeps the original sponsor rotation.
+            : i === 0 && <><MediaPlayer /><SponsorBadge /></>}
+        </div>
+      ))}
+    </aside>
+  );
+};
+
 export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) => {
-  const { placement, size, fit } = usePresentationStore((state) => state.sponsorLayout);
+  const { placement, size } = usePresentationStore((state) => state.sponsorLayout);
   const side = placement === 'left' || placement === 'right';
   const rest = 100 - size;
   // Grid tracks come from the operator's size; areas from the placement (presentation.css).
@@ -157,10 +196,7 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme }> = ({ theme })
         <ShotClock />
       </section>
       {team('away')}
-      <aside className="pm-slot" data-region="sponsor" data-fit={fit} aria-label="Sponsor area">
-        <MediaPlayer />
-        <SponsorBadge />
-      </aside>
+      <SponsorSections />
     </Stage>
   );
 };
