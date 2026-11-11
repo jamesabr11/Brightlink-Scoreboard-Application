@@ -16,7 +16,7 @@ const useIntroTicker = (total: number) => {
     if (!isPlaying || autoAdvanceMs <= 0 || total === 0) return;
     const timer = setTimeout(() => next(total), autoAdvanceMs);
     return () => clearTimeout(timer);
-  }, [isPlaying, playerIndex, autoAdvanceMs, total, next]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isPlaying, playerIndex, autoAdvanceMs, total, next]);
 };
 
 export const IntroPanel: React.FC = () => {
@@ -26,11 +26,11 @@ export const IntroPanel: React.FC = () => {
   const homeRoster = useRosterStore((s) => s.home);
   const awayRoster = useRosterStore((s) => s.away);
 
-  const roster = team === 'home' ? homeRoster : team === 'away' ? awayRoster : [];
   const introPlayers = useMemo(() => {
+    const roster = team === 'home' ? homeRoster : team === 'away' ? awayRoster : [];
     const starters = roster.filter((p) => p.isStarter);
     return starters.length > 0 ? starters : roster;
-  }, [roster]);
+  }, [team, homeRoster, awayRoster]);
 
   // Total = players to introduce (team card is implicit at index -1)
   const total = introPlayers.length;

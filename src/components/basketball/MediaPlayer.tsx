@@ -22,15 +22,15 @@ interface MediaProps {
   onMissing: () => void; // called when the blob was deleted from IndexedDB
 }
 
-export const ImageMedia: React.FC<MediaProps> = ({ item: _item, isPlaying: _isPlaying, onMissing }) => {
-  const { url, missing } = useMediaUrl(_item.id, 'files');
+export const ImageMedia: React.FC<MediaProps> = ({ item, onMissing }) => {
+  const { url, missing } = useMediaUrl(item.id, 'files');
   useEffect(() => { if (missing) onMissing(); }, [missing, onMissing]);
   if (!url) return null;
   return (
     <img
-      key={_item.id}
+      key={item.id}
       src={url}
-      alt={_item.name}
+      alt={item.name}
       className="pm-media-img"
       // A hard load error (corrupt file, wrong MIME) is treated like missing.
       onError={onMissing}

@@ -38,7 +38,7 @@ const PlayerPhoto: React.FC<{ photoId: string; alt: string }> = ({ photoId, alt 
 
 // ── Card variants ────────────────────────────────────────────────────
 
-const TeamIntroCard: React.FC<{ name: string; logoId?: string; color: string }> = ({ name, logoId, color: _color }) => (
+const TeamIntroCard: React.FC<{ name: string; logoId?: string; color: string }> = ({ name, logoId }) => (
   <div className="pm-intro">
     <span className="pm-intro-eyebrow">Now Introducing</span>
     <TeamLogo id={logoId} alt="" className="pm-intro-crest" fallback={null} />
