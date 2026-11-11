@@ -37,6 +37,30 @@
 .pm-board[data-mode='livesponsor'][data-place='bottom'] .pm-center,
 .pm-board[data-mode='livesponsor'][data-place='top'] .pm-center { flex-direction: column; }
 
+/* Live Sponsor text sizing is relative to each block, not the whole stage: a team
+ * block or the clock block is its own size container, and its type scales with
+ * whichever of its width or height runs out first. The reference sizes are the
+ * default-layout block (team 32.5 x 36 stage units; clock 28.6 x 36 below or
+ * above the board, 65 x 20 beside it), so the default look is unchanged and
+ * every placement, media size or aspect ratio re-fits the text automatically.
+ * Variables are re-declared on the children because var(--u) resolves where it
+ * is declared, and the container units must resolve inside the block. */
+.pm-board[data-mode='livesponsor'] .sb-team,
+.pm-board[data-mode='livesponsor'] .pm-center { container: blk / size; }
+.pm-board[data-mode='livesponsor'] .sb-team > * {
+  --u: min(1cqw / 32.5, 1cqh / 36);
+  --crest: calc(var(--u) * 8);
+  --name: calc(var(--u) * 4);
+  --score: calc(var(--u) * 17);
+}
+.pm-board[data-mode='livesponsor'] .pm-center > * {
+  --u: min(1cqw / 28.6, 1cqh / 36);
+  --clock: calc(var(--u) * 12);
+  --shot: calc(var(--u) * 7);
+}
+.pm-board[data-mode='livesponsor'][data-place='left'] .pm-center > *,
+.pm-board[data-mode='livesponsor'][data-place='right'] .pm-center > * { --u: min(1cqw / 65, 1cqh / 20); }
+
 /* Stadium has no header: the teams get the room. */
 .pm-board[data-mode='stadium'] {
   --crest: calc(var(--u) * 11);

@@ -69,7 +69,7 @@ const ConfigCard: React.FC<{ config: GameConfig }> = ({ config }) => {
         </form>
       )}
       <div className={preview ? 'my-2' : 'my-2 max-w-48'}>
-        <LayoutPreview layout={layout} colors={colors} names={names} compact={!preview} />
+        <LayoutPreview layout={layout} theme={config.theme} colors={colors} names={names} compact={!preview} media />
       </div>
       <div className="flex items-center gap-2 my-2 text-sm">
         <TeamLogo id={config.homeTeam.logo} alt="" className="w-6 h-6 object-contain" />

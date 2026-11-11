@@ -21,7 +21,7 @@ const DEFAULT_SECONDS: Record<CountdownId, number> = { pregame: 10 * 60, halftim
 
 const freshCountdown = (seconds: number): Countdown => ({ duration: seconds, remainingTime: seconds, isRunning: false, startTimestamp: null });
 
-export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'right', size: 35, fit: 'contain', sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []] };
+export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'bottom', size: 35, fit: 'contain', sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []] };
 
 const initialState = (): PresentationState => ({
   mode: 'live',

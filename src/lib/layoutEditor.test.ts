@@ -8,7 +8,15 @@ describe('layoutRects', () => {
     expect(area).toBeCloseTo(100 * 100, 3);
   });
   it('section width follows size', () => {
-    expect(layoutRects({ ...DEFAULT_SPONSOR_LAYOUT, size: 40 }).find((e) => e.id === 'section0')?.width).toBe(40);
+    expect(layoutRects({ ...DEFAULT_SPONSOR_LAYOUT, placement: 'right', size: 40 }).find((e) => e.id === 'section0')?.width).toBe(40);
+  });
+  it('by default the full-width scoreboard sits above side-by-side media sections', () => {
+    const rects = layoutRects({ ...DEFAULT_SPONSOR_LAYOUT, sections: 3 });
+    const board = rects.filter((e) => !e.id.startsWith('section'));
+    const media = rects.filter((e) => e.id.startsWith('section'));
+    expect(board.reduce((s, e) => s + e.width, 0)).toBeCloseTo(100);
+    expect(media.every((m) => m.top >= Math.max(...board.map((b) => b.top + b.height)) - 1e-9 && m.height === media[0].height)).toBe(true);
+    expect(media.map((m) => m.left)).toEqual([...media.map((m) => m.left)].sort((a, b) => a - b));
   });
   it('shares normalise to 100 for the active sections', () => {
     const shares = sectionShares({ ...DEFAULT_SPONSOR_LAYOUT, sections: 2, split: [60, 20, 20] });

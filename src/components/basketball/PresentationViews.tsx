@@ -156,14 +156,15 @@ const SectionRotator: React.FC<{ ids: string[] }> = ({ ids }) => {
     : <VideoMedia key={index} item={item} isPlaying onMissing={next} onError={next} onEnded={next} loop={list.length === 1} />;
 };
 
-const SponsorSections: React.FC = () => {
+// `preview` draws the empty section panels only; the Layout Editor overlays its own thumbnails, so nothing plays.
+const SponsorSections: React.FC<{ preview?: boolean }> = ({ preview }) => {
   const layout = usePresentationStore((state) => state.sponsorLayout);
   const rows = sectionDirection(layout) === 'rows';
   return (
     <aside className="pm-slot" data-region="sponsor" data-fit={layout.fit} data-sections={layout.sections} style={{ flexDirection: rows ? 'column' : 'row' }} aria-label="Sponsor area">
       {sectionShares(layout).map((share, i) => (
         <div key={i} className="pm-section" style={{ flex: `${share} 1 0` }}>
-          {layout.media[i].length > 0
+          {preview ? null : layout.media[i].length > 0
             ? <SectionRotator ids={layout.media[i]} />
             // An unassigned first section keeps the original sponsor rotation.
             : i === 0 && <><MediaPlayer /><SponsorBadge /></>}
@@ -173,7 +174,7 @@ const SponsorSections: React.FC = () => {
   );
 };
 
-export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) => {
+export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boolean }> = ({ theme, preview }) => {
   const { placement, size } = usePresentationStore((state) => state.sponsorLayout);
   const side = placement === 'left' || placement === 'right';
   const rest = 100 - size;
@@ -196,7 +197,7 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme }> = ({ theme })
         <ShotClock />
       </section>
       {team('away')}
-      <SponsorSections />
+      <SponsorSections preview={preview} />
     </Stage>
   );
 };

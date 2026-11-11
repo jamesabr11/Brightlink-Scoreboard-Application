@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
 import { usePresentationStore } from '../../store/usePresentationStore';
+import { useBasketballStore } from '../../store/useBasketballStore';
 import { useMediaStore } from '../../store/useMediaStore';
 import { areaRects, layoutRects, sectionShares, type ElementId } from '../../lib/layoutEditor';
 import { SPONSOR_ARRANGES, SPONSOR_MAX_SECTIONS, SPONSOR_PLACEMENTS, SPONSOR_SHARE_MAX, SPONSOR_SHARE_MIN, SPONSOR_SIZE_MAX, SPONSOR_SIZE_MIN } from '../../types/presentation';
@@ -99,6 +100,7 @@ const SectionControls: React.FC<{ index: number }> = ({ index }) => {
 
 export const LayoutEditorPage: React.FC = () => {
   const [layout] = useLayout();
+  const theme = useBasketballStore((s) => s.gameConfig.theme);
   const [selected, setSelected] = useState<ElementId>('sponsor');
   const rects = layoutRects(layout);
   const area = areaRects(layout).find((r) => r.id === 'sponsor')!;
@@ -115,7 +117,16 @@ export const LayoutEditorPage: React.FC = () => {
       </div>
       <div className="grid gap-3 lg:grid-cols-[1fr_340px]">
         <Panel title="Live Sponsor Layout">
-          <LayoutPreview layout={layout} selected={selected === 'sponsor' ? undefined : selected} onSelect={setSelected} media />
+          <LayoutPreview layout={layout} theme={theme} live selected={selected === 'sponsor' ? undefined : selected} onSelect={setSelected} media />
+          <ul className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Elements">
+            {elements.map((r) => (
+              <li key={r.id} className="flex-1 min-w-fit">
+                <button onClick={() => setSelected(r.id)} aria-pressed={sel.id === r.id} className={`w-full flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-neutral-700 px-3 py-1.5 text-sm ${sel.id === r.id ? 'bg-neutral-100 text-black' : 'text-neutral-200 hover:bg-neutral-800'}`}>
+                  <span className="h-3 w-3 rounded-sm flex-none" style={{ background: r.color }} aria-hidden />{r.name}
+                </button>
+              </li>
+            ))}
+          </ul>
         </Panel>
         <div className="space-y-3">
           <Panel title="Properties">
@@ -129,17 +140,6 @@ export const LayoutEditorPage: React.FC = () => {
               {sel.id === 'sponsor' && <AreaControls />}
               {sectionIndex >= 0 && <SectionControls index={sectionIndex} />}
             </div>
-          </Panel>
-          <Panel title="Elements">
-            <ul className="space-y-1">
-              {elements.map((r) => (
-                <li key={r.id}>
-                  <button onClick={() => setSelected(r.id)} aria-pressed={sel.id === r.id} className={`w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm text-left ${sel.id === r.id ? 'bg-neutral-100 text-black' : 'text-neutral-200 hover:bg-neutral-800'} ${r.id.startsWith('section') ? 'pl-7' : ''}`}>
-                    <span className="h-3 w-3 rounded-sm flex-none" style={{ background: r.color }} aria-hidden />{r.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
           </Panel>
         </div>
       </div>
