@@ -296,7 +296,9 @@
   width: calc(var(--u) * 30);
   height: calc(var(--u) * 30);
   border-radius: 50%;
-  object-fit: cover;
+  object-fit: cover; /* fills the circle without stretching; the crop favours the face */
+  object-position: 50% 20%;
+  image-rendering: auto;
   border: calc(var(--u) * 0.4) solid color-mix(in srgb, var(--intro-text, #fff) 40%, transparent);
 }
 
