@@ -51,7 +51,7 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Upload PNG, JPG and WebP images (up to 25 MB) and MP4 video (up to 500 MB), with thumbnails
 - Built-in categories (Sponsors, Advertisements, Pregame, Team Hype, Player Introductions, Halftime, Timeout, General Promotions) plus your own
 - Search, filter, preview, rename, recategorize and set display times
-- Sponsors, managed inside the Media Library (there is no separate Sponsors page): assign any media to a sponsor from its details by typing or picking a sponsor name, rename a sponsor there, and use the **Sponsors** view in the library for logos, individual durations and reorderable rotation. The old `/sponsors` address redirects to `/media`
+- Sponsors are managed only in the Media Library's **Sponsors** tab (there is no separate Sponsors page or route): create, rename and delete sponsors, set logos, add existing media or upload images and videos, and set each item's order and display time. Any media can also be assigned to a sponsor by name from its details
 - **Live Sponsor presentation mode** — the scoreboard plus a media area (up to three sections) arranged in the [Layout Editor](#layout-editor). Without assigned media, the first section plays each sponsor's rotation in the order and for the durations set under Sponsors in the Media Library
 - **Video with audible audio** — sponsor and intro videos play with sound enabled
 
@@ -212,7 +212,7 @@ src/
     ├── ThemePicker.tsx        Preset fields and live preview
     ├── ConfigsPage.tsx        Saved configurations
     ├── MediaPage.tsx          Media library
-    ├── SponsorsPanel.tsx      Sponsor management (Media Library Sponsors view)
+    ├── SponsorsPanel.tsx      Sponsor management (Media Library Sponsors tab)
     ├── MediaParts.tsx         Media thumbnail, preview and details dialog
     ├── useMedia.ts            Media URLs, uploads and deletion
     ├── HistoryPage.tsx        Finished games

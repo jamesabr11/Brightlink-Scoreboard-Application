@@ -120,17 +120,17 @@ const SponsorCard: React.FC<{ sponsor: Sponsor; onOpen: (id: string) => void }> 
           </h3>
           <div className="flex flex-wrap gap-2">
             <select
-              aria-label={`Add existing image to ${sponsor.name} rotation`}
+              aria-label={`Add existing media to ${sponsor.name} rotation`}
               value=""
               onChange={(e) => { if (e.target.value) { handleAddSponsorImage(e.target.value); } }}
               className={`${input} mt-0 w-auto py-1.5 text-sm`}
               disabled={linkable.length === 0}
             >
-              <option value="">Add from library…</option>
+              <option value="">Add existing media…</option>
               {linkable.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </select>
-            <input ref={adInput} type="file" multiple hidden accept={MEDIA_ACCEPT} aria-label={`${sponsor.name} sponsor image files`} onChange={(e) => { const files = [...(e.target.files ?? [])]; void upload(files, SPONSOR_CATEGORY, sponsor.id).then((saved) => { saved.forEach((item) => addSponsorImage(sponsor.id, item.id)); }); e.target.value = ''; }} />
-            <button onClick={() => adInput.current?.click()} disabled={status !== null} className={`${brand} px-3 py-1.5 text-sm`}><Upload size={16} />Upload Images</button>
+            <input ref={adInput} type="file" multiple hidden accept={MEDIA_ACCEPT} aria-label={`${sponsor.name} sponsor media files`} onChange={(e) => { const files = [...(e.target.files ?? [])]; void upload(files, SPONSOR_CATEGORY, sponsor.id).then((saved) => { saved.forEach((item) => addSponsorImage(sponsor.id, item.id)); }); e.target.value = ''; }} />
+            <button onClick={() => adInput.current?.click()} disabled={status !== null} className={`${brand} px-3 py-1.5 text-sm`}><Upload size={16} />Upload Media</button>
           </div>
         </div>
         {status && <p role="status" className="text-sm text-neutral-300">{status}</p>}

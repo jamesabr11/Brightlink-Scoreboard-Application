@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ConfigsPage } from "./components/basketball/ConfigsPage";
 import { RosterPage } from "./components/basketball/RosterPage";
 import { DisplayView } from "./components/basketball/DisplayView";
@@ -19,7 +19,6 @@ export default function App() {
           <Route path="/setup" element={<SetupPage />} />
           <Route path="/configs" element={<ConfigsPage />} />
           <Route path="/media" element={<MediaPage />} />
-          <Route path="/sponsors" element={<Navigate to="/media" replace />} />
           <Route path="/layout" element={<LayoutEditorPage />} />
           <Route path="/roster" element={<RosterPage />} />
           <Route path="/history" element={<HistoryPage />} />

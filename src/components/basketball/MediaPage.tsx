@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, FolderPlus, Handshake, HardDrive, Pencil, Search, Trash2, Upload, X } from 'lucide-react';
+import { Check, FolderPlus, Handshake, HardDrive, Images, Pencil, Search, Trash2, Upload, X } from 'lucide-react';
 import { askConfirm, notify } from '../../lib/feedback';
 import { formatBytes, formatSeconds, MEDIA_ACCEPT, pruneMediaFiles, storageUsage } from '../../lib/media';
 import { FALLBACK_CATEGORY, sponsorOf, useMediaStore } from '../../store/useMediaStore';
@@ -10,7 +10,6 @@ import { useUpload } from './useMedia';
 import { brand, input, neutral } from './styles';
 
 const ALL = 'all';
-const SPONSORS = '__sponsors'; // virtual view: sponsor management, not a category
 
 const StorageMeter: React.FC<{ usage: { used: number; quota: number } | null }> = ({ usage }) => {
   if (!usage) return null;
@@ -101,6 +100,7 @@ const NewCategory: React.FC<{ onAdded: (id: string) => void }> = ({ onAdded }) =
 
 export const MediaPage: React.FC = () => {
   const { items, categories, sponsors } = useMediaStore();
+  const [tab, setTab] = useState<'library' | 'sponsors'>('library');
   const [category, setCategory] = useState(ALL);
   const [kind, setKind] = useState<MediaKind | typeof ALL>(ALL);
   const [search, setSearch] = useState('');
@@ -111,8 +111,8 @@ export const MediaPage: React.FC = () => {
   const fileInput = useRef<HTMLInputElement>(null);
 
   // A deleted custom category can't stay selected.
-  const selected = category === ALL || category === SPONSORS || categories.some((c) => c.id === category) ? category : ALL;
-  const uploadCategory = selected === ALL || selected === SPONSORS ? FALLBACK_CATEGORY : selected;
+  const selected = category === ALL || categories.some((c) => c.id === category) ? category : ALL;
+  const uploadCategory = selected === ALL ? FALLBACK_CATEGORY : selected;
   const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? '';
   const sponsorName = (item: MediaItem) => sponsorOf(item, sponsors)?.name ?? '';
 
@@ -160,16 +160,20 @@ export const MediaPage: React.FC = () => {
         {status ?? 'PNG, JPG and WebP images up to 25 MB, MP4 video up to 500 MB. Drag files anywhere on this page to add them.'}
       </div>
 
+      <div role="tablist" aria-label="Media Library sections" className="flex gap-1 border-b border-neutral-700">
+        {([['library', 'Library', Images, items.length], ['sponsors', 'Sponsors', Handshake, sponsors.length]] as const).map(([value, label, Icon, n]) => (
+          <button key={value} role="tab" aria-selected={tab === value} onClick={() => setTab(value)} className={`-mb-px flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-semibold ${tab === value ? 'border-[var(--brand)] text-white' : 'border-transparent text-neutral-400 hover:text-white'}`}>
+            <Icon size={16} aria-hidden />{label} <span className="text-xs tabular-nums text-neutral-400">{n}</span>
+          </button>
+        ))}
+      </div>
+
+      {tab === 'sponsors' ? <SponsorsPanel onOpen={setOpenId} /> : (
       <div className="grid gap-3 md:grid-cols-[15rem_1fr]">
         <nav aria-label="Media categories" className="self-start rounded-lg border border-neutral-700 bg-neutral-900 p-2">
           <div className={`flex items-center rounded border-l-4 ${selected === ALL ? 'border-[var(--brand)] bg-neutral-800' : 'border-transparent hover:bg-neutral-800/60'}`}>
             <button onClick={() => setCategory(ALL)} aria-pressed={selected === ALL} className="flex flex-1 items-center justify-between px-3 py-2 text-left text-sm font-semibold">
               All media <span className="text-xs tabular-nums text-neutral-400">{items.length}</span>
-            </button>
-          </div>
-          <div className={`mt-1 flex items-center rounded border-l-4 ${selected === SPONSORS ? 'border-[var(--brand)] bg-neutral-800' : 'border-transparent hover:bg-neutral-800/60'}`}>
-            <button onClick={() => setCategory(SPONSORS)} aria-pressed={selected === SPONSORS} className="flex flex-1 items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold">
-              <span className="flex items-center gap-2"><Handshake size={14} aria-hidden />Sponsors</span> <span className="text-xs tabular-nums text-neutral-400">{sponsors.length}</span>
             </button>
           </div>
           <div className="my-2 border-t border-neutral-700" />
@@ -180,8 +184,7 @@ export const MediaPage: React.FC = () => {
         </nav>
 
         <section aria-label="Media" className="min-w-0 space-y-3">
-          {selected === SPONSORS ? <SponsorsPanel onOpen={setOpenId} /> : <>
-          <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2">
             <label className="relative min-w-56 flex-1">
               <Search size={16} aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
               <input type="search" aria-label="Search media" placeholder="Search by name or sponsor" value={search} onChange={(e) => setSearch(e.target.value)} className={`${input} mt-0 pl-9`} />
@@ -218,9 +221,9 @@ export const MediaPage: React.FC = () => {
               ))}
             </ul>
           )}
-          </>}
         </section>
       </div>
+      )}
 
       {dragging && (
         <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-black/70">

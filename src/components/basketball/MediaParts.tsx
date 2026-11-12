@@ -42,20 +42,14 @@ export const DurationField: React.FC<{ item: MediaItem; label?: string }> = ({ i
 };
 
 const DetailsForm: React.FC<{ item: MediaItem; onClose: () => void }> = ({ item, onClose }) => {
-  const { categories, sponsors, updateItem, assignSponsor, updateSponsor } = useMediaStore();
+  const { categories, sponsors, updateItem, assignSponsor } = useMediaStore();
   const [name, setName] = useState(item.name);
   const sponsor = sponsorOf(item, sponsors);
   const [sponsorName, setSponsorName] = useState(sponsor?.name ?? '');
-  const [renameTo, setRenameTo] = useState(sponsor?.name ?? '');
   const saveSponsor = () => {
     if (sponsorName.trim() === (sponsor?.name ?? '')) return;
     assignSponsor(item.id, sponsorName);
     notify(sponsorName.trim() ? 'Sponsor saved.' : 'Sponsor cleared.');
-  };
-  const renameSponsor = () => {
-    if (!sponsor || renameTo.trim() === sponsor.name) return;
-    if (updateSponsor(sponsor.id, { name: renameTo })) { setSponsorName(renameTo.trim()); notify('Sponsor renamed.'); }
-    else { notify('Sponsor names must be filled in and different from the others.', 'error'); setRenameTo(sponsor.name); }
   };
   const saveName = () => {
     if (!name.trim()) setName(item.name);
@@ -82,12 +76,6 @@ const DetailsForm: React.FC<{ item: MediaItem; onClose: () => void }> = ({ item,
           <datalist id="sponsor-names">{sponsors.map((s) => <option key={s.id} value={s.name} />)}</datalist>
           <span className="mt-1 block text-xs text-neutral-400">Adds this media to the sponsor's rotation. A new name creates the sponsor.</span>
         </label>
-        {sponsor && (
-          <label className="block text-sm text-white sm:col-span-2">
-            Rename sponsor (all of its media)
-            <input value={renameTo} maxLength={80} onChange={(e) => setRenameTo(e.target.value)} onBlur={renameSponsor} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={input} />
-          </label>
-        )}
         <DurationField item={item} />
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 self-start text-sm text-neutral-300">
           <dt>Type</dt><dd>{item.kind === 'video' ? 'MP4 video' : item.type.replace('image/', '').toUpperCase() + ' image'}</dd>
