@@ -205,6 +205,48 @@ describe('sponsor layout sections', () => {
     expect(show.getState().sponsorLayout.rects).toHaveProperty('away');
   });
 
+  describe('layout undo', () => {
+    it('steps back through changes, coalesces a drag, and leaves game state and saved layouts alone', async () => {
+      vi.useFakeTimers();
+      const { game, show } = await openTab();
+      const theme = game.getState().gameConfig.theme;
+      const s = () => show.getState();
+      expect(s().layoutHistory).toEqual([]);
+      s().undoLayout(); // nothing to undo is a no-op
+      const start = s().sponsorLayout;
+
+      s().setSponsorLayout({ rects: { home: { x: 0, y: 0, w: 30, h: 30 } } });
+      s().setSponsorLayout({ rects: { home: { x: 5, y: 5, w: 30, h: 30 } } }); // same drag
+      vi.advanceTimersByTime(1000);
+      s().setSponsorLayout({ sections: 2, size: 40 });
+      expect(s().layoutHistory).toHaveLength(2);
+
+      s().saveLayout('Mine', theme);
+      const before = JSON.stringify(game.getState().gameConfig);
+      s().undoLayout();
+      expect(s().sponsorLayout.sections).toBe(1);
+      expect(s().sponsorLayout.rects.home).toEqual({ x: 5, y: 5, w: 30, h: 30 });
+      s().undoLayout();
+      expect(s().sponsorLayout).toEqual(start);
+      expect(s().layoutHistory).toEqual([]);
+      expect(JSON.stringify(game.getState().gameConfig)).toBe(before);
+      expect(s().savedLayouts[0].layout.sections).toBe(2);
+      vi.useRealTimers();
+    });
+
+    it('is not saved or shared, and loading a saved layout starts a fresh history', async () => {
+      const { game, show } = await openTab();
+      const theme = game.getState().gameConfig.theme;
+      show.getState().setSponsorLayout({ sections: 3 });
+      show.getState().saveLayout('Mine', theme);
+      expect(Object.values(localStorage).some((v) => String(v).includes('layoutHistory'))).toBe(false);
+      expect((await openTab()).show.getState().layoutHistory).toEqual([]);
+      show.getState().setSponsorLayout({ sections: 2 });
+      show.getState().loadSavedLayout(show.getState().savedLayouts[0].id);
+      expect(show.getState().layoutHistory).toEqual([]);
+    });
+  });
+
   describe('saved layouts', () => {
     it('keep independent copies, unique names, and survive a restart', async () => {
       const { game, show } = await openTab();

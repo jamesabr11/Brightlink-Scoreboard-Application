@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, RotateCcw, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, RotateCcw, Undo2, X } from 'lucide-react';
 import { defaultGeometry, usePresentationStore } from '../../store/usePresentationStore';
 import { askConfirm, notify } from '../../lib/feedback';
 import { useBasketballStore } from '../../store/useBasketballStore';
@@ -113,6 +113,8 @@ const SectionControls: React.FC<{ index: number }> = ({ index }) => {
 export const LayoutEditorPage: React.FC = () => {
   const [layout, setLayout] = useLayout();
   const theme = useBasketballStore((s) => s.gameConfig.theme);
+  const canUndo = usePresentationStore((s) => s.layoutHistory.length > 0);
+  const undo = usePresentationStore((s) => s.undoLayout);
   const reset = async () => {
     const ok = await askConfirm({ title: 'Reset the layout?', message: 'Positions, sizes, placement, sections and scaling go back to the defaults for the selected scoreboard preset. Your media assignments and game settings are kept. A saved layout changes only when you press Save changes.', confirmLabel: 'Reset to Defaults', danger: true });
     if (!ok) return;
@@ -148,7 +150,10 @@ export const LayoutEditorPage: React.FC = () => {
           <h2 className="text-xl font-bold">Layout Editor</h2>
           <p className="text-sm text-neutral-400">Edits the Live Sponsor display preset, shown on the public display in Live Sponsor mode. Select an element to see its properties. Choosing a different scoreboard preset in Game Setup loads that preset's layout here.</p>
         </div>
-        <button onClick={reset} className={`${neutral} px-4 py-2 text-sm font-semibold ring-1 ring-neutral-500`}><RotateCcw size={16} className="mr-2 inline" />Reset to Defaults</button>
+        <div className="flex gap-2">
+          <button onClick={undo} disabled={!canUndo} title="Undo the last layout change" className={`${neutral} px-4 py-2 text-sm font-semibold ring-1 ring-neutral-500`}><Undo2 size={16} className="mr-2 inline" />Undo</button>
+          <button onClick={reset} className={`${neutral} px-4 py-2 text-sm font-semibold ring-1 ring-neutral-500`}><RotateCcw size={16} className="mr-2 inline" />Reset to Defaults</button>
+        </div>
       </div>
       <div className="grid gap-3 lg:grid-cols-[1fr_340px]">
         <Panel title="Live Sponsor Layout">

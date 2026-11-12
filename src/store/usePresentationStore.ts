@@ -11,7 +11,10 @@ import type { Countdown, CountdownId, PresentationMode, PresentationState, Saved
 
 interface PresentationStore extends PresentationState {
   setMode: (mode: PresentationMode) => void;
+  /** Earlier working layouts, newest last. Memory only: not saved, not synced, cleared when a saved layout is loaded or the scoreboard preset changes. */
+  layoutHistory: SponsorLayout[];
   setSponsorLayout: (patch: Partial<SponsorLayout>) => void;
+  undoLayout: () => void;
   saveLayout: (name: string, theme: ScoreboardTheme) => void;
   updateSavedLayout: (id: string, theme: ScoreboardTheme) => void;
   renameSavedLayout: (id: string, name: string) => void;
@@ -25,6 +28,9 @@ interface PresentationStore extends PresentationState {
   adjustCountdown: (id: CountdownId, delta: number) => void;
   tick: () => void;
 }
+
+const MAX_LAYOUT_HISTORY = 50;
+const COALESCE_MS = 500; // a drag or slider fires many changes: those in a quick run count as one undo step
 
 export const MAX_COUNTDOWN_SECONDS = 120 * 60;
 const DEFAULT_SECONDS: Record<CountdownId, number> = { pregame: 10 * 60, halftime: 15 * 60 };
@@ -144,12 +150,34 @@ export const usePresentationStore = create<PresentationStore>()(
       const setCountdown = (id: CountdownId, countdown: Countdown) =>
         syncAndSet({ countdowns: { ...get().countdowns, [id]: countdown } });
 
+      let lastEdit = { keys: '', at: 0 };
+
       return {
         ...initialState(),
+        layoutHistory: [],
 
         setMode: (mode) => { if (mode !== get().mode) syncAndSet({ mode }); },
 
-        setSponsorLayout: (patch) => syncAndSet({ sponsorLayout: cleanLayout({ ...get().sponsorLayout, ...patch }) }),
+        setSponsorLayout: (patch) => {
+          const { sponsorLayout, layoutHistory } = get();
+          const next = cleanLayout({ ...sponsorLayout, ...patch });
+          if (JSON.stringify(next) === JSON.stringify(sponsorLayout)) return;
+          const keys = Object.keys(patch).sort().join();
+          const now = Date.now();
+          const same = keys === lastEdit.keys && now - lastEdit.at < COALESCE_MS && layoutHistory.length > 0;
+          lastEdit = { keys, at: now };
+          if (!same) set({ layoutHistory: [...layoutHistory, sponsorLayout].slice(-MAX_LAYOUT_HISTORY) });
+          syncAndSet({ sponsorLayout: next });
+        },
+
+        // Restores the previous working layout exactly. Game state and saved layouts are never touched.
+        undoLayout: () => {
+          const { layoutHistory } = get();
+          if (layoutHistory.length === 0) return;
+          lastEdit = { keys: '', at: 0 };
+          set({ layoutHistory: layoutHistory.slice(0, -1) });
+          syncAndSet({ sponsorLayout: layoutHistory[layoutHistory.length - 1] });
+        },
 
         // Saved layouts are independent copies: editing the live layout never touches one until it is saved again.
         saveLayout: (name, theme) => {
@@ -182,6 +210,7 @@ export const usePresentationStore = create<PresentationStore>()(
         loadSavedLayout: (id) => {
           const saved = get().savedLayouts.find((l) => l.id === id);
           if (!saved) return;
+          set({ layoutHistory: [] }); // the appearance changes too, which undo does not cover
           syncAndSet({ sponsorLayout: cleanLayout({ ...saved.layout, preset: presetKey(saved.theme) }), activeLayoutId: id });
           useBasketballStore.getState().updateGameConfig({ theme: saved.theme });
         },
@@ -263,7 +292,7 @@ if (typeof window !== 'undefined') {
     lastPreset = next;
     const { sponsorLayout } = usePresentationStore.getState();
     if (sponsorLayout.preset === next) return;
-    usePresentationStore.setState({ sponsorLayout: cleanLayout({ ...sponsorLayout, ...presetGeometry(theme.layout), preset: next }) });
+    usePresentationStore.setState({ layoutHistory: [], sponsorLayout: cleanLayout({ ...sponsorLayout, ...presetGeometry(theme.layout), preset: next }) });
   });
   import.meta.hot?.dispose(() => { clearInterval(ticker); unsubscribe(); channel.close(); });
 }
