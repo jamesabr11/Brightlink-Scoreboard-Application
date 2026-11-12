@@ -1,12 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { ExternalLink, FolderOpen, Gauge, History, Images, LayoutTemplate, Settings, SlidersHorizontal, Users } from 'lucide-react';
+import { ExternalLink, FolderOpen, Gauge, History, Images, LayoutTemplate, SlidersHorizontal, Users } from 'lucide-react';
 import { BRAND, BRAND_TEAM } from '../../lib/branding';
 import { primary } from './styles';
 import { FeedbackHost } from './ui';
 import { useSounds } from './useSounds';
 
 // Groups keep related nav items together so the operator can scan quickly.
-// Scoreboard | Setup | Configs | Roster — then — Media — then — Layout Editor (display customization) — then — History | Settings
+// Scoreboard | Setup | Configs | Roster — then — Media — then — Layout Editor (display customization) — then — History
 const NAV_GROUPS = [
   [
     { to: '/', label: 'Scoreboard', icon: Gauge },
@@ -22,7 +22,6 @@ const NAV_GROUPS = [
   ],
   [
     { to: '/history', label: 'History', icon: History },
-    { to: '/settings', label: 'Settings', icon: Settings },
   ],
 ];
 

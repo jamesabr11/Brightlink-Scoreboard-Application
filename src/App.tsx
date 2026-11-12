@@ -7,7 +7,6 @@ import { LayoutEditorPage } from "./components/basketball/LayoutEditorPage";
 import { MediaPage } from "./components/basketball/MediaPage";
 import { OperatorLayout } from "./components/basketball/OperatorLayout";
 import { OperatorView } from "./components/basketball/OperatorView";
-import { SettingsPage } from "./components/basketball/SettingsPage";
 import { SetupPage } from "./components/basketball/SetupPage";
 
 export default function App() {
@@ -22,7 +21,6 @@ export default function App() {
           <Route path="/layout" element={<LayoutEditorPage />} />
           <Route path="/roster" element={<RosterPage />} />
           <Route path="/history" element={<HistoryPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
         </Route>
         <Route path="/display" element={<DisplayView />} />
       </Routes>

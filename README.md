@@ -91,13 +91,12 @@ The navigation at the top of the operator console has:
 | Page | Purpose |
 |---|---|
 | **Scoreboard** | Live game controls |
-| **Game Setup** | Team names, colours, logos, rules, and the scoreboard preset with a live preview |
+| **Game Setup** | Two sections. *This Game*: team names, colours, logos, rules and the scoreboard preset with a live preview. *Defaults & Preferences*: default rules and theme for new games, sound, display preferences, New Game With Defaults and Restore Defaults (there is no separate Settings page) |
 | **Configurations** | Save, load, update, rename, duplicate and delete prepared setups |
 | **Media** | Upload and organize images and videos; assign media to sponsors and manage sponsor logos and rotation |
 | **History** | Finished games, statistics, CSV export and printable summaries |
-| **Settings** | Defaults for new games, sound, and display preferences |
 
-Default rules are 4 × 12-minute quarters, 5-minute overtime, a 24/14 shot clock, bonus at 5 team fouls and 3 timeouts per team. Team fouls reset each period; timeouts carry over. Change them for the current game in Game Setup, or as defaults in Settings.
+Default rules are 4 × 12-minute quarters, 5-minute overtime, a 24/14 shot clock, bonus at 5 team fouls and 3 timeouts per team. Team fouls reset each period; timeouts carry over. Change them for the current game in Game Setup, or as defaults under Defaults & Preferences on the same page.
 
 ### Scoreboard presets
 
@@ -172,7 +171,7 @@ All data stays in the browser on this computer and is validated when it loads:
 | Data | Where |
 |---|---|
 | Live game, configurations, undo history | localStorage `basketball-storage` |
-| Settings | localStorage `basketball-settings` |
+| Settings (defaults, sound, display) | localStorage `basketball-settings` |
 | Finished games | localStorage `basketball-games` |
 | Media metadata, categories, sponsors | localStorage `basketball-media` |
 | Team logos | IndexedDB `basketball-logos` |
@@ -220,7 +219,7 @@ src/
     ├── MediaParts.tsx         Media thumbnail, preview and details dialog
     ├── useMedia.ts            Media URLs, uploads and deletion
     ├── HistoryPage.tsx        Finished games
-    ├── SettingsPage.tsx       Settings
+    ├── AppPreferences.tsx     Defaults & Preferences (Game Setup)
     ├── DisplayView.tsx        Public display page
     ├── Scoreboard.tsx         The five scoreboard layouts
     ├── PresentationViews.tsx  Pregame, Stadium and Halftime displays

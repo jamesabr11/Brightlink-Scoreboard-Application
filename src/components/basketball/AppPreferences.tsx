@@ -7,7 +7,8 @@ import { neutral, primary } from './styles';
 import { CheckField, Panel, RulesFields } from './ui';
 import { ThemeFields } from './ThemePicker';
 
-export const SettingsPage: React.FC = () => {
+// Application preferences and the defaults for new games (useSettingsStore). Shown on the Game Setup page.
+export const AppPreferences: React.FC = () => {
   const settings = useSettingsStore();
 
   const startNewGame = async () => {
@@ -36,15 +37,15 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3">
+    <section aria-labelledby="preferences-heading" className="space-y-3">
       <div className="flex flex-wrap justify-between items-center gap-2">
-        <h2 className="text-2xl font-bold">Settings</h2>
+        <h3 id="preferences-heading" className="text-xl font-bold">Defaults &amp; Preferences</h3>
         <div className="flex gap-2">
           <button onClick={startNewGame} className={`${primary} px-4 py-2`}>New Game With Defaults</button>
           <button onClick={restore} className={`${neutral} px-4 py-2`}>Restore Defaults</button>
         </div>
       </div>
-      <p className="text-sm text-neutral-300">Settings are saved in this browser. Defaults apply when you choose New Game With Defaults; they don't change a game in progress.</p>
+      <p className="text-sm text-neutral-300">Preferences are saved in this browser. Defaults apply when you choose New Game With Defaults; they don't change a game in progress.</p>
 
       <Panel title="Default Game Rules">
         <RulesFields rules={settings.rules} onChange={settings.updateRules} />
@@ -76,6 +77,6 @@ export const SettingsPage: React.FC = () => {
           <CheckField label="Show LEADING badge" checked={settings.display.showLeadingBadge} onChange={(showLeadingBadge) => settings.updateDisplay({ showLeadingBadge })} />
         </div>
       </Panel>
-    </div>
+    </section>
   );
 };
