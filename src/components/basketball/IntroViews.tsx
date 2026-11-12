@@ -47,12 +47,14 @@ const TeamIntroCard: React.FC<{ name: string; logoId?: string; color: string }> 
 );
 
 const PlayerIntroCard: React.FC<{ player: Player }> = ({ player }) => (
-  <div className="pm-intro">
+  <div className="pm-intro pm-intro-player" data-photo={Boolean(player.photoId)}>
     <span className="pm-intro-watermark" aria-hidden>{player.number}</span>
     {player.photoId && <PlayerPhoto photoId={player.photoId} alt={player.name} />}
-    <span className="pm-intro-number">#{player.number}</span>
-    <span className="pm-intro-name">{player.name}</span>
-    {player.position && <span className="pm-intro-position">{player.position}</span>}
+    <div className="pm-intro-text">
+      <span className="pm-intro-number">#{player.number}</span>
+      <span className="pm-intro-name">{player.name}</span>
+      {player.position && <span className="pm-intro-position">{player.position}</span>}
+    </div>
   </div>
 );
 

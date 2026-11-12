@@ -225,17 +225,31 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: calc(var(--u) * 2);
+  gap: calc(var(--u) * 1.5);
   overflow: hidden;
   color: var(--intro-text, #fff);
   text-align: center;
-  padding: calc(var(--u) * 4);
+  padding: calc(var(--u) * 3);
 }
+
+/* A player card is one compact row: the photo beside number, name and position, so the whole card fits the
+ * 16:9 canvas (a stacked photo + number + name was taller than the screen). Without a photo the text is centred. */
+.pm-intro-player { flex-direction: row; gap: calc(var(--u) * 5); }
+.pm-intro-text {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+  min-width: 0;
+  max-width: calc(var(--u) * 58);
+}
+.pm-intro-player[data-photo='true'] .pm-intro-text { align-items: flex-start; text-align: left; }
 
 /* Large watermark number behind the player card. */
 .pm-intro-watermark {
   position: absolute;
-  font-size: calc(var(--u) * 48);
+  font-size: calc(var(--u) * 44);
   font-weight: 900;
   line-height: 1;
   opacity: 0.1;
@@ -253,22 +267,24 @@
 }
 
 .pm-intro-name {
-  font-size: calc(var(--u) * 10);
+  font-size: calc(var(--u) * 9);
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.02;
   text-transform: uppercase;
-  word-break: break-word;
-  max-width: 80%;
+  overflow-wrap: anywhere;
+  max-width: 100%;
 }
+/* A team card has no text wrapper, so its name keeps the wider limit. */
+.pm-intro:not(.pm-intro-player) .pm-intro-name { font-size: calc(var(--u) * 10); max-width: 80%; }
 
 .pm-intro-number {
-  font-size: calc(var(--u) * 22);
+  font-size: calc(var(--u) * 16);
   font-weight: 900;
   line-height: 1;
 }
 
 .pm-intro-position {
-  font-size: calc(var(--u) * 3.5);
+  font-size: calc(var(--u) * 3.2);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -276,8 +292,9 @@
 }
 
 .pm-intro-photo {
-  width: calc(var(--u) * 18);
-  height: calc(var(--u) * 18);
+  flex: none;
+  width: calc(var(--u) * 30);
+  height: calc(var(--u) * 30);
   border-radius: 50%;
   object-fit: cover;
   border: calc(var(--u) * 0.4) solid color-mix(in srgb, var(--intro-text, #fff) 40%, transparent);
@@ -287,6 +304,12 @@
   width: calc(var(--u) * 20);
   height: calc(var(--u) * 20);
   object-fit: contain;
+}
+
+/* A portrait canvas has no room beside the photo, so the row stacks. */
+@container sb (max-aspect-ratio: 1 / 1) {
+  .pm-intro-player { flex-direction: column; gap: calc(var(--u) * 3); }
+  .pm-intro-player[data-photo='true'] .pm-intro-text { align-items: center; text-align: center; }
 }
 
 /* 4:3 — same areas, a taller canvas. */
