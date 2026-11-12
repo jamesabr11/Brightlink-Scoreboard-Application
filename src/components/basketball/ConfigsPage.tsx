@@ -7,6 +7,7 @@ import { LAYOUTS, THEMES } from '../../lib/theme';
 import type { GameConfig } from '../../types/basketball';
 import { input, negative, neutral, primary } from './styles';
 import { usePresentationStore } from '../../store/usePresentationStore';
+import { ConfigPreview } from './ConfigPreview';
 import { LayoutPreview } from './LayoutPreview';
 import { Panel, TeamLogo } from './ui';
 
@@ -75,8 +76,11 @@ const ConfigCard: React.FC<{ config: GameConfig }> = ({ config }) => {
         </form>
       )}
       <div className={preview ? 'my-2' : 'my-2 max-w-48'}>
-        <LayoutPreview layout={layout} theme={config.theme} colors={colors} names={names} compact={!preview} media />
+        {preview
+          ? <ConfigPreview config={config} layout={saved?.layout} />
+          : <LayoutPreview layout={layout} theme={config.theme} colors={colors} names={names} compact media />}
       </div>
+      {preview && <p className="-mt-1 mb-2 text-[11px] text-neutral-500">Scores, clocks and fouls are sample values; everything else is this configuration's saved setup.</p>}
       <div className="flex items-center gap-2 my-2 text-sm">
         <TeamLogo id={config.homeTeam.logo} alt="" className="w-6 h-6 object-contain" />
         <span className="w-3 h-3 rounded-full flex-none" style={{ background: config.homeTeam.primaryColor }} />

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { inBonus, useBasketballStore } from '../../store/useBasketballStore';
+import { inBonus } from '../../store/useBasketballStore';
+import { useGame } from './previewContext';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { readableOn, themeStyle } from '../../lib/theme';
 import type { ScoreboardTheme, Team } from '../../types/basketball';
@@ -15,10 +16,10 @@ import './scoreboard.css';
 
 type Side = 'home' | 'away';
 
-const useTeam = (side: Side) => useBasketballStore((state) => (side === 'home' ? state.homeTeam : state.awayTeam));
+const useTeam = (side: Side) => useGame((state) => (side === 'home' ? state.homeTeam : state.awayTeam));
 
 const usePeriod = () => {
-  const { finished, isOvertime, period, gameConfig: { numberOfPeriods } } = useBasketballStore();
+  const { finished, isOvertime, period, gameConfig: { numberOfPeriods } } = useGame();
   const unit = { 2: 'Half', 4: 'Quarter' }[numberOfPeriods] ?? 'Period';
   if (finished) return { short: 'FINAL', long: 'Final', unit: 'Game', state: 'final' };
   if (isOvertime) return { short: `OT${period - numberOfPeriods}`, long: `Overtime ${period - numberOfPeriods}`, unit: 'Overtime', state: 'ot' };
@@ -62,7 +63,7 @@ export const Crest: React.FC<{ side: Side }> = ({ side }) => {
 };
 
 const Ball: React.FC<{ side: Side }> = ({ side }) => {
-  const on = useBasketballStore((state) => state.possession === side);
+  const on = useGame((state) => state.possession === side);
   return <span className="sb-ball" data-on={on} data-testid={on ? `${side}-possession` : undefined} />;
 };
 
@@ -110,7 +111,7 @@ export const Fouls: React.FC<{ side: Side }> = ({ side }) => (
 
 export const Timeouts: React.FC<{ side: Side; showValue?: boolean }> = ({ side, showValue }) => {
   const { timeouts } = useTeam(side);
-  const max = useBasketballStore((state) => state.gameConfig.maxTimeouts);
+  const max = useGame((state) => state.gameConfig.maxTimeouts);
   const pips = max > 0 && max <= 7;
   return (
     <div className="sb-stat">
@@ -128,17 +129,17 @@ export const Timeouts: React.FC<{ side: Side; showValue?: boolean }> = ({ side, 
 // Always rendered, lit or unlit, so turning it on never moves anything.
 export const Bonus: React.FC<{ side: Side }> = ({ side }) => {
   const team = useTeam(side);
-  const config = useBasketballStore((state) => state.gameConfig);
+  const config = useGame((state) => state.gameConfig);
   return <span className="sb-bonus" data-on={inBonus(team, config)}>Bonus</span>;
 };
 
 const Arrow: React.FC<{ side: Side }> = ({ side }) => {
-  const on = useBasketballStore((state) => state.possession === side);
+  const on = useGame((state) => state.possession === side);
   return <span className="sb-arrow" data-dir={side} data-on={on} data-testid={on ? `${side}-possession` : undefined} aria-hidden />;
 };
 
 export const GameClock: React.FC = () => {
-  const gameClock = useBasketballStore((state) => state.gameClock);
+  const gameClock = useGame((state) => state.gameClock);
   return (
     <div className="sb-clock">
       <span className="sb-run" data-on={gameClock.isRunning} aria-hidden />
@@ -160,7 +161,7 @@ export const Period: React.FC = () => {
 };
 
 export const ShotClock: React.FC = () => {
-  const shotClock = useBasketballStore((state) => state.shotClock);
+  const shotClock = useGame((state) => state.shotClock);
   const show = useSettingsStore((state) => state.display.showShotClock);
   if (!show) return null;
   return (
@@ -172,7 +173,7 @@ export const ShotClock: React.FC = () => {
 };
 
 const LeadCell: React.FC = () => {
-  const { homeTeam, awayTeam } = useBasketballStore();
+  const { homeTeam, awayTeam } = useGame();
   const margin = Math.abs(homeTeam.score - awayTeam.score);
   const leader = homeTeam.score > awayTeam.score ? homeTeam : awayTeam;
   return (
@@ -231,7 +232,7 @@ const ModernSports: React.FC = () => {
 
 /* Layout C: Tournament */
 const Tournament: React.FC = () => {
-  const { homeTeam, awayTeam, gameConfig } = useBasketballStore();
+  const { homeTeam, awayTeam, gameConfig } = useGame();
   const period = usePeriod();
   const stats = (side: Side) => {
     const cells = [
@@ -309,8 +310,8 @@ const Broadcast: React.FC = () => {
 };
 
 export const Scoreboard: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) => {
-  const home = useBasketballStore((state) => state.homeTeam.primaryColor);
-  const away = useBasketballStore((state) => state.awayTeam.primaryColor);
+  const home = useGame((state) => state.homeTeam.primaryColor);
+  const away = useGame((state) => state.awayTeam.primaryColor);
   return (
     <div className="sb-stage" data-testid="scoreboard" style={themeStyle(theme)}>
       <div className="sb-board" data-layout={theme.layout} style={{ '--home': home, '--away': away } as React.CSSProperties}>
