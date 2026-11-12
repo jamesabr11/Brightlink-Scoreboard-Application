@@ -150,3 +150,28 @@ describe('saved data', () => {
     expect(items[1]).toMatchObject({ naturalDuration: null, duration: 600 });
   });
 });
+
+describe('assigning media to a sponsor', () => {
+  it('creates the sponsor, joins its rotation, and moves between sponsors', async () => {
+    const store = await openTab();
+    store.getState().addItem(image('a'));
+    expect(store.getState().assignSponsor('a', 'Main Street Pizza')).toBe(true);
+    let { sponsors } = store.getState();
+    expect(store.getState().items[0].sponsorId).toBe(sponsors[0].id);
+    expect(sponsors).toHaveLength(1);
+    expect(sponsors[0].imageIds).toEqual(['a']);
+
+    store.getState().assignSponsor('a', 'main street pizza'); // same sponsor, any case
+    expect(store.getState().sponsors).toHaveLength(1);
+    expect(store.getState().sponsors[0].imageIds).toEqual(['a']);
+
+    store.getState().assignSponsor('a', 'Acme');
+    ({ sponsors } = store.getState());
+    expect(sponsors.find((s) => s.name === 'Main Street Pizza')!.imageIds).toEqual([]);
+    expect(sponsors.find((s) => s.name === 'Acme')!.imageIds).toEqual(['a']);
+
+    store.getState().assignSponsor('a', '');
+    expect(store.getState().items[0].sponsorId).toBeNull();
+    expect(store.getState().sponsors.every((s) => s.imageIds.length === 0)).toBe(true);
+  });
+});

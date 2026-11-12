@@ -4,7 +4,7 @@ import { askConfirm, notify } from '../../lib/feedback';
 import { formatSeconds, MEDIA_ACCEPT, MEDIA_TYPES, mediaType } from '../../lib/media';
 import { useMediaStore } from '../../store/useMediaStore';
 import type { Sponsor, MediaItem } from '../../types/media';
-import { MediaDetails, MediaThumb } from './MediaParts';
+import { MediaThumb } from './MediaParts';
 import { useUpload } from './useMedia';
 import { brand, input, negative, neutral } from './styles';
 import { Panel } from './ui';
@@ -190,10 +190,9 @@ const NumberField: React.FC<{ label: string; min: number; value: number; onChang
   </label>
 );
 
-export const SponsorsPage: React.FC = () => {
+export const SponsorsPanel: React.FC<{ onOpen: (id: string) => void }> = ({ onOpen }) => {
   const { sponsors, addSponsor } = useMediaStore();
   const [name, setName] = useState('');
-  const [openId, setOpenId] = useState<string | null>(null);
 
   const add = () => {
     if (!addSponsor(name)) { notify('Give the sponsor a name that isn\'t already used.', 'error'); return; }
@@ -205,7 +204,6 @@ export const SponsorsPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <h2 className="text-2xl font-bold">Sponsors</h2>
       <Panel title="Add a Sponsor">
         <form className="flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); add(); }}>
           <label className="min-w-48 flex-1 text-sm">
@@ -214,7 +212,7 @@ export const SponsorsPage: React.FC = () => {
           </label>
           <button type="submit" className={`${brand} px-4 py-2`}><Plus size={16} />Add Sponsor</button>
         </form>
-        <p className="mt-2 text-xs text-neutral-400">Each sponsor gets a logo and a rotation of images and videos, each with its own display time. Use the arrows to reorder. Sponsor uploads are filed under Sponsors in the Media Library.</p>
+        <p className="mt-2 text-xs text-neutral-400">Each sponsor gets a logo and a rotation of images and videos, each with its own display time. Use the arrows to reorder. You can also assign any media to a sponsor from its details.</p>
       </Panel>
 
       {sorted.length === 0 ? (
@@ -224,9 +222,8 @@ export const SponsorsPage: React.FC = () => {
           <p className="max-w-md text-sm text-neutral-300">Add a sponsor above, then upload its logo and sponsor images.</p>
         </div>
       ) : (
-        <ul className="space-y-3">{sorted.map((sponsor) => <SponsorCard key={sponsor.id} sponsor={sponsor} onOpen={setOpenId} />)}</ul>
+        <ul className="space-y-3">{sorted.map((sponsor) => <SponsorCard key={sponsor.id} sponsor={sponsor} onOpen={onOpen} />)}</ul>
       )}
-      <MediaDetails itemId={openId} onClose={() => setOpenId(null)} />
     </div>
   );
 };

@@ -51,8 +51,8 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Upload PNG, JPG and WebP images (up to 25 MB) and MP4 video (up to 500 MB), with thumbnails
 - Built-in categories (Sponsors, Advertisements, Pregame, Team Hype, Player Introductions, Halftime, Timeout, General Promotions) plus your own
 - Search, filter, preview, rename, recategorize and set display times
-- Sponsors with logos, multiple images/videos with individual durations and reorderable rotation
-- **Live Sponsor presentation mode** — the scoreboard plus a media area (up to three sections) arranged in the [Layout Editor](#layout-editor). Without assigned media, the first section plays each sponsor's rotation in the order and for the durations set on the Sponsors page
+- Sponsors, managed inside the Media Library (there is no separate Sponsors page): assign any media to a sponsor from its details by typing or picking a sponsor name, rename a sponsor there, and use the **Sponsors** view in the library for logos, individual durations and reorderable rotation. The old `/sponsors` address redirects to `/media`
+- **Live Sponsor presentation mode** — the scoreboard plus a media area (up to three sections) arranged in the [Layout Editor](#layout-editor). Without assigned media, the first section plays each sponsor's rotation in the order and for the durations set under Sponsors in the Media Library
 - **Video with audible audio** — sponsor and intro videos play with sound enabled
 
 ## Getting started
@@ -93,8 +93,7 @@ The navigation at the top of the operator console has:
 | **Scoreboard** | Live game controls |
 | **Game Setup** | Team names, colours, logos, rules, and the scoreboard preset with a live preview |
 | **Configurations** | Save, load, update, rename, duplicate and delete prepared setups |
-| **Media** | Upload and organize images and videos |
-| **Sponsors** | Sponsor names, logos, multiple images/videos with per-item durations and reorderable rotation |
+| **Media** | Upload and organize images and videos; assign media to sponsors and manage sponsor logos and rotation |
 | **History** | Finished games, statistics, CSV export and printable summaries |
 | **Settings** | Defaults for new games, sound, and display preferences |
 
@@ -213,7 +212,7 @@ src/
     ├── ThemePicker.tsx        Preset fields and live preview
     ├── ConfigsPage.tsx        Saved configurations
     ├── MediaPage.tsx          Media library
-    ├── SponsorsPage.tsx       Sponsor management
+    ├── SponsorsPanel.tsx      Sponsor management (Media Library Sponsors view)
     ├── MediaParts.tsx         Media thumbnail, preview and details dialog
     ├── useMedia.ts            Media URLs, uploads and deletion
     ├── HistoryPage.tsx        Finished games

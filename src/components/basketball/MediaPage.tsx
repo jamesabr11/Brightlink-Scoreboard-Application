@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, FolderPlus, HardDrive, Pencil, Search, Trash2, Upload, X } from 'lucide-react';
+import { Check, FolderPlus, Handshake, HardDrive, Pencil, Search, Trash2, Upload, X } from 'lucide-react';
 import { askConfirm, notify } from '../../lib/feedback';
 import { formatBytes, formatSeconds, MEDIA_ACCEPT, pruneMediaFiles, storageUsage } from '../../lib/media';
-import { FALLBACK_CATEGORY, useMediaStore } from '../../store/useMediaStore';
-import type { MediaCategory, MediaKind } from '../../types/media';
+import { FALLBACK_CATEGORY, sponsorOf, useMediaStore } from '../../store/useMediaStore';
+import type { MediaCategory, MediaItem, MediaKind } from '../../types/media';
 import { MediaDetails, MediaThumb } from './MediaParts';
+import { SponsorsPanel } from './SponsorsPanel';
 import { useUpload } from './useMedia';
 import { brand, input, neutral } from './styles';
 
 const ALL = 'all';
+const SPONSORS = '__sponsors'; // virtual view: sponsor management, not a category
 
 const StorageMeter: React.FC<{ usage: { used: number; quota: number } | null }> = ({ usage }) => {
   if (!usage) return null;
@@ -109,10 +111,10 @@ export const MediaPage: React.FC = () => {
   const fileInput = useRef<HTMLInputElement>(null);
 
   // A deleted custom category can't stay selected.
-  const selected = category === ALL || categories.some((c) => c.id === category) ? category : ALL;
-  const uploadCategory = selected === ALL ? FALLBACK_CATEGORY : selected;
+  const selected = category === ALL || category === SPONSORS || categories.some((c) => c.id === category) ? category : ALL;
+  const uploadCategory = selected === ALL || selected === SPONSORS ? FALLBACK_CATEGORY : selected;
   const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? '';
-  const sponsorName = (id: string | null) => sponsors.find((s) => s.id === id)?.name ?? '';
+  const sponsorName = (item: MediaItem) => sponsorOf(item, sponsors)?.name ?? '';
 
   useEffect(() => {
     pruneMediaFiles(new Set(useMediaStore.getState().items.map((item) => item.id)))
@@ -131,7 +133,7 @@ export const MediaPage: React.FC = () => {
   const shown = items
     .filter((item) => selected === ALL || item.categoryId === selected)
     .filter((item) => kind === ALL || item.kind === kind)
-    .filter((item) => !query || item.name.toLowerCase().includes(query) || sponsorName(item.sponsorId).toLowerCase().includes(query))
+    .filter((item) => !query || item.name.toLowerCase().includes(query) || sponsorName(item).toLowerCase().includes(query))
     .sort((a, b) => b.createdAt - a.createdAt);
   const counts = new Map<string, number>();
   for (const item of items) counts.set(item.categoryId, (counts.get(item.categoryId) ?? 0) + 1);
@@ -165,6 +167,11 @@ export const MediaPage: React.FC = () => {
               All media <span className="text-xs tabular-nums text-neutral-400">{items.length}</span>
             </button>
           </div>
+          <div className={`mt-1 flex items-center rounded border-l-4 ${selected === SPONSORS ? 'border-[var(--brand)] bg-neutral-800' : 'border-transparent hover:bg-neutral-800/60'}`}>
+            <button onClick={() => setCategory(SPONSORS)} aria-pressed={selected === SPONSORS} className="flex flex-1 items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold">
+              <span className="flex items-center gap-2"><Handshake size={14} aria-hidden />Sponsors</span> <span className="text-xs tabular-nums text-neutral-400">{sponsors.length}</span>
+            </button>
+          </div>
           <div className="my-2 border-t border-neutral-700" />
           {categories.map((c) => (
             <CategoryRow key={c.id} category={c} count={counts.get(c.id) ?? 0} selected={selected === c.id} onSelect={() => setCategory(c.id)} />
@@ -173,6 +180,7 @@ export const MediaPage: React.FC = () => {
         </nav>
 
         <section aria-label="Media" className="min-w-0 space-y-3">
+          {selected === SPONSORS ? <SponsorsPanel onOpen={setOpenId} /> : <>
           <div className="flex flex-wrap gap-2">
             <label className="relative min-w-56 flex-1">
               <Search size={16} aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
@@ -203,13 +211,14 @@ export const MediaPage: React.FC = () => {
                     <div className="space-y-1 p-3">
                       <div className="truncate font-semibold">{item.name}</div>
                       <div className="truncate text-xs text-neutral-400">{categoryName(item.categoryId)} · {item.kind === 'image' ? `${formatSeconds(item.duration)} on screen` : formatBytes(item.size)}</div>
-                      {item.sponsorId && <div className="truncate text-xs font-semibold text-[#ff6b7f]">{sponsorName(item.sponsorId)}</div>}
+                      {sponsorName(item) && <div className="truncate text-xs font-semibold text-[#ff6b7f]">{sponsorName(item)}</div>}
                     </div>
                   </button>
                 </li>
               ))}
             </ul>
           )}
+          </>}
         </section>
       </div>
 
