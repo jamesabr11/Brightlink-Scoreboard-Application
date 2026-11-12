@@ -12,6 +12,7 @@ import { Panel } from './ui';
 // "Save changes" is pressed, so editing one layout can never overwrite another.
 export const SavedLayoutsPanel: React.FC = () => {
   const store = usePresentationStore();
+  const savedConfigs = useBasketballStore((s) => s.savedConfigs);
   const theme = useBasketballStore((s) => s.gameConfig.theme);
   const [name, setName] = useState('');
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
@@ -25,11 +26,21 @@ export const SavedLayoutsPanel: React.FC = () => {
     if (layoutNameTaken(savedLayouts, value, exceptId)) { notify('A layout with that name already exists.', 'error'); return false; }
     return true;
   };
+  // Every saved layout is also a Saved Configuration (teams, rules, appearance and this layout), linked by layoutId.
+  const linkedConfig = (layoutId: string) => savedConfigs.find((c) => c.layoutId === layoutId);
+  const syncConfig = (layoutId: string, title: string) => {
+    const game = useBasketballStore.getState();
+    const linked = linkedConfig(layoutId);
+    if (linked) game.updateConfigFromCurrent(linked.id, layoutId);
+    else game.saveCurrentConfig(title, layoutId);
+  };
   const save = () => {
     if (!checkName(name)) return;
     store.saveLayout(name, theme);
+    const saved = usePresentationStore.getState();
+    if (saved.savedLayouts.length > savedLayouts.length && saved.activeLayoutId) syncConfig(saved.activeLayoutId, saved.savedLayouts.find((l) => l.id === saved.activeLayoutId)?.name ?? name);
     setName('');
-    notify('Layout saved.');
+    notify('Layout saved. It is also available on the Configurations page.');
   };
   const load = async (id: string, title: string) => {
     if (dirty && !(await askConfirm({ title: 'Unsaved changes', message: `"${active?.name}" has changes that are not saved. Loading "${title}" discards them.`, confirmLabel: 'Load Layout', danger: true }))) return;
@@ -63,7 +74,7 @@ export const SavedLayoutsPanel: React.FC = () => {
       {active && (
         <div className="mt-2 flex items-center gap-2 text-xs text-neutral-400">
           <span className="flex-1 truncate">Editing <strong className="text-neutral-200">{active.name}</strong>{dirty ? ' · unsaved changes' : ''}</span>
-          <button disabled={!dirty} onClick={() => { store.updateSavedLayout(active.id, theme); notify('Layout updated.'); }} className={`${neutral} px-3 py-1.5 text-sm`}>Save changes</button>
+          <button disabled={!dirty} onClick={() => { store.updateSavedLayout(active.id, theme); syncConfig(active.id, active.name); notify('Layout and configuration updated.'); }} className={`${neutral} px-3 py-1.5 text-sm`}>Save changes</button>
         </div>
       )}
       {savedLayouts.length === 0 ? (
@@ -73,7 +84,7 @@ export const SavedLayoutsPanel: React.FC = () => {
           {savedLayouts.map((l) => (
             <li key={l.id} className={`rounded-md border p-2 ${l.id === activeLayoutId ? 'border-neutral-300 bg-neutral-800' : 'border-neutral-700 bg-neutral-900'}`}>
               {renaming?.id === l.id ? (
-                <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (checkName(renaming.name, l.id)) { store.renameSavedLayout(l.id, renaming.name); setRenaming(null); notify('Layout renamed.'); } }}>
+                <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (checkName(renaming.name, l.id)) { store.renameSavedLayout(l.id, renaming.name); const linked = linkedConfig(l.id); if (linked) useBasketballStore.getState().renameConfig(linked.id, usePresentationStore.getState().savedLayouts.find((x) => x.id === l.id)?.name ?? renaming.name); setRenaming(null); notify('Layout renamed.'); } }}>
                   <input autoFocus aria-label="New layout name" maxLength={MAX_LAYOUT_NAME} value={renaming.name} onChange={(e) => setRenaming({ id: l.id, name: e.target.value })} className={`${input} mt-0 text-sm`} />
                   <button type="submit" className={`${primary} px-3 py-1 text-sm`}>Save</button>
                   <button type="button" onClick={() => setRenaming(null)} className={`${neutral} px-3 py-1 text-sm`}>Cancel</button>

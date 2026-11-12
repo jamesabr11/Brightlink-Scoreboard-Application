@@ -59,6 +59,7 @@ export interface GameConfig extends GameRules {
   awayTeam: Partial<Team>;
   theme: ScoreboardTheme;
   createdAt: number;
+  layoutId?: string; // a custom layout saved in the Layout Editor (presentation store) that loads with this configuration
 }
 
 export interface GameRecord {

@@ -14,7 +14,10 @@ const ConfigCard: React.FC<{ config: GameConfig }> = ({ config }) => {
   const store = useBasketballStore();
   const [newName, setNewName] = useState<string | null>(null);
   const [preview, setPreview] = useState(false);
-  const layout = usePresentationStore((state) => state.sponsorLayout);
+  const working = usePresentationStore((state) => state.sponsorLayout);
+  const saved = usePresentationStore((state) => state.savedLayouts.find((l) => l.id === config.layoutId));
+  const activeLayoutId = usePresentationStore((state) => state.activeLayoutId);
+  const layout = saved?.layout ?? working;
   const active = store.gameConfig.id === config.id;
   const colors = { home: config.homeTeam.primaryColor, away: config.awayTeam.primaryColor };
   const names = { home: config.homeTeam.name, away: config.awayTeam.name };
@@ -36,13 +39,16 @@ const ConfigCard: React.FC<{ config: GameConfig }> = ({ config }) => {
     });
     if (!confirmed) return;
     store.loadConfig(config.id);
+    if (saved) usePresentationStore.getState().loadSavedLayout(saved.id); // the custom layout goes live with the game settings
     notify(`Loaded ${config.name}.`);
   };
 
   const overwrite = async () => {
-    const confirmed = await askConfirm({ title: 'Update this configuration?', message: `"${config.name}" will be replaced with the current teams, rules and theme.`, confirmLabel: 'Update' });
+    const confirmed = await askConfirm({ title: 'Update this configuration?', message: `"${config.name}" will be replaced with the current teams, rules and theme${saved && activeLayoutId === saved.id ? ', and its custom layout with the one in the Layout Editor' : ''}.`, confirmLabel: 'Update' });
     if (!confirmed) return;
     store.updateConfigFromCurrent(config.id);
+    // A custom layout is only rewritten from the editor when that same layout is the one being edited.
+    if (saved && activeLayoutId === saved.id) usePresentationStore.getState().updateSavedLayout(saved.id, useBasketballStore.getState().gameConfig.theme);
     notify('Configuration updated.');
   };
 
@@ -81,7 +87,7 @@ const ConfigCard: React.FC<{ config: GameConfig }> = ({ config }) => {
         <span className="truncate">{config.awayTeam.name}</span>
       </div>
       <p className="text-xs text-neutral-300 mb-3">
-        {config.numberOfPeriods} × {config.periodDuration} min, {config.overtimeDuration} min OT · Shot clock {config.shotClockDuration}/{config.shotClockShort} · Bonus {config.foulsForBonus} · {config.maxTimeouts} timeouts · {THEMES[config.theme.themeId].label}, {LAYOUTS[config.theme.layout].label} layout
+        {config.numberOfPeriods} × {config.periodDuration} min, {config.overtimeDuration} min OT · Shot clock {config.shotClockDuration}/{config.shotClockShort} · Bonus {config.foulsForBonus} · {config.maxTimeouts} timeouts · {THEMES[config.theme.themeId].label}, {LAYOUTS[config.theme.layout].label} layout{saved ? ` · Custom layout “${saved.name}”` : ''}
       </p>
       <div className="flex flex-wrap gap-2">
         <button onClick={() => setPreview((v) => !v)} aria-pressed={preview} aria-label={`${preview ? 'Hide' : 'Preview'} layout for ${config.name}`} className={`${neutral} px-3 py-2 text-sm`}>{preview ? <EyeOff size={16} /> : <Eye size={16} />}Preview</button>
@@ -118,7 +124,7 @@ export const ConfigsPage: React.FC = () => {
           </label>
           <button type="submit" className={`${primary} px-4 py-2`}><Save size={16} />Save Configuration</button>
         </form>
-        <p className="mt-2 text-xs text-neutral-400">Saves team names, colors and logos, the rules and the scoreboard theme. Scores aren't saved here.</p>
+        <p className="mt-2 text-xs text-neutral-400">Saves team names, colors and logos, the rules and the scoreboard theme. Scores aren't saved here. Layouts saved in the Layout Editor also appear below, and loading one restores its custom layout.</p>
       </Panel>
       <ul className="grid md:grid-cols-2 gap-3">
         {savedConfigs.map((config) => <ConfigCard key={config.id} config={config} />)}

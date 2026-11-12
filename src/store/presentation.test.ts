@@ -286,6 +286,30 @@ describe('sponsor layout sections', () => {
       expect(s().sponsorLayout.sponsorSections).toBe(false);
     });
 
+    it('a configuration linked to a saved layout restores both, keeps the link when updated, and survives a restart', async () => {
+      const operator = await openTab();
+      const display = await openTab();
+      const g = () => operator.game.getState(), s = () => operator.show.getState();
+      s().setSponsorLayout({ sections: 2, media: [['a'], ['b'], []], rects: { away: { x: 50, y: 0, w: 30, h: 30 } } });
+      s().saveLayout('Senior night', g().gameConfig.theme);
+      const layoutId = s().savedLayouts[0].id;
+      g().saveCurrentConfig('Senior night', layoutId);
+      const configId = g().savedConfigs.find((c) => c.layoutId === layoutId)!.id;
+
+      s().setSponsorLayout({ sections: 3, rects: {}, media: [[], [], []] }); // wander off
+      g().updateConfigFromCurrent(configId); // a plain update keeps the link
+      expect(g().savedConfigs.find((c) => c.id === configId)!.layoutId).toBe(layoutId);
+
+      g().loadConfig(configId);
+      s().loadSavedLayout(layoutId); // what the Load button does
+      expect(s().sponsorLayout).toMatchObject({ sections: 2, media: [['a'], ['b'], []], rects: { away: { x: 50, y: 0, w: 30, h: 30 } } });
+      expect(display.show.getState().sponsorLayout.sections).toBe(2);
+      expect(s().savedLayouts).toHaveLength(1); // nothing was duplicated
+
+      const next = await openTab();
+      expect(next.game.getState().savedConfigs.find((c) => c.id === configId)!.layoutId).toBe(layoutId);
+    });
+
     it('loading one restores its layout and appearance everywhere, and edits stay in the working copy', async () => {
       const operator = await openTab();
       const display = await openTab();
