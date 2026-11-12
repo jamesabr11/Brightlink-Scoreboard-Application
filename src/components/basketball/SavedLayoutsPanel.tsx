@@ -44,6 +44,15 @@ export const SavedLayoutsPanel: React.FC = () => {
 
   return (
     <Panel title="Saved Layouts">
+      <div role="radiogroup" aria-label="Layout type" className="mb-2">
+        <span className="mb-1 block text-xs text-neutral-400">Layout type</span>
+        <div className="flex gap-2">
+          {([[true, 'With Sponsor Sections'], [false, 'Without Sponsor Sections']] as const).map(([on, text]) => (
+            <button key={text} type="button" role="radio" aria-checked={sponsorLayout.sponsorSections === on} onClick={() => store.setSponsorLayout({ sponsorSections: on })} className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-semibold ${sponsorLayout.sponsorSections === on ? 'border-white bg-neutral-100 text-black' : 'border-neutral-600 bg-neutral-800 text-neutral-200 hover:bg-neutral-700'}`}>{text}</button>
+          ))}
+        </div>
+        <p className="mt-1 text-[11px] text-neutral-500">{sponsorLayout.sponsorSections ? 'Set the number of sections and their arrangement under Media Area.' : 'A clean scoreboard. Media sections are removed from the saved layout and the display.'}</p>
+      </div>
       <form className="flex gap-2 items-end" onSubmit={(e) => { e.preventDefault(); save(); }}>
         <label className="flex-1 text-xs text-neutral-400">
           Save the current layout as
@@ -73,7 +82,7 @@ export const SavedLayoutsPanel: React.FC = () => {
                 <div className="flex items-center gap-1">
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold">{l.name}</div>
-                    <div className="truncate text-[11px] text-neutral-400">{THEMES[l.theme.themeId].label} · {l.layout.sections} media section{l.layout.sections > 1 ? 's' : ''}{Object.keys(l.layout.rects).length > 0 ? ' · custom positions' : ''}</div>
+                    <div className="truncate text-[11px] text-neutral-400">{THEMES[l.theme.themeId].label} · {l.layout.sponsorSections ? `${l.layout.sections} media section${l.layout.sections > 1 ? 's' : ''}` : 'No sponsor sections'}{Object.keys(l.layout.rects).length > 0 ? ' · custom positions' : ''}</div>
                   </div>
                   <button onClick={() => void load(l.id, l.name)} aria-label={`Load ${l.name}`} title="Load into the editor and the display" className={`${neutral} p-1.5`}><FolderOpen size={15} /></button>
                   <button onClick={() => setRenaming({ id: l.id, name: l.name })} aria-label={`Rename ${l.name}`} title="Rename" className={`${neutral} p-1.5`}><Pencil size={15} /></button>

@@ -30,6 +30,8 @@
   grid-template-columns: minmax(0, 1fr);
 }
 .pm-board[data-mode='livesponsor'][data-place='bottom'] { grid-template-areas: 'home center away' 'slot slot slot'; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr); }
+/* No sponsor sections: the scoreboard fills the whole board. */
+.pm-board[data-mode='livesponsor'][data-place='none'] { grid-template-areas: 'home center away'; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 .pm-board[data-mode='livesponsor'][data-place='top'] { grid-template-areas: 'slot slot slot' 'home center away'; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr); }
 .pm-board[data-mode='livesponsor'][data-place='right'] { grid-template-areas: 'home away slot' 'center center slot'; }
 .pm-board[data-mode='livesponsor'][data-place='left'] { grid-template-areas: 'slot home away' 'slot center center'; }
@@ -38,6 +40,7 @@
 .pm-board[data-mode='livesponsor'][data-place$='-stack'] .pm-center { flex-direction: column; flex-wrap: nowrap; }
 .pm-board[data-mode='livesponsor'] .sb-team .sb-team-head { flex-direction: row; max-width: 100%; }
 .pm-board[data-mode='livesponsor'] .pm-center { flex-direction: row; flex-wrap: wrap; gap: calc(var(--u) * 2); padding: calc(var(--u) * 1); }
+.pm-board[data-mode='livesponsor'][data-place='none'] .pm-center,
 .pm-board[data-mode='livesponsor'][data-place='bottom'] .pm-center,
 .pm-board[data-mode='livesponsor'][data-place='top'] .pm-center { flex-direction: column; }
 

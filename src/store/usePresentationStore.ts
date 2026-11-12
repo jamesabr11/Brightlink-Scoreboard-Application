@@ -31,7 +31,7 @@ const DEFAULT_SECONDS: Record<CountdownId, number> = { pregame: 10 * 60, halftim
 
 const freshCountdown = (seconds: number): Countdown => ({ duration: seconds, remainingTime: seconds, isRunning: false, startTimestamp: null });
 
-export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'bottom', size: 35, fit: 'contain', sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []], preset: '', rects: {} };
+export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'bottom', size: 35, fit: 'contain', sponsorSections: true, sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []], preset: '', rects: {} };
 
 /**
  * The Live Sponsor geometry a scoreboard preset starts from (placement, media size, no manual positions).
@@ -77,6 +77,7 @@ const cleanLayout = (saved: Partial<SponsorLayout> | undefined): SponsorLayout =
   placement: SPONSOR_PLACEMENTS.includes(saved?.placement as never) ? saved!.placement! : DEFAULT_SPONSOR_LAYOUT.placement,
   size: typeof saved?.size === 'number' && Number.isFinite(saved.size) ? Math.min(SPONSOR_SIZE_MAX, Math.max(SPONSOR_SIZE_MIN, Math.round(saved.size))) : DEFAULT_SPONSOR_LAYOUT.size,
   fit: saved?.fit === 'cover' ? 'cover' : 'contain',
+  sponsorSections: saved?.sponsorSections !== false, // layouts saved before this option keep their sections
   sections: typeof saved?.sections === 'number' ? Math.min(SPONSOR_MAX_SECTIONS, Math.max(1, Math.round(saved.sections))) : 1,
   split: DEFAULT_SPONSOR_LAYOUT.split.map((d, i) => {
     const v = saved?.split?.[i];
@@ -90,6 +91,13 @@ const cleanLayout = (saved: Partial<SponsorLayout> | undefined): SponsorLayout =
   preset: typeof saved?.preset === 'string' ? saved.preset.slice(0, 40) : '',
   rects: cleanRects(saved?.rects),
 });
+
+/** A layout saved without sponsor sections carries no section media or section positions. */
+const forSave = (layout: SponsorLayout): SponsorLayout => layout.sponsorSections ? layout : {
+  ...layout,
+  media: DEFAULT_SPONSOR_LAYOUT.media,
+  rects: Object.fromEntries(Object.entries(layout.rects).filter(([id]) => !id.startsWith('section'))),
+};
 
 export const presetKey = (theme: ScoreboardTheme) => `${theme.themeId}:${theme.layout}`;
 
@@ -147,12 +155,12 @@ export const usePresentationStore = create<PresentationStore>()(
         saveLayout: (name, theme) => {
           const { savedLayouts, sponsorLayout } = get();
           if (savedLayouts.length >= MAX_SAVED_LAYOUTS) return;
-          const saved: SavedLayout = { id: newId(), name: uniqueName(name, savedLayouts), layout: cleanLayout({ ...sponsorLayout, preset: presetKey(theme) }), theme: cleanTheme(theme) };
+          const saved: SavedLayout = { id: newId(), name: uniqueName(name, savedLayouts), layout: forSave(cleanLayout({ ...sponsorLayout, preset: presetKey(theme) })), theme: cleanTheme(theme) };
           syncAndSet({ savedLayouts: [...savedLayouts, saved], activeLayoutId: saved.id, sponsorLayout: saved.layout });
         },
         updateSavedLayout: (id, theme) => {
           const { savedLayouts, sponsorLayout } = get();
-          const layout = cleanLayout({ ...sponsorLayout, preset: presetKey(theme) });
+          const layout = forSave(cleanLayout({ ...sponsorLayout, preset: presetKey(theme) }));
           syncAndSet({ savedLayouts: savedLayouts.map((l) => (l.id === id ? { ...l, layout, theme: cleanTheme(theme) } : l)), sponsorLayout: layout });
         },
         renameSavedLayout: (id, name) => {

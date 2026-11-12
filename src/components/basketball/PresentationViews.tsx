@@ -220,7 +220,7 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boole
   };
   const team = (s: Side) => <TeamBlock side={s} style={at(s)}>{body(s)}</TeamBlock>;
   return (
-    <Stage theme={theme} mode="livesponsor" place={free ? 'free' : stack ? `${placement}-stack` : placement} look={look} style={free ? undefined : tracks}>
+    <Stage theme={theme} mode="livesponsor" place={free ? 'free' : !layout.sponsorSections ? 'none' : stack ? `${placement}-stack` : placement} look={look} style={free || !layout.sponsorSections ? undefined : tracks}>
       {team('home')}
       <section className="pm-center" style={at('center')} aria-label="Game clock">
         <Period />
@@ -228,7 +228,7 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boole
         <ShotClock />
       </section>
       {team('away')}
-      <SponsorSections preview={preview} />
+      {layout.sponsorSections && <SponsorSections preview={preview} />}
     </Stage>
   );
 };

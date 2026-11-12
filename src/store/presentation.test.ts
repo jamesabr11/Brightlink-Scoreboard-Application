@@ -229,6 +229,21 @@ describe('sponsor layout sections', () => {
       expect(next.show.getState().savedLayouts).toHaveLength(2);
     });
 
+    it('without sponsor sections saves a clean scoreboard that keeps its positions, and older layouts keep their sections', async () => {
+      const { game, show } = await openTab();
+      const theme = game.getState().gameConfig.theme;
+      const s = () => show.getState();
+      s().setSponsorLayout({ media: [['a'], [], []], rects: { home: { x: 0, y: 0, w: 40, h: 40 }, section0: { x: 50, y: 50, w: 30, h: 30 } } });
+      s().saveLayout('With', theme);
+      s().setSponsorLayout({ sponsorSections: false });
+      s().saveLayout('Without', theme);
+      const [withSections, without] = s().savedLayouts;
+      expect(withSections.layout).toMatchObject({ sponsorSections: true, media: [['a'], [], []] });
+      expect(without.layout).toMatchObject({ sponsorSections: false, media: [[], [], []], rects: { home: { x: 0, y: 0, w: 40, h: 40 } } });
+      expect(without.layout.rects).not.toHaveProperty('section0');
+      expect(s().sponsorLayout.sponsorSections).toBe(false);
+    });
+
     it('loading one restores its layout and appearance everywhere, and edits stay in the working copy', async () => {
       const operator = await openTab();
       const display = await openTab();
