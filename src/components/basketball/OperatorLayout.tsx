@@ -29,7 +29,7 @@ export const OperatorLayout: React.FC = () => {
   useSounds();
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="flex min-h-screen flex-col bg-neutral-950 text-white">
       <header className="border-b border-neutral-800 bg-neutral-950/95 backdrop-blur-sm sticky top-0 z-10 px-4 py-3 print:hidden">
         <div className="max-w-[1600px] mx-auto flex flex-wrap items-center gap-x-6 gap-y-3">
           <h1 className="flex items-center gap-2.5 text-xl font-bold whitespace-nowrap">
@@ -56,11 +56,17 @@ export const OperatorLayout: React.FC = () => {
           </button>
         </div>
       </header>
-      <main className="px-4 py-4">
+      <main className="flex-1 px-4 py-4">
         <div className="max-w-[1600px] mx-auto">
           <Outlet />
         </div>
       </main>
+      <footer className="border-t border-neutral-800 px-4 py-4 text-xs text-neutral-500 print:hidden">
+        <div className="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <span className="font-semibold text-neutral-400">Holy Cross Scoreboard</span>
+          <span>Powered by BrightLink AV Ltd.</span>
+        </div>
+      </footer>
       <FeedbackHost />
     </div>
   );
