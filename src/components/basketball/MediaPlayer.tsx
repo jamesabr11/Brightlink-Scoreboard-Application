@@ -75,6 +75,7 @@ export const VideoMedia: React.FC<MediaProps & { onError: () => void; onEnded?: 
       onEnded={onEnded}
       loop={loop}
       playsInline
+      preload="auto"
       className="pm-media-video"
     />
   );
