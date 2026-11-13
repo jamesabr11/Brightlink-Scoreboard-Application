@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Film, Image, ListPlus, ListVideo, Play, Square, X } from 'lucide-react';
-import { mediaIdOf, mediaValue, play as playValue, playCustomLayout, QUEUE, ROTATION, runPlaybackTimer, stopAll } from '../../lib/mediaPlayback';
+import { mediaIdOf, mediaValue, play as playValue, playCustomLayout, QUEUE, runPlaybackTimer, stopAll } from '../../lib/mediaPlayback';
 import { useMediaStore } from '../../store/useMediaStore';
-import { queueForMode, usePlaybackStore } from '../../store/usePlaybackStore';
+import { usePlaybackStore } from '../../store/usePlaybackStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import type { PresentationMode } from '../../types/presentation';
 import type { MediaItem } from '../../types/media';
@@ -24,19 +24,17 @@ export const MediaPlaybackPanel: React.FC = () => {
   const { queue, currentIndex, isPlaying, loop, addToQueue, removeFromQueue, next, prev } = usePlaybackStore();
   const items = useMediaStore((state) => state.items);
   const categories = useMediaStore((state) => state.categories);
-  const sponsors = useMediaStore((state) => state.sponsors);
   const mode = usePresentationStore((state) => state.mode);
   const [value, setValue] = useState('');
   const chosenId = mediaIdOf(value);
 
   const byId = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
-  const rotationCount = useMemo(() => queueForMode(mode, items, sponsors).length, [mode, items, sponsors]);
   const currentId = currentIndex >= 0 ? queue[currentIndex] : undefined;
   const current = currentId ? byId.get(currentId) ?? null : null;
   useEffect(runPlaybackTimer, []); // the single advance timer; see runPlaybackTimer
 
   // A choice that no longer exists (media deleted, or a mode without a rotation) falls back to nothing chosen.
-  const valid = value === '' || (chosenId ? byId.has(chosenId) : value === ROTATION ? rotationCount > 0 : value === QUEUE && queue.length > 0);
+  const valid = value === '' || (chosenId ? byId.has(chosenId) : value === QUEUE && queue.length > 0);
   const choice = valid ? value : '';
   const showing = isPlaying && current ? current.name : null;
 
@@ -63,9 +61,8 @@ export const MediaPlaybackPanel: React.FC = () => {
         <label className="min-w-56 flex-1 text-xs text-neutral-400">
           Media for {MODE_LABELS[mode]}
           <select value={choice} onChange={(e) => setValue(e.target.value)} className="mt-1 block w-full rounded border border-neutral-600 bg-neutral-800 px-2 py-2 text-sm text-white">
-            <option value="">{queue.length > 0 ? 'Choose media, or press Play to resume the queue' : 'Choose media…'}</option>
+            <option value="">Choose media…</option>
             <option value={QUEUE} disabled={queue.length === 0}>Rotate Through Queue{queue.length > 0 ? ` (${queue.length})` : ' (queue is empty)'}</option>
-            {rotationCount > 0 && <option value={ROTATION}>All {MODE_LABELS[mode]} media ({rotationCount})</option>}
             {categories.map((category) => {
               const inCategory = items.filter((item) => item.categoryId === category.id);
               return inCategory.length > 0 && (
