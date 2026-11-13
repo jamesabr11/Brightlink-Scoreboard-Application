@@ -271,7 +271,9 @@ export const usePresentationStore = create<PresentationStore>()(
         const state = saved as Partial<PresentationState> | undefined;
         return {
           ...current,
-          mode: PRESENTATION_MODES.includes(state?.mode as PresentationMode) ? (state?.mode as PresentationMode) : current.mode,
+          // The retired Stadium display is Live Sponsor now, so a saved Stadium mode carries over to it.
+          mode: (state?.mode as string) === 'stadium' ? 'livesponsor'
+            : PRESENTATION_MODES.includes(state?.mode as PresentationMode) ? (state?.mode as PresentationMode) : current.mode,
           sponsorLayout: cleanLayout(state?.sponsorLayout),
           ...(() => {
             const savedLayouts = cleanSaved(state?.savedLayouts);

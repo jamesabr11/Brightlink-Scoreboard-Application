@@ -4,7 +4,7 @@ A basketball scoreboard and game-day presentation system for school gyms and are
 
 Holy Cross Regional High School red, white and black is the default branding. Team names, colours and logos can be changed for any school.
 
-> **Status:** Phases 1–10 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, operator UI/UX improvements, display/animation verification, audio system, sponsor/advertising system optimization, and the customizable Live Sponsor Layout Editor are shipped.
+> **Status:** Phases 1–12 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, operator UI/UX improvements, display/animation verification, audio system, sponsor/advertising system optimization, the customizable Layout Editor, the usability audit, and the Media Playback queue are shipped.
 
 ## Contents
 
@@ -41,10 +41,10 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Reduced-motion preferences are respected; fonts are bundled, so it works offline
 
 **Presentation modes**
-- Pregame (matchup and tip-off countdown), Live (the scoreboard), Live Sponsor (Stadium scoreboard with a resizable sponsor media area), Stadium (arena layout with score, clocks, period and a media area), Halftime (first-half score and a second-half countdown), Introductions and Fullscreen
+- Pregame (matchup and tip-off countdown), Live (the scoreboard), Custom Layout (the arena scoreboard with a resizable, customizable media and sponsor area, set up in the Layout Editor), Halftime (first-half score and a second-half countdown), Introductions and Fullscreen
 - Switch modes in one click from the operator screen; the display follows. Switching never changes the game, and the clocks keep running
 - Media playback and sponsor rotation run inside the presentation layout during live games
-- **Layout Editor** (`/layout`, its own navigation section): design the Live Sponsor display with drag-and-drop, resizing, up to three media sections and named saved layouts. See [Layout Editor](#layout-editor)
+- **Layout Editor** (`/layout`, its own navigation section): design the Custom Layout display with drag-and-drop, resizing, up to three media sections and named saved layouts. See [Layout Editor](#layout-editor)
 - Saved configurations show a thumbnail of the display layout in the team colours, with a Preview button to enlarge it before loading
 
 **Media library and sponsors**
@@ -52,7 +52,7 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Built-in categories (Sponsors, Advertisements, Pregame, Team Hype, Player Introductions, Halftime, Timeout, General Promotions) plus your own
 - Search, filter, preview, rename, recategorize and set display times
 - Sponsors are managed only in the Media Library's **Sponsors** tab (there is no separate Sponsors page or route): create, rename and delete sponsors, set logos, add existing media or upload images and videos, and set each item's order and display time. Any media can also be assigned to a sponsor by name from its details
-- **Live Sponsor presentation mode** — the scoreboard plus a media area (up to three sections) arranged in the [Layout Editor](#layout-editor). Without assigned media, the first section plays each sponsor's rotation in the order and for the durations set under Sponsors in the Media Library
+- **Custom Layout presentation mode** — the scoreboard plus a media area (up to three sections) arranged in the [Layout Editor](#layout-editor). Without assigned media, the first section plays each sponsor's rotation in the order and for the durations set under Sponsors in the Media Library
 - **Video with audible audio** — sponsor and intro videos play with sound enabled
 
 ## Getting started
@@ -113,13 +113,25 @@ Changes appear in the live preview and reach the display when you click **Apply 
 
 ### Display modes
 
-The **Display Mode** panel at the top of the Scoreboard page switches the public display between Pregame, Live, Stadium, Halftime, Introductions and Fullscreen. Pregame and Halftime have an operator-controlled countdown (start, pause, reset, ±1 minute, and a length in minutes; 0 hides it). Halftime shows the score as of the end of the first half, kept per period so it stays correct after Undo. In Stadium mode the shot clock follows the *Show shot clock* display setting.
+The **Display Mode** buttons at the top of the Scoreboard page switch the public display, in this order: Pregame, Introductions, Live, Halftime, Fullscreen and Custom Layout. Pregame and Halftime have an operator-controlled countdown (start, pause, reset, ±1 minute, and a length in minutes; 0 hides it). Halftime shows the score as of the end of the first half, kept per period so it stays correct after Undo. The shot clock on the Custom Layout display follows the *Show shot clock* display setting.
+
+### Media Playback and the queue
+
+The **Media Playback** section below the mode buttons runs media on the selected mode. Live and Introductions need no media, so it is hidden for them (choosing either stops any media playing); Introductions run from the Player Introductions panel. Custom Layout shows only Play and Stop, because its media and sponsor sections come from the Layout Editor.
+
+- **One dropdown** of the library's media, grouped by category, plus **Rotate Through Queue**.
+- **Play Now** plays the chosen media at once (slotted in after the current item if a queue exists). **Add to Queue** lines media up without interrupting what is playing. **Stop** clears the media from the display and leaves the mode alone.
+- **Queue list** marks the item now playing and what is up next, with **Previous**, **Next** and a remove button on each item. A queue you build plays through and stops at the end.
+- **Rotate Through Queue** (automatic advertisement rotation) plays the queue from the first item, shows each for its own display time (a sponsor's time for that item wins over the item's), and repeats from the top until Stop. It is disabled while the queue is empty.
+- **Countdown.** The Now Playing row shows the seconds left before the next item, to the left of Previous.
+- **One timer.** A single operator-tab timer advances playback, so Next, Previous and Stop never stack timers. The public display only follows the synced state, including a display opened after Play began.
+- **Video autoplay.** A display tab nobody has clicked can't play sound, so video starts muted and gets sound on the first click or key press on the display.
 
 ### Layout Editor
 
-The Layout Editor (`/layout`) is the one place to customize the display. It edits the **Live Sponsor** preset only; Pregame, Stadium and Halftime are unchanged. Everything you do appears on the public `/display` route in Live Sponsor mode.
+The Layout Editor (`/layout`) is the one place to customize the display. It edits the **Custom Layout** display only; Pregame and Halftime are unchanged. Everything you do appears on the public `/display` route in Live Sponsor mode.
 
-- **Canvas.** Shows the real Live Sponsor scoreboard in the appearance chosen in Game Setup (colours, typography, background, team areas and clocks), with selectable areas on top. Media does not play in the editor; each section shows its first item or an "Empty" placeholder.
+- **Canvas.** Shows the real Custom Layout scoreboard in the appearance chosen in Game Setup (colours, typography, background, team areas and clocks), with selectable areas on top. Media does not play in the editor; each section shows its first item or an "Empty" placeholder.
 - **Elements.** Select Home Team, Clocks, Away Team, Media Area or Media 1–3 from the row under the canvas or on the canvas. The Properties panel shows the selection's Top, Left, Width and Height (%).
 - **Media area.** Place it right, left, top or bottom (default: the full-width scoreboard with the media below it), set its size (20–60%) and Fit or Fill scaling, and split it into 1–3 sections arranged as rows or columns with a share slider for each. Changing placement, arrangement or section count re-lays out the display and, after a confirmation, resets manual positions.
 - **Media sections.** Assign images and videos from the Media Library to each section, reorder or remove them, and see them in place. On the display each section cycles its media using each item's display time; videos play with audio and advance when they end. An empty first section keeps the sponsor rotation from the Playback panel. Only media ids are stored, never files.
@@ -222,7 +234,7 @@ src/
     ├── AppPreferences.tsx     Sound/Display preferences (Game Setup)
     ├── DisplayView.tsx        Public display page
     ├── Scoreboard.tsx         The five scoreboard layouts
-    ├── PresentationViews.tsx  Pregame, Stadium and Halftime displays
+    ├── PresentationViews.tsx  Pregame and Halftime displays
     ├── PresentationPanel.tsx  Operator mode and countdown controls
     ├── presentation.css       Presentation mode layouts
     ├── scoreboard.css         Display design system and responsive layouts
@@ -272,7 +284,9 @@ The unit tests cover scoring, clocks, periods and overtime, fouls, timeouts, pos
 | 8 | Audio system and sound effects | ✅ Done |
 | 9 | Sponsor and advertising system optimization | ✅ Done |
 | 10 | Customizable Live Sponsor Layout Editor: drag-and-drop, resizing, media sections and saved layouts | ✅ Done |
-| 11+ | Coming soon | Planned |
+| 11 | Usability audit: Game Settings, Media Storage Management, category management, Layout Editor refinements | ✅ Done |
+| 12 | Operator media playback: one Media Playback section, playback queue, Rotate Through Queue, countdown, display mode changes | ✅ Done |
+| 13+ | Coming soon | Planned |
 
 ## Known limitations
 

@@ -88,9 +88,15 @@ describe('presentation mode', () => {
   it('defaults to live and survives a refresh', async () => {
     const { show } = await openTab();
     expect(show.getState().mode).toBe('live');
-    show.getState().setMode('stadium');
+    show.getState().setMode('halftime');
     const next = await openTab();
-    expect(next.show.getState().mode).toBe('stadium');
+    expect(next.show.getState().mode).toBe('halftime');
+  });
+
+  it('carries a saved Stadium mode over to Live Sponsor', async () => {
+    localStorage.setItem('basketball-presentation', JSON.stringify({ state: { mode: 'stadium' }, version: 0 }));
+    const { show } = await openTab();
+    expect(show.getState().mode).toBe('livesponsor');
   });
 
   it('follows the operator tab on the display tab', async () => {
@@ -112,7 +118,7 @@ describe('presentation mode', () => {
     game.getState().startGameClock();
     const { homeTeam, gameClock, history, periodScores } = game.getState();
     const before = { homeTeam, gameClock, history, periodScores };
-    for (const mode of ['pregame', 'stadium', 'halftime', 'live'] as const) show.getState().setMode(mode);
+    for (const mode of ['pregame', 'livesponsor', 'halftime', 'live'] as const) show.getState().setMode(mode);
     const after = game.getState();
     expect(after.homeTeam).toEqual(before.homeTeam);
     expect(after.gameClock).toEqual(before.gameClock);

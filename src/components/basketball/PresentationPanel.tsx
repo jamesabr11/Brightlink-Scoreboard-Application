@@ -1,17 +1,17 @@
+import { needsMedia, selectMode } from '../../lib/mediaPlayback';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import { PRESENTATION_MODES } from '../../types/presentation';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
 import { ClockDisplay } from './ClockDisplay';
 import { IntroPanel } from './IntroPanel';
-import { PlaybackPanel } from './PlaybackPanel';
+import { MediaPlaybackPanel } from './MediaPlaybackPanel';
 import { NumberField, Panel } from './ui';
 import { buttonBase, neutral, negative, positive } from './styles';
 import { Pause, Play, RotateCcw } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 const LABELS: Record<PresentationMode, string> = {
-  pregame: 'Pregame', live: 'Live', stadium: 'Stadium', halftime: 'Halftime',
-  intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Live Sponsor',
+  pregame: 'Pregame', live: 'Live', halftime: 'Halftime',
+  intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Custom Layout',
 };
 const COUNTDOWN_FOR: Partial<Record<PresentationMode, { id: CountdownId; title: string }>> = {
   pregame: { id: 'pregame', title: 'Tip-off countdown' },
@@ -41,7 +41,6 @@ const CountdownControls: React.FC<{ id: CountdownId; title: string }> = ({ id, t
 
 export const PresentationPanel: React.FC = () => {
   const mode = usePresentationStore((state) => state.mode);
-  const setMode = usePresentationStore((state) => state.setMode);
   const countdown = COUNTDOWN_FOR[mode];
   return (
     <div className="mb-3">
@@ -50,7 +49,7 @@ export const PresentationPanel: React.FC = () => {
           {PRESENTATION_MODES.map((id) => (
             <button
               key={id}
-              onClick={() => setMode(id)}
+              onClick={() => selectMode(id)}
               aria-pressed={mode === id}
               className={mode === id ? `${buttonBase} bg-[var(--brand)] py-3 ring-2 ring-white` : `${neutral} py-3`}
             >
@@ -59,10 +58,9 @@ export const PresentationPanel: React.FC = () => {
           ))}
         </div>
         {countdown && <CountdownControls {...countdown} />}
-        {mode === 'livesponsor' && <p className="mt-3 text-xs text-neutral-400">Placement, size and scaling of the sponsor area are set in the <Link to="/layout" className="underline text-neutral-200">Layout Editor</Link>.</p>}
       </Panel>
       {mode === 'intro' && <IntroPanel />}
-      <PlaybackPanel />
+      {needsMedia(mode) && <MediaPlaybackPanel />}
     </div>
   );
 };

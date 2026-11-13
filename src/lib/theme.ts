@@ -41,7 +41,7 @@ export const THEMES: Record<ThemeId, ThemePreset> = {
   },
   modern: {
     label: 'Arena',
-    description: 'Stadium board: full team-color panels over a big central clock.',
+    description: 'Arena board: full team-color panels over a big central clock.',
     layout: 'modern',
     font: 'athletic',
     background: 'gradient',
