@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useBasketballStore } from '../../store/useBasketballStore';
 import { useMediaStore } from '../../store/useMediaStore';
 import { usePlaybackStore } from '../../store/usePlaybackStore';
+import { playWithSound } from '../../lib/videoPlayback';
 import { useMediaUrl } from './useMedia';
 import type { MediaItem } from '../../types/media';
 
@@ -44,22 +45,15 @@ export const VideoMedia: React.FC<MediaProps & { onError: () => void; onEnded?: 
 
   useEffect(() => { if (missing) onMissing(); }, [missing, onMissing]);
 
-  // Drive play/pause imperatively — the autoplay attribute alone is not reliable.
+  // Drive play/pause imperatively — the autoplay attribute alone is not reliable. The display tab has had no click
+  // yet, so unmuted playback is usually refused: playWithSound falls back to muted and unmutes on the first click
+  // rather than treating that as a broken video (which used to skip it and leave only the game name on screen).
   useEffect(() => {
     const video = ref.current;
     if (!video || !url) return;
-    if (isPlaying) {
-      video.play().catch(onError);
-    } else {
-      video.pause();
-    }
+    if (!isPlaying) { video.pause(); return; }
+    return playWithSound(video, onError);
   }, [isPlaying, url, onError]);
-
-  // Ensure audio is enabled (not muted) for sponsor/intro videos
-  useEffect(() => {
-    const video = ref.current;
-    if (video) video.muted = false;
-  }, []);
 
   if (!url) return null;
   return (
