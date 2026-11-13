@@ -41,7 +41,7 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Reduced-motion preferences are respected; fonts are bundled, so it works offline
 
 **Presentation modes**
-- Pregame (matchup and tip-off countdown), Live (the scoreboard), Live Sponsor (Stadium scoreboard with a resizable sponsor media area), Stadium (arena layout with score, clocks, period and a media area), Halftime (first-half score and a second-half countdown), Introductions and Fullscreen
+- Pregame (matchup and tip-off countdown), Live (the scoreboard), Live Sponsor (the arena scoreboard with a resizable, customizable sponsor media area), Halftime (first-half score and a second-half countdown), Introductions and Fullscreen
 - Switch modes in one click from the operator screen; the display follows. Switching never changes the game, and the clocks keep running
 - Media playback and sponsor rotation run inside the presentation layout during live games
 - **Layout Editor** (`/layout`, its own navigation section): design the Live Sponsor display with drag-and-drop, resizing, up to three media sections and named saved layouts. See [Layout Editor](#layout-editor)
@@ -113,11 +113,11 @@ Changes appear in the live preview and reach the display when you click **Apply 
 
 ### Display modes
 
-The **Display Mode** buttons at the top of the Scoreboard page switch the public display between Pregame, Live, Stadium, Halftime, Introductions, Fullscreen and Live Sponsor. Below them, **Media Playback** has one dropdown of media for the selected mode (including all of that mode's own media), with **Play Now**, **Add to Queue** (which never interrupts what is playing) and **Stop**. The queue shows the item now playing and what is up next, with Previous and Next and a remove button per item; an operator queue plays through and stops at the end, while a mode's media rotation repeats. Stop clears the media from the display without changing the mode. Live and Introductions need no media, so Media Playback is hidden for them (choosing either stops any media that was playing); Introductions are run from the Player Introductions panel. Pregame and Halftime have an operator-controlled countdown (start, pause, reset, ±1 minute, and a length in minutes; 0 hides it). Halftime shows the score as of the end of the first half, kept per period so it stays correct after Undo. In Stadium mode the shot clock follows the *Show shot clock* display setting.
+The **Display Mode** buttons at the top of the Scoreboard page switch the public display between Pregame, Live, Halftime, Introductions, Fullscreen and Live Sponsor. Below them, **Media Playback** has one dropdown of media for the selected mode (including all of that mode's own media), with **Play Now**, **Add to Queue** (which never interrupts what is playing) and **Stop**. The queue shows the item now playing and what is up next, with Previous and Next and a remove button per item; an operator queue plays through and stops at the end, while a mode's media rotation repeats. Stop clears the media from the display without changing the mode. Live and Introductions need no media, so Media Playback is hidden for them (choosing either stops any media that was playing); Introductions are run from the Player Introductions panel. Pregame and Halftime have an operator-controlled countdown (start, pause, reset, ±1 minute, and a length in minutes; 0 hides it). Halftime shows the score as of the end of the first half, kept per period so it stays correct after Undo. The shot clock on the Live Sponsor display follows the *Show shot clock* display setting.
 
 ### Layout Editor
 
-The Layout Editor (`/layout`) is the one place to customize the display. It edits the **Live Sponsor** preset only; Pregame, Stadium and Halftime are unchanged. Everything you do appears on the public `/display` route in Live Sponsor mode.
+The Layout Editor (`/layout`) is the one place to customize the display. It edits the **Live Sponsor** preset only; Pregame and Halftime are unchanged. Everything you do appears on the public `/display` route in Live Sponsor mode.
 
 - **Canvas.** Shows the real Live Sponsor scoreboard in the appearance chosen in Game Setup (colours, typography, background, team areas and clocks), with selectable areas on top. Media does not play in the editor; each section shows its first item or an "Empty" placeholder.
 - **Elements.** Select Home Team, Clocks, Away Team, Media Area or Media 1–3 from the row under the canvas or on the canvas. The Properties panel shows the selection's Top, Left, Width and Height (%).
@@ -222,7 +222,7 @@ src/
     ├── AppPreferences.tsx     Sound/Display preferences (Game Setup)
     ├── DisplayView.tsx        Public display page
     ├── Scoreboard.tsx         The five scoreboard layouts
-    ├── PresentationViews.tsx  Pregame, Stadium and Halftime displays
+    ├── PresentationViews.tsx  Pregame and Halftime displays
     ├── PresentationPanel.tsx  Operator mode and countdown controls
     ├── presentation.css       Presentation mode layouts
     ├── scoreboard.css         Display design system and responsive layouts

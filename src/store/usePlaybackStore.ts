@@ -32,7 +32,6 @@ const initialState = (): PlaybackState => ({ queue: [], currentIndex: -1, isPlay
 const MODE_CATEGORIES: Partial<Record<PresentationMode, string[]>> = {
   pregame:  ['pregame', 'sponsors', 'advertisements'],
   halftime: ['halftime', 'sponsors', 'advertisements'],
-  stadium:  ['advertisements', 'promotions', 'hype'],
   livesponsor: ['sponsors', 'advertisements'],
 };
 

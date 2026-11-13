@@ -47,10 +47,6 @@ describe('queueForMode', () => {
     expect(queueForMode('halftime', items)).toEqual(['b', 'c', 'd']);
   });
 
-  it('stadium: advertisements + promotions + hype', () => {
-    expect(queueForMode('stadium', items)).toEqual(['c', 'e', 'f']);
-  });
-
   it('live: empty (operator picks manually)', () => {
     expect(queueForMode('live', items)).toEqual([]);
   });

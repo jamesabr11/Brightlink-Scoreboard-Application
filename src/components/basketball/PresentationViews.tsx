@@ -15,10 +15,10 @@ import { isFree, layoutRects, sectionDirection, sectionId, sectionShares, stacke
 import { Bonus, Crest, Fouls, GameClock, Ident, Period, Score, ShotClock, TeamBlock, Timeouts } from './Scoreboard';
 import './presentation.css';
 
-// Pregame, Stadium and Halftime are built from the same blocks as the live
+// Pregame and Halftime are built from the same blocks as the live
 // scoreboard (exported by Scoreboard.tsx), so branding, themes and sizing stay
 // in one place. Live mode is the unchanged Scoreboard. Live Sponsor adds a resizable
-// sponsor media area to the Stadium scoreboard.
+// sponsor media area to the scoreboard.
 
 type Side = 'home' | 'away';
 
@@ -84,28 +84,6 @@ export const PregameView: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) => 
   </Stage>
 );
 
-export const StadiumView: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) => {
-  const team = (side: Side) => (
-    <TeamBlock side={side}>
-      <div className="sb-team-head"><Crest side={side} /><Ident side={side} ball /></div>
-      <Score side={side} />
-      <div className="pm-meta"><Fouls side={side} /><Timeouts side={side} /><Bonus side={side} /></div>
-    </TeamBlock>
-  );
-  return (
-    <Stage theme={theme} mode="stadium">
-      {team('home')}
-      <section className="pm-center" aria-label="Game clock">
-        <Period />
-        <GameClock />
-        <ShotClock />
-      </section>
-      {team('away')}
-      <MediaSlot region="media" />
-    </Stage>
-  );
-};
-
 export const HalftimeView: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) => (
   <Stage theme={theme} mode="halftime">
     <Header title="Halftime" />
@@ -119,7 +97,7 @@ export const HalftimeView: React.FC<{ theme: ScoreboardTheme }> = ({ theme }) =>
   </Stage>
 );
 
-// Live Sponsor mode: the Stadium scoreboard plus a media area the operator can
+// Live Sponsor mode: the arena scoreboard plus a media area the operator can
 // resize and move (presentation store → sponsorLayout, synced to the display).
 const SponsorBadge: React.FC = () => {
   const { queue, currentIndex } = usePlaybackStore();
@@ -215,7 +193,7 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boole
   const tracks = (side ? { gridTemplateColumns: (placement === 'right' ? [a, b, size] : [size, a, b]).map(fr).join(' '), gridTemplateRows: stack ? `${fr(1)} ${fr(1)}` : `${fr(1)} ${fr(0.55)}` }
     : { gridTemplateRows: (placement === 'bottom' ? [rest, size] : [size, rest]).map(fr).join(' ') }) as React.CSSProperties;
   // The selected scoreboard appearance (Game Setup) decides the team block's look and contents. Classic and
-  // Live Sponsor keep the base Stadium block; the others take their scoreboard.css block styling via data-layout.
+  // Live Sponsor keep the base block; the others take their scoreboard.css block styling via data-layout.
   const look = (['modern', 'minimal', 'tournament', 'broadcast'] as const).find((l) => l === theme.layout);
   const meta = (s: Side, cls: string) => <div className={cls}><Fouls side={s} /><Timeouts side={s} /><Bonus side={s} /></div>;
   const body = (s: Side) => {

@@ -11,7 +11,7 @@ import { Pause, Play, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const LABELS: Record<PresentationMode, string> = {
-  pregame: 'Pregame', live: 'Live', stadium: 'Stadium', halftime: 'Halftime',
+  pregame: 'Pregame', live: 'Live', halftime: 'Halftime',
   intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Live Sponsor',
 };
 const COUNTDOWN_FOR: Partial<Record<PresentationMode, { id: CountdownId; title: string }>> = {

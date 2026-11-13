@@ -1,6 +1,6 @@
 import type { ScoreboardTheme } from './basketball';
 
-export const PRESENTATION_MODES = ['pregame', 'live', 'stadium', 'halftime', 'intro', 'fullscreen', 'livesponsor'] as const;
+export const PRESENTATION_MODES = ['pregame', 'live', 'halftime', 'intro', 'fullscreen', 'livesponsor'] as const;
 export type PresentationMode = (typeof PRESENTATION_MODES)[number];
 
 export type CountdownId = 'pregame' | 'halftime';

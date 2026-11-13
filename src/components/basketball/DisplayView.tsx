@@ -5,7 +5,7 @@ import { useBasketballStore } from '../../store/useBasketballStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import { themeStyle } from '../../lib/theme';
 import { FullscreenView, IntroView } from './IntroViews';
-import { HalftimeView, LiveSponsorView, PregameView, StadiumView } from './PresentationViews';
+import { HalftimeView, LiveSponsorView, PregameView } from './PresentationViews';
 import { Scoreboard } from './Scoreboard';
 
 const toggleFullscreen = () => {
@@ -49,7 +49,6 @@ export const DisplayView: React.FC = () => {
         <motion.div key={mode} className="h-full" data-testid="presentation-mode" data-mode={mode} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           {mode === 'pregame' && <PregameView theme={theme} />}
           {mode === 'live' && <Scoreboard theme={theme} />}
-          {mode === 'stadium' && <StadiumView theme={theme} />}
           {mode === 'halftime' && <HalftimeView theme={theme} />}
           {mode === 'livesponsor' && <LiveSponsorView theme={theme} />}
           {mode === 'intro' && <IntroView theme={theme} />}

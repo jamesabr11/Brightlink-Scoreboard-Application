@@ -10,7 +10,7 @@ import { neutral, negative, positive } from './styles';
 import { Panel } from './ui';
 
 const MODE_LABELS: Record<PresentationMode, string> = {
-  live: 'Live', pregame: 'Pregame', stadium: 'Stadium', halftime: 'Halftime',
+  live: 'Live', pregame: 'Pregame', halftime: 'Halftime',
   intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Live Sponsor',
 };
 

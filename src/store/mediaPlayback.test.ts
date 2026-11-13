@@ -18,7 +18,7 @@ const setup = async () => {
   const [flow, playback, presentation, intro, mediaStore] = await Promise.all([
     import('../lib/mediaPlayback'), import('./usePlaybackStore'), import('./usePresentationStore'), import('./useIntroStore'), import('./useMediaStore'),
   ]);
-  mediaStore.useMediaStore.setState({ items: [media('ad', 'advertisements'), media('clip', 'hype')] });
+  mediaStore.useMediaStore.setState({ items: [media('ad', 'advertisements'), media('clip', 'hype'), media('pre', 'pregame')] });
   return { flow, playback: playback.usePlaybackStore, presentation: presentation.usePresentationStore, intro: intro.useIntroStore };
 };
 
@@ -34,7 +34,7 @@ describe('operator media playback', () => {
 
   it('a mode button only changes the display mode', async () => {
     const { flow, playback, presentation } = await setup();
-    for (const mode of ['pregame', 'stadium', 'halftime', 'intro', 'fullscreen', 'live'] as const) {
+    for (const mode of ['pregame', 'halftime', 'intro', 'fullscreen', 'live'] as const) {
       flow.selectMode(mode);
       expect(presentation.getState().mode).toBe(mode);
     }
@@ -44,7 +44,7 @@ describe('operator media playback', () => {
   it('Live and Introductions need no media; choosing them stops anything playing', async () => {
     const { flow, playback } = await setup();
     expect(['live', 'intro'].map((m) => flow.needsMedia(m as never))).toEqual([false, false]);
-    expect(['pregame', 'stadium', 'halftime', 'livesponsor', 'fullscreen'].every((m) => flow.needsMedia(m as never))).toBe(true);
+    expect(['pregame', 'halftime', 'livesponsor', 'fullscreen'].every((m) => flow.needsMedia(m as never))).toBe(true);
     playback.getState().playNow('clip');
     playback.getState().addToQueue('ad');
     flow.selectMode('intro');
@@ -63,17 +63,17 @@ describe('operator media playback', () => {
 
   it('Play Now plays the chosen media in the selected mode', async () => {
     const { flow, playback, presentation } = await setup();
-    flow.selectMode('stadium');
+    flow.selectMode('pregame');
     flow.play(flow.mediaValue('clip'));
-    expect(presentation.getState().mode).toBe('stadium');
+    expect(presentation.getState().mode).toBe('pregame');
     expect(playback.getState()).toMatchObject({ queue: ['clip'], isPlaying: true });
   });
 
   it("Play with the mode's rotation chosen loads that mode's media", async () => {
     const { flow, playback } = await setup();
-    flow.selectMode('stadium');
+    flow.selectMode('pregame');
     flow.play(flow.ROTATION);
-    expect(playback.getState()).toMatchObject({ queue: ['ad', 'clip'], isPlaying: true, loop: true });
+    expect(playback.getState()).toMatchObject({ queue: ['ad', 'pre'], isPlaying: true, loop: true });
   });
 
   it('Play with nothing chosen resumes the queue', async () => {
