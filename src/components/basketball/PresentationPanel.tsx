@@ -1,18 +1,13 @@
 import { usePresentationStore } from '../../store/usePresentationStore';
-import { PRESENTATION_MODES } from '../../types/presentation';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
 import { ClockDisplay } from './ClockDisplay';
 import { IntroPanel } from './IntroPanel';
-import { PlaybackPanel } from './PlaybackPanel';
+import { MediaPlaybackPanel } from './MediaPlaybackPanel';
 import { NumberField, Panel } from './ui';
-import { buttonBase, neutral, negative, positive } from './styles';
+import { neutral, negative, positive } from './styles';
 import { Pause, Play, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const LABELS: Record<PresentationMode, string> = {
-  pregame: 'Pregame', live: 'Live', stadium: 'Stadium', halftime: 'Halftime',
-  intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Live Sponsor',
-};
 const COUNTDOWN_FOR: Partial<Record<PresentationMode, { id: CountdownId; title: string }>> = {
   pregame: { id: 'pregame', title: 'Tip-off countdown' },
   halftime: { id: 'halftime', title: 'Second-half countdown' },
@@ -22,7 +17,7 @@ const CountdownControls: React.FC<{ id: CountdownId; title: string }> = ({ id, t
   const countdown = usePresentationStore((state) => state.countdowns[id]);
   const { startCountdown, pauseCountdown, resetCountdown, setCountdownDuration, adjustCountdown } = usePresentationStore.getState();
   return (
-    <div className="mt-3 grid gap-2 md:grid-cols-[auto_1fr_auto] items-end" role="group" aria-label={title}>
+    <div className="grid gap-2 md:grid-cols-[auto_1fr_auto] items-end" role="group" aria-label={title}>
       <ClockDisplay clock={countdown} kind="countdown" size="large" label={title} />
       <div className="grid grid-cols-4 gap-2">
         {countdown.isRunning ? (
@@ -41,28 +36,17 @@ const CountdownControls: React.FC<{ id: CountdownId; title: string }> = ({ id, t
 
 export const PresentationPanel: React.FC = () => {
   const mode = usePresentationStore((state) => state.mode);
-  const setMode = usePresentationStore((state) => state.setMode);
   const countdown = COUNTDOWN_FOR[mode];
   return (
-    <div className="mb-3">
-      <Panel title="Display Mode" aside={<span className="text-xs text-neutral-400">Changes only what the public display shows</span>}>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2" role="group" aria-label="Display mode">
-          {PRESENTATION_MODES.map((id) => (
-            <button
-              key={id}
-              onClick={() => setMode(id)}
-              aria-pressed={mode === id}
-              className={mode === id ? `${buttonBase} bg-[var(--brand)] py-3 ring-2 ring-white` : `${neutral} py-3`}
-            >
-              {LABELS[id]}
-            </button>
-          ))}
-        </div>
-        {countdown && <CountdownControls {...countdown} />}
-        {mode === 'livesponsor' && <p className="mt-3 text-xs text-neutral-400">Placement, size and scaling of the sponsor area are set in the <Link to="/layout" className="underline text-neutral-200">Layout Editor</Link>.</p>}
-      </Panel>
+    <div className="mb-3 space-y-3">
+      <MediaPlaybackPanel />
+      {(countdown || mode === 'livesponsor') && (
+        <Panel title={countdown ? countdown.title : 'Live Sponsor'}>
+          {countdown && <CountdownControls {...countdown} />}
+          {mode === 'livesponsor' && <p className="text-xs text-neutral-400">Placement, size and scaling of the sponsor area are set in the <Link to="/layout" className="underline text-neutral-200">Layout Editor</Link>.</p>}
+        </Panel>
+      )}
       {mode === 'intro' && <IntroPanel />}
-      <PlaybackPanel />
     </div>
   );
 };
