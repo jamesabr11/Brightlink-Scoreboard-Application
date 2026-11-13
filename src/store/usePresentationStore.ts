@@ -20,6 +20,8 @@ interface PresentationStore extends PresentationState {
   renameSavedLayout: (id: string, name: string) => void;
   duplicateSavedLayout: (id: string) => void;
   deleteSavedLayout: (id: string) => void;
+  /** Drops deleted Media Library ids from the working layout and every saved layout. */
+  removeMedia: (ids: string[]) => void;
   loadSavedLayout: (id: string) => void;
   startCountdown: (id: CountdownId) => void;
   pauseCountdown: (id: CountdownId) => void;
@@ -202,6 +204,13 @@ export const usePresentationStore = create<PresentationStore>()(
           const copy: SavedLayout = { id: newId(), name: uniqueName(`${from.name} copy`, savedLayouts), layout: cleanLayout(from.layout), theme: cleanTheme(from.theme) };
           syncAndSet({ savedLayouts: [...savedLayouts, copy] });
         },
+        removeMedia: (ids) => {
+          const gone = new Set(ids);
+          const strip = (l: SponsorLayout): SponsorLayout => ({ ...l, media: l.media.map((m) => m.filter((id) => !gone.has(id))) });
+          const { sponsorLayout, savedLayouts } = get();
+          syncAndSet({ sponsorLayout: strip(sponsorLayout), savedLayouts: savedLayouts.map((l) => ({ ...l, layout: strip(l.layout) })) });
+        },
+
         deleteSavedLayout: (id) => {
           const { savedLayouts, activeLayoutId } = get();
           syncAndSet({ savedLayouts: savedLayouts.filter((l) => l.id !== id), activeLayoutId: activeLayoutId === id ? null : activeLayoutId });

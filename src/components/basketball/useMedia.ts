@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { askConfirm, notify } from '../../lib/feedback';
 import { deleteMediaFiles, keepMediaStored, loadMedia, saveMedia } from '../../lib/media';
+import { layoutsUsing } from '../../lib/mediaUsage';
 import { useMediaStore } from '../../store/useMediaStore';
+import { usePresentationStore } from '../../store/usePresentationStore';
 import type { MediaItem } from '../../types/media';
 
 // An object URL for a stored file or thumbnail, revoked when no longer shown.
@@ -61,18 +63,26 @@ export const useUpload = () => {
   return { upload, status };
 };
 
+// Removes items from the library and every place that points at them (sponsors, working and saved layouts),
+// then their blobs and thumbnails. Unreadable files are swept up the next time the library opens.
+export const deleteMediaItems = async (ids: string[]) => {
+  useMediaStore.getState().removeItems(ids);
+  usePresentationStore.getState().removeMedia(ids);
+  await Promise.all(ids.map((id) => deleteMediaFiles(id).catch((error) => console.error('Could not delete media file', error))));
+};
+
 export const confirmDeleteMedia = async (item: MediaItem) => {
-  const logoOf = useMediaStore.getState().sponsors.filter((s) => s.logoId === item.id).map((s) => s.name);
+  const { sponsors } = useMediaStore.getState();
+  const logoOf = sponsors.filter((s) => s.logoId === item.id).map((s) => s.name);
+  const layouts = layoutsUsing(item.id, usePresentationStore.getState());
   const confirmed = await askConfirm({
     title: `Delete "${item.name}"?`,
-    message: `The file is permanently removed from this computer.${logoOf.length > 0 ? ` ${logoOf.join(', ')} will no longer have a logo.` : ''}`,
+    message: `The file is permanently removed from this computer.${logoOf.length > 0 ? ` ${logoOf.join(', ')} will no longer have a logo.` : ''}${layouts.length > 0 ? ` It is removed from: ${layouts.join(', ')}.` : ''}`,
     confirmLabel: 'Delete',
     danger: true,
   });
   if (!confirmed) return false;
-  useMediaStore.getState().removeItem(item.id);
-  // A file left behind if this fails is swept up the next time the library opens.
-  deleteMediaFiles(item.id).catch((error) => console.error('Could not delete media file', error));
+  await deleteMediaItems([item.id]);
   notify(`"${item.name}" deleted.`);
   return true;
 };

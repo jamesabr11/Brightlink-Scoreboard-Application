@@ -45,6 +45,7 @@ interface MediaStore extends MediaState {
   addItem: (item: MediaItem) => void;
   updateItem: (id: string, patch: ItemPatch) => void;
   removeItem: (id: string) => void;
+  removeItems: (ids: string[]) => void;
   addCategory: (name: string) => string | null;
   renameCategory: (id: string, name: string) => boolean;
   removeCategory: (id: string) => void;
@@ -138,11 +139,21 @@ export const useMediaStore = create<MediaStore>()(
         });
       },
 
-      // A sponsor that used this image as its logo is left without one.
-      removeItem: (id) => set({
-        items: get().items.filter((item) => item.id !== id),
-        sponsors: get().sponsors.map((s) => (s.logoId === id ? { ...s, logoId: null } : s)),
-      }),
+      // A sponsor that used a removed image as its logo is left without one, and its rotation drops the item.
+      removeItem: (id) => get().removeItems([id]),
+
+      removeItems: (ids) => {
+        const gone = new Set(ids);
+        set({
+          items: get().items.filter((item) => !gone.has(item.id)),
+          sponsors: get().sponsors.map((s) => ({
+            ...s,
+            logoId: s.logoId && gone.has(s.logoId) ? null : s.logoId,
+            imageIds: s.imageIds.filter((id) => !gone.has(id)),
+            imageDurations: Object.fromEntries(Object.entries(s.imageDurations).filter(([id]) => !gone.has(id))),
+          })),
+        });
+      },
 
       addCategory: (name) => {
         const clean = cleanName(name);

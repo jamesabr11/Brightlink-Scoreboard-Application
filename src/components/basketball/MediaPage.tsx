@@ -5,6 +5,7 @@ import { formatBytes, formatSeconds, MEDIA_ACCEPT, pruneMediaFiles, storageUsage
 import { FALLBACK_CATEGORY, sponsorOf, useMediaStore } from '../../store/useMediaStore';
 import type { MediaCategory, MediaItem, MediaKind } from '../../types/media';
 import { MediaDetails, MediaThumb } from './MediaParts';
+import { StoragePanel } from './StoragePanel';
 import { SponsorsPanel } from './SponsorsPanel';
 import { useUpload } from './useMedia';
 import { brand, input, neutral } from './styles';
@@ -100,7 +101,7 @@ const NewCategory: React.FC<{ onAdded: (id: string) => void }> = ({ onAdded }) =
 
 export const MediaPage: React.FC = () => {
   const { items, categories, sponsors } = useMediaStore();
-  const [tab, setTab] = useState<'library' | 'sponsors'>('library');
+  const [tab, setTab] = useState<'library' | 'sponsors' | 'storage'>('library');
   const [category, setCategory] = useState(ALL);
   const [kind, setKind] = useState<MediaKind | typeof ALL>(ALL);
   const [search, setSearch] = useState('');
@@ -161,14 +162,14 @@ export const MediaPage: React.FC = () => {
       </div>
 
       <div role="tablist" aria-label="Media Library sections" className="flex gap-1 border-b border-neutral-700">
-        {([['library', 'Library', Images, items.length], ['sponsors', 'Sponsors', Handshake, sponsors.length]] as const).map(([value, label, Icon, n]) => (
+        {([['library', 'Library', Images, items.length], ['sponsors', 'Sponsors', Handshake, sponsors.length], ['storage', 'Storage Management', HardDrive, items.length]] as const).map(([value, label, Icon, n]) => (
           <button key={value} role="tab" aria-selected={tab === value} onClick={() => setTab(value)} className={`-mb-px flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-semibold ${tab === value ? 'border-[var(--brand)] text-white' : 'border-transparent text-neutral-400 hover:text-white'}`}>
             <Icon size={16} aria-hidden />{label} <span className="text-xs tabular-nums text-neutral-400">{n}</span>
           </button>
         ))}
       </div>
 
-      {tab === 'sponsors' ? <SponsorsPanel onOpen={setOpenId} /> : (
+      {tab === 'sponsors' ? <SponsorsPanel onOpen={setOpenId} /> : tab === 'storage' ? <StoragePanel /> : (
       <div className="grid gap-3 md:grid-cols-[15rem_1fr]">
         <nav aria-label="Media categories" className="self-start rounded-lg border border-neutral-700 bg-neutral-900 p-2">
           <div className={`flex items-center rounded border-l-4 ${selected === ALL ? 'border-[var(--brand)] bg-neutral-800' : 'border-transparent hover:bg-neutral-800/60'}`}>
