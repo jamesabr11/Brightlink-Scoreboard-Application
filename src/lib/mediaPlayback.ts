@@ -1,6 +1,6 @@
 import { useIntroStore } from '../store/useIntroStore';
 import { useMediaStore } from '../store/useMediaStore';
-import { queueForMode, usePlaybackStore } from '../store/usePlaybackStore';
+import { durationFor, queueForMode, usePlaybackStore } from '../store/usePlaybackStore';
 import { usePresentationStore } from '../store/usePresentationStore';
 import type { PresentationMode } from '../types/presentation';
 
@@ -9,6 +9,8 @@ import type { PresentationMode } from '../types/presentation';
 
 /** Dropdown value for the selected mode's own media rotation (pregame ads, sponsors...). */
 export const ROTATION = 'rotation';
+/** Dropdown value for Rotate Through Queue: play the operator's queue from the top, round and round. */
+export const QUEUE = 'queue';
 export const mediaValue = (id: string) => `media:${id}`;
 export const mediaIdOf = (value: string) => (value.startsWith('media:') ? value.slice(6) : null);
 
@@ -40,6 +42,7 @@ export const play = (value: string) => {
   const playback = usePlaybackStore.getState();
   const id = mediaIdOf(value);
   if (id) return playback.playNow(id);
+  if (value === QUEUE) return playback.playQueue();
   if (value === ROTATION) {
     const ids = modeRotation(usePresentationStore.getState().mode);
     if (ids.length > 0) playback.setQueue(ids, true);
@@ -60,4 +63,30 @@ export const playCustomLayout = () => {
   const ids = modeRotation('livesponsor');
   if (ids.length > 0) playback.setQueue(ids, true);
   else playback.play();
+};
+
+/**
+ * The one timer that moves playback on: when the item on screen has had its time (a sponsor's own override, else the
+ * item's duration) it calls advance, which wraps a rotation and stops at the end of a one-off queue. It re-arms
+ * whenever the item or position changes (Next, Previous, a new Play) and clears on Stop. Runs in the operator tab
+ * only, so the display never has a second timer; the display just follows the synced state.
+ */
+export const runPlaybackTimer = () => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let armed = '';
+  const arm = () => {
+    const { queue, currentIndex, isPlaying } = usePlaybackStore.getState();
+    const { items, sponsors } = useMediaStore.getState();
+    const id = isPlaying ? queue[currentIndex] : undefined;
+    const item = id ? items.find((i) => i.id === id) : undefined;
+    const key = item ? `${currentIndex}:${item.id}` : '';
+    if (key === armed) return; // the same item is still showing: keep its timer running
+    armed = key;
+    clearTimeout(timer);
+    if (!item) return;
+    timer = setTimeout(() => { armed = ''; usePlaybackStore.getState().advance(); }, durationFor(item, sponsors) * 1000);
+  };
+  arm();
+  const unsubscribe = usePlaybackStore.subscribe(arm);
+  return () => { unsubscribe(); clearTimeout(timer); };
 };

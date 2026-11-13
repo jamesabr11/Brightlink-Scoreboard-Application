@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MediaItem } from '../types/media';
 
 class FakeChannel {
@@ -103,5 +103,80 @@ describe('operator media playback', () => {
     expect(playback.getState().isPlaying).toBe(false);
     flow.playCustomLayout();
     expect(playback.getState()).toMatchObject({ queue: ['ad'], isPlaying: true, loop: true });
+  });
+});
+
+describe('Rotate Through Queue', () => {
+  afterEach(() => vi.useRealTimers());
+
+  const start = async (durations: Record<string, number> = { a: 5, b: 15, c: 10 }) => {
+    vi.useFakeTimers();
+    const ctx = await setup();
+    const { useMediaStore } = await import('./useMediaStore');
+    useMediaStore.setState({ items: Object.entries(durations).map(([id, duration]) => ({ ...media(id, 'advertisements'), duration })) });
+    for (const id of Object.keys(durations)) ctx.playback.getState().addToQueue(id);
+    return { ...ctx, useMediaStore, stopTimer: ctx.flow.runPlaybackTimer() };
+  };
+  const at = (playback: { getState: () => { currentIndex: number } }) => playback.getState().currentIndex;
+
+  it('starts at the first item and rotates through the whole queue on each item\'s own duration, then starts over', async () => {
+    const { flow, playback, stopTimer } = await start();
+    playback.getState().next(); playback.getState().next(); // leave it part-way through
+    flow.play(flow.QUEUE);
+    expect(playback.getState()).toMatchObject({ currentIndex: 0, isPlaying: true, loop: true });
+    vi.advanceTimersByTime(4999); expect(at(playback)).toBe(0);
+    vi.advanceTimersByTime(1);    expect(at(playback)).toBe(1); // a: 5s
+    vi.advanceTimersByTime(15000); expect(at(playback)).toBe(2); // b: 15s
+    vi.advanceTimersByTime(10000); expect(at(playback)).toBe(0); // c: 10s, then back to the first
+    vi.advanceTimersByTime(5000);  expect(at(playback)).toBe(1); // and round again
+    stopTimer();
+  });
+
+  it("uses a sponsor's own time for an item in preference to the item's duration", async () => {
+    const { flow, playback, useMediaStore, stopTimer } = await start({ a: 5, b: 15 });
+    useMediaStore.setState({ sponsors: [{ id: 's', name: 'S', logoId: null, imageIds: ['a'], imageDurations: { a: 7 }, createdAt: 1 }] });
+    flow.play(flow.QUEUE);
+    vi.advanceTimersByTime(6999); expect(at(playback)).toBe(0);
+    vi.advanceTimersByTime(1);    expect(at(playback)).toBe(1);
+    stopTimer();
+  });
+
+  it('Next and Previous move at once, wrap round, and restart the new item\'s timer', async () => {
+    const { flow, playback, stopTimer } = await start();
+    flow.play(flow.QUEUE);
+    vi.advanceTimersByTime(3000);
+    playback.getState().prev();
+    expect(at(playback)).toBe(2); // wraps back to the last item
+    vi.advanceTimersByTime(9999); expect(at(playback)).toBe(2); // c's full 10s starts from the press
+    vi.advanceTimersByTime(1);    expect(at(playback)).toBe(0);
+    playback.getState().next();
+    expect(at(playback)).toBe(1);
+    playback.getState().next(); playback.getState().next();
+    expect(at(playback)).toBe(0); // wraps forward
+    stopTimer();
+  });
+
+  it('Stop cancels advancement and leaves one timer at most', async () => {
+    const { flow, playback, stopTimer } = await start();
+    const others = vi.getTimerCount(); // timers that belong to other parts of the app
+    flow.play(flow.QUEUE);
+    playback.getState().next(); playback.getState().next(); playback.getState().prev();
+    expect(vi.getTimerCount() - others).toBe(1); // moving about never stacks timers
+    flow.stopAll();
+    expect(vi.getTimerCount() - others).toBe(0);
+    vi.advanceTimersByTime(60000);
+    expect(playback.getState()).toMatchObject({ currentIndex: 1, isPlaying: false });
+    stopTimer();
+  });
+
+  it('does nothing with an empty queue', async () => {
+    vi.useFakeTimers();
+    const { flow, playback } = await setup();
+    const stopTimer = flow.runPlaybackTimer();
+    const others = vi.getTimerCount();
+    flow.play(flow.QUEUE);
+    expect(playback.getState()).toMatchObject({ queue: [], isPlaying: false });
+    expect(vi.getTimerCount() - others).toBe(0);
+    stopTimer();
   });
 });

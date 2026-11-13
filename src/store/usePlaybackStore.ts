@@ -17,6 +17,8 @@ export interface PlaybackState {
 export interface PlaybackStore extends PlaybackState {
   setQueue: (ids: string[], autoPlay?: boolean, loop?: boolean) => void;
   playNow: (id: string) => void;
+  /** Rotate Through Queue: from the first item, advancing on each item's time and wrapping until stopped. */
+  playQueue: () => void;
   addToQueue: (id: string) => void;
   removeFromQueue: (index: number) => void;
   play: () => void;
@@ -96,6 +98,11 @@ export const usePlaybackStore = create<PlaybackStore>()((set, get) => {
       if (at >= 0) return sync({ currentIndex: at, isPlaying: true });
       const insertAt = currentIndex < 0 ? queue.length : currentIndex + 1;
       sync({ queue: [...queue.slice(0, insertAt), id, ...queue.slice(insertAt)], currentIndex: insertAt, isPlaying: true });
+    },
+
+    playQueue: () => {
+      if (get().queue.length === 0) return;
+      sync({ currentIndex: 0, isPlaying: true, loop: true });
     },
 
     // Never starts, stops or moves playback: an empty queue just gets its first item lined up.

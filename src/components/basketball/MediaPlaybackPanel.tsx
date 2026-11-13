@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Film, Image, ListPlus, ListVideo, Play, Square, X } from 'lucide-react';
-import { mediaIdOf, mediaValue, play as playValue, playCustomLayout, ROTATION, stopAll } from '../../lib/mediaPlayback';
+import { mediaIdOf, mediaValue, play as playValue, playCustomLayout, QUEUE, ROTATION, runPlaybackTimer, stopAll } from '../../lib/mediaPlayback';
 import { useMediaStore } from '../../store/useMediaStore';
-import { durationFor, queueForMode, usePlaybackStore } from '../../store/usePlaybackStore';
+import { queueForMode, usePlaybackStore } from '../../store/usePlaybackStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import type { PresentationMode } from '../../types/presentation';
 import type { MediaItem } from '../../types/media';
@@ -17,19 +17,6 @@ const MODE_LABELS: Record<PresentationMode, string> = {
 
 const KindIcon: React.FC<{ kind: MediaItem['kind'] }> = ({ kind }) =>
   kind === 'video' ? <Film size={14} aria-hidden /> : <Image size={14} aria-hidden />;
-
-// Single source of truth for timed advance. Runs only in the operator tab (this panel is never rendered on the
-// display route), which prevents the double-advance race of both tabs running timers.
-const usePlaybackTicker = (item: MediaItem | null, index: number, isPlaying: boolean) => {
-  const sponsors = useMediaStore((state) => state.sponsors);
-  const seconds = item ? durationFor(item, sponsors) : 0;
-  const advance = usePlaybackStore((state) => state.advance);
-  useEffect(() => {
-    if (!isPlaying || !item) return;
-    const timer = setTimeout(advance, seconds * 1000);
-    return () => clearTimeout(timer);
-  }, [item?.id, index, seconds, isPlaying, advance]); // eslint-disable-line react-hooks/exhaustive-deps
-};
 
 // Plays media on the display mode picked with the Display Mode buttons: choose content, Play Now or Add to Queue,
 // and step through the queue.
@@ -46,10 +33,10 @@ export const MediaPlaybackPanel: React.FC = () => {
   const rotationCount = useMemo(() => queueForMode(mode, items, sponsors).length, [mode, items, sponsors]);
   const currentId = currentIndex >= 0 ? queue[currentIndex] : undefined;
   const current = currentId ? byId.get(currentId) ?? null : null;
-  usePlaybackTicker(current, currentIndex, isPlaying);
+  useEffect(runPlaybackTimer, []); // the single advance timer; see runPlaybackTimer
 
   // A choice that no longer exists (media deleted, or a mode without a rotation) falls back to nothing chosen.
-  const valid = value === '' || (chosenId ? byId.has(chosenId) : value === ROTATION && rotationCount > 0);
+  const valid = value === '' || (chosenId ? byId.has(chosenId) : value === ROTATION ? rotationCount > 0 : value === QUEUE && queue.length > 0);
   const choice = valid ? value : '';
   const showing = isPlaying && current ? current.name : null;
 
@@ -77,6 +64,7 @@ export const MediaPlaybackPanel: React.FC = () => {
           Media for {MODE_LABELS[mode]}
           <select value={choice} onChange={(e) => setValue(e.target.value)} className="mt-1 block w-full rounded border border-neutral-600 bg-neutral-800 px-2 py-2 text-sm text-white">
             <option value="">{queue.length > 0 ? 'Choose media, or press Play to resume the queue' : 'Choose media…'}</option>
+            <option value={QUEUE} disabled={queue.length === 0}>Rotate Through Queue{queue.length > 0 ? ` (${queue.length})` : ' (queue is empty)'}</option>
             {rotationCount > 0 && <option value={ROTATION}>All {MODE_LABELS[mode]} media ({rotationCount})</option>}
             {categories.map((category) => {
               const inCategory = items.filter((item) => item.categoryId === category.id);
@@ -89,7 +77,7 @@ export const MediaPlaybackPanel: React.FC = () => {
           </select>
         </label>
         <button onClick={() => playValue(choice)} disabled={choice === '' && queue.length === 0} className={`${positive} px-4 py-2`}><Play size={18} />{chosenId ? 'Play Now' : 'Play'}</button>
-        <button onClick={() => chosenId && addToQueue(chosenId)} disabled={!chosenId} className={`${neutral} px-4 py-2`}><ListPlus size={18} />Add to Queue</button>
+        {choice !== QUEUE && <button onClick={() => chosenId && addToQueue(chosenId)} disabled={!chosenId} className={`${neutral} px-4 py-2`}><ListPlus size={18} />Add to Queue</button>}
         <button onClick={stopAll} aria-label="Stop" className={`${negative} px-4 py-2`}><Square size={18} />Stop</button>
       </div>
 
