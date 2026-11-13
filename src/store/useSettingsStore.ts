@@ -13,7 +13,7 @@ interface SettingsStore extends AppSettings {
   restoreDefaults: () => void;
 }
 
-const pickRules = (config: GameRules): GameRules => ({
+export const pickRules = (config: GameRules): GameRules => ({
   periodDuration: config.periodDuration,
   overtimeDuration: config.overtimeDuration,
   numberOfPeriods: config.numberOfPeriods,
