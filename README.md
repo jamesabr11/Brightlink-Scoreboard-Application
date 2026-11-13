@@ -4,7 +4,7 @@ A basketball scoreboard and game-day presentation system for school gyms and are
 
 Holy Cross Regional High School red, white and black is the default branding. Team names, colours and logos can be changed for any school.
 
-> **Status:** Phases 1–10 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, operator UI/UX improvements, display/animation verification, audio system, sponsor/advertising system optimization, and the customizable Live Sponsor Layout Editor are shipped.
+> **Status:** Phases 1–12 complete. Core scoreboard, media library, presentation modes, media playback, player introductions, operator UI/UX improvements, display/animation verification, audio system, sponsor/advertising system optimization, the customizable Layout Editor, the usability audit, and the Media Playback queue are shipped.
 
 ## Contents
 
@@ -113,7 +113,19 @@ Changes appear in the live preview and reach the display when you click **Apply 
 
 ### Display modes
 
-The **Display Mode** buttons at the top of the Scoreboard page switch the public display between Pregame, Live, Halftime, Introductions, Fullscreen and Custom Layout. Below them, **Media Playback** has one dropdown of media for the selected mode, with **Rotate Through Queue** (plays the queue from the top on each item's own time and repeats until Stop), **Play Now**, **Add to Queue** (which never interrupts what is playing) and **Stop**. The queue shows the item now playing and what is up next, with Previous and Next and a remove button per item; an operator queue plays through and stops at the end, while a mode's media rotation repeats. Stop clears the media from the display without changing the mode. Live and Introductions need no media, so Media Playback is hidden for them; Custom Layout shows just Play and Stop, since its media and sponsor sections come from the Layout Editor (choosing either stops any media that was playing); Introductions are run from the Player Introductions panel. Pregame and Halftime have an operator-controlled countdown (start, pause, reset, ±1 minute, and a length in minutes; 0 hides it). Halftime shows the score as of the end of the first half, kept per period so it stays correct after Undo. The shot clock on the Custom Layout display follows the *Show shot clock* display setting.
+The **Display Mode** buttons at the top of the Scoreboard page switch the public display, in this order: Pregame, Introductions, Live, Halftime, Fullscreen and Custom Layout. Pregame and Halftime have an operator-controlled countdown (start, pause, reset, ±1 minute, and a length in minutes; 0 hides it). Halftime shows the score as of the end of the first half, kept per period so it stays correct after Undo. The shot clock on the Custom Layout display follows the *Show shot clock* display setting.
+
+### Media Playback and the queue
+
+The **Media Playback** section below the mode buttons runs media on the selected mode. Live and Introductions need no media, so it is hidden for them (choosing either stops any media playing); Introductions run from the Player Introductions panel. Custom Layout shows only Play and Stop, because its media and sponsor sections come from the Layout Editor.
+
+- **One dropdown** of the library's media, grouped by category, plus **Rotate Through Queue**.
+- **Play Now** plays the chosen media at once (slotted in after the current item if a queue exists). **Add to Queue** lines media up without interrupting what is playing. **Stop** clears the media from the display and leaves the mode alone.
+- **Queue list** marks the item now playing and what is up next, with **Previous**, **Next** and a remove button on each item. A queue you build plays through and stops at the end.
+- **Rotate Through Queue** (automatic advertisement rotation) plays the queue from the first item, shows each for its own display time (a sponsor's time for that item wins over the item's), and repeats from the top until Stop. It is disabled while the queue is empty.
+- **Countdown.** The Now Playing row shows the seconds left before the next item, to the left of Previous.
+- **One timer.** A single operator-tab timer advances playback, so Next, Previous and Stop never stack timers. The public display only follows the synced state, including a display opened after Play began.
+- **Video autoplay.** A display tab nobody has clicked can't play sound, so video starts muted and gets sound on the first click or key press on the display.
 
 ### Layout Editor
 
@@ -272,7 +284,9 @@ The unit tests cover scoring, clocks, periods and overtime, fouls, timeouts, pos
 | 8 | Audio system and sound effects | ✅ Done |
 | 9 | Sponsor and advertising system optimization | ✅ Done |
 | 10 | Customizable Live Sponsor Layout Editor: drag-and-drop, resizing, media sections and saved layouts | ✅ Done |
-| 11+ | Coming soon | Planned |
+| 11 | Usability audit: Game Settings, Media Storage Management, category management, Layout Editor refinements | ✅ Done |
+| 12 | Operator media playback: one Media Playback section, playback queue, Rotate Through Queue, countdown, display mode changes | ✅ Done |
+| 13+ | Coming soon | Planned |
 
 ## Known limitations
 
