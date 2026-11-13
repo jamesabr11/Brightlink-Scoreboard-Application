@@ -8,11 +8,10 @@ import { MediaPlaybackPanel } from './MediaPlaybackPanel';
 import { NumberField, Panel } from './ui';
 import { buttonBase, neutral, negative, positive } from './styles';
 import { Pause, Play, RotateCcw } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 const LABELS: Record<PresentationMode, string> = {
   pregame: 'Pregame', live: 'Live', halftime: 'Halftime',
-  intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Live Sponsor',
+  intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Custom Layout',
 };
 const COUNTDOWN_FOR: Partial<Record<PresentationMode, { id: CountdownId; title: string }>> = {
   pregame: { id: 'pregame', title: 'Tip-off countdown' },
@@ -59,7 +58,6 @@ export const PresentationPanel: React.FC = () => {
           ))}
         </div>
         {countdown && <CountdownControls {...countdown} />}
-        {mode === 'livesponsor' && <p className="mt-3 text-xs text-neutral-400">Placement, size and scaling of the sponsor area are set in the <Link to="/layout" className="underline text-neutral-200">Layout Editor</Link>.</p>}
       </Panel>
       {mode === 'intro' && <IntroPanel />}
       {needsMedia(mode) && <MediaPlaybackPanel />}

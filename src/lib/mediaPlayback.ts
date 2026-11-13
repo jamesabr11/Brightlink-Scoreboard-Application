@@ -22,7 +22,7 @@ export const needsMedia = (mode: PresentationMode) => mode !== 'live' && mode !=
 
 /**
  * A display-mode button. Live and Introductions have no media area, so any media still playing is stopped (its
- * timer lives in the Media Playback section, which is hidden there). Entering Live Sponsor with nothing queued
+ * timer lives in the Media Playback section, which is hidden there). Entering Custom Layout with nothing queued
  * starts the sponsor rotation.
  */
 export const selectMode = (mode: PresentationMode) => {
@@ -52,4 +52,12 @@ export const play = (value: string) => {
 export const stopAll = () => {
   usePlaybackStore.getState().stop();
   useIntroStore.getState().stop();
+};
+
+/** Custom Layout's Play: (re)start its sponsor rotation, or resume whatever is queued if it has none. */
+export const playCustomLayout = () => {
+  const playback = usePlaybackStore.getState();
+  const ids = modeRotation('livesponsor');
+  if (ids.length > 0) playback.setQueue(ids, true);
+  else playback.play();
 };

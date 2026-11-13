@@ -145,7 +145,7 @@ export const LayoutEditorPage: React.FC = () => {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold">Layout Editor</h2>
-          <p className="text-sm text-neutral-400">Edits the Live Sponsor display preset, shown on the public display in Live Sponsor mode. Select an element to see its properties. Choosing a different scoreboard preset in Game Setup loads that preset's layout here.</p>
+          <p className="text-sm text-neutral-400">Edits the Custom Layout display, shown on the public display in Custom Layout mode. Select an element to see its properties. Choosing a different scoreboard preset in Game Setup loads that preset's layout here.</p>
         </div>
         <div className="flex gap-2">
           <button onClick={undo} disabled={!canUndo} title="Undo the last layout change" className={`${neutral} px-4 py-2 text-sm font-semibold ring-1 ring-neutral-500`}><Undo2 size={16} className="mr-2 inline" />Undo</button>
@@ -153,7 +153,7 @@ export const LayoutEditorPage: React.FC = () => {
         </div>
       </div>
       <div className="grid gap-3 lg:grid-cols-[1fr_340px]">
-        <Panel title="Live Sponsor Layout">
+        <Panel title="Custom Layout">
           <LayoutPreview layout={layout} theme={theme} live selected={selected === 'sponsor' || !withSections ? (withSections ? undefined : sel.id as ElementId) : selected} onSelect={setSelected} onRect={setBox} media />
           <ul className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Elements">
             {elements.map((r) => (

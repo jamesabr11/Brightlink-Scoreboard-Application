@@ -94,4 +94,14 @@ describe('operator media playback', () => {
     expect(playback.getState()).toMatchObject({ isPlaying: false, queue: ['clip', 'ad'] });
     expect(intro.getState().isPlaying).toBe(false);
   });
+
+  it('Custom Layout: Play starts the sponsor rotation; with none it resumes the queue; Stop stops it', async () => {
+    const { flow, playback, presentation } = await setup();
+    flow.selectMode('livesponsor');
+    expect(presentation.getState().mode).toBe('livesponsor');
+    flow.stopAll();
+    expect(playback.getState().isPlaying).toBe(false);
+    flow.playCustomLayout();
+    expect(playback.getState()).toMatchObject({ queue: ['ad'], isPlaying: true, loop: true });
+  });
 });

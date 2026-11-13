@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Film, Image, ListPlus, ListVideo, Play, Square, X } from 'lucide-react';
-import { mediaIdOf, mediaValue, play as playValue, ROTATION, stopAll } from '../../lib/mediaPlayback';
+import { mediaIdOf, mediaValue, play as playValue, playCustomLayout, ROTATION, stopAll } from '../../lib/mediaPlayback';
 import { useMediaStore } from '../../store/useMediaStore';
 import { durationFor, queueForMode, usePlaybackStore } from '../../store/usePlaybackStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
@@ -11,7 +12,7 @@ import { Panel } from './ui';
 
 const MODE_LABELS: Record<PresentationMode, string> = {
   live: 'Live', pregame: 'Pregame', halftime: 'Halftime',
-  intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Live Sponsor',
+  intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Custom Layout',
 };
 
 const KindIcon: React.FC<{ kind: MediaItem['kind'] }> = ({ kind }) =>
@@ -50,8 +51,24 @@ export const MediaPlaybackPanel: React.FC = () => {
   // A choice that no longer exists (media deleted, or a mode without a rotation) falls back to nothing chosen.
   const valid = value === '' || (chosenId ? byId.has(chosenId) : value === ROTATION && rotationCount > 0);
   const choice = valid ? value : '';
-  const atEnd = !loop && currentIndex >= queue.length - 1;
   const showing = isPlaying && current ? current.name : null;
+
+  // Custom Layout runs the media and sponsor sections set up in the Layout Editor, so there is nothing to choose:
+  // just Play (the sponsor rotation) and Stop. The timer above keeps that rotation moving.
+  if (mode === 'livesponsor') {
+    return (
+      <Panel title="Custom Layout" aside={<span className="text-xs text-neutral-400">{isPlaying ? 'Playing' : 'Stopped'}</span>}>
+        <p className="mb-3 text-xs text-neutral-400">Shows the layout saved in the <Link to="/layout" className="underline text-neutral-200">Layout Editor</Link>, with its own media and sponsor sections.</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={playCustomLayout} className={`${positive} py-2`}><Play size={18} />Play</button>
+          <button onClick={stopAll} aria-label="Stop" className={`${negative} py-2`}><Square size={18} />Stop</button>
+        </div>
+        {showing && <p className="mt-3 truncate text-sm text-neutral-300">Now playing: {showing}</p>}
+      </Panel>
+    );
+  }
+
+  const atEnd = !loop && currentIndex >= queue.length - 1;
 
   return (
     <Panel title="Media Playback" aside={<span className="text-xs text-neutral-400">{queue.length > 0 ? `${queue.length} in queue` : 'No queue'}</span>}>
