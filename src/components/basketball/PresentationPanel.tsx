@@ -1,4 +1,4 @@
-import { selectMode } from '../../lib/mediaPlayback';
+import { needsMedia, selectMode } from '../../lib/mediaPlayback';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import { PRESENTATION_MODES } from '../../types/presentation';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
@@ -62,7 +62,7 @@ export const PresentationPanel: React.FC = () => {
         {mode === 'livesponsor' && <p className="mt-3 text-xs text-neutral-400">Placement, size and scaling of the sponsor area are set in the <Link to="/layout" className="underline text-neutral-200">Layout Editor</Link>.</p>}
       </Panel>
       {mode === 'intro' && <IntroPanel />}
-      <MediaPlaybackPanel />
+      {needsMedia(mode) && <MediaPlaybackPanel />}
     </div>
   );
 };

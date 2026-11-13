@@ -12,18 +12,23 @@ export const ROTATION = 'rotation';
 export const mediaValue = (id: string) => `media:${id}`;
 export const mediaIdOf = (value: string) => (value.startsWith('media:') ? value.slice(6) : null);
 
-/** Modes whose display has a media area. */
-export const SHOWS_MEDIA: PresentationMode[] = ['pregame', 'stadium', 'halftime', 'livesponsor', 'fullscreen'];
-
 export const modeRotation = (mode: PresentationMode) => {
   const { items, sponsors } = useMediaStore.getState();
   return queueForMode(mode, items, sponsors);
 };
 
-/** A display-mode button. Entering Live Sponsor with nothing queued starts the sponsor rotation. */
+/** Live and Introductions need no media choice, so the Media Playback section is hidden for them. */
+export const needsMedia = (mode: PresentationMode) => mode !== 'live' && mode !== 'intro';
+
+/**
+ * A display-mode button. Live and Introductions have no media area, so any media still playing is stopped (its
+ * timer lives in the Media Playback section, which is hidden there). Entering Live Sponsor with nothing queued
+ * starts the sponsor rotation.
+ */
 export const selectMode = (mode: PresentationMode) => {
   usePresentationStore.getState().setMode(mode);
   const playback = usePlaybackStore.getState();
+  if (!needsMedia(mode)) playback.stop();
   if (mode === 'livesponsor' && playback.queue.length === 0) {
     const ids = modeRotation(mode);
     if (ids.length > 0) playback.setQueue(ids, true);

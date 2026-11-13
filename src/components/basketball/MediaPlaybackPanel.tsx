@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Film, Image, ListPlus, ListVideo, Play, Square, X } from 'lucide-react';
-import { mediaIdOf, mediaValue, play as playValue, ROTATION, SHOWS_MEDIA, stopAll } from '../../lib/mediaPlayback';
+import { mediaIdOf, mediaValue, play as playValue, ROTATION, stopAll } from '../../lib/mediaPlayback';
 import { useMediaStore } from '../../store/useMediaStore';
 import { durationFor, queueForMode, usePlaybackStore } from '../../store/usePlaybackStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
@@ -51,7 +51,6 @@ export const MediaPlaybackPanel: React.FC = () => {
   const valid = value === '' || (chosenId ? byId.has(chosenId) : value === ROTATION && rotationCount > 0);
   const choice = valid ? value : '';
   const atEnd = !loop && currentIndex >= queue.length - 1;
-  const hasMediaArea = SHOWS_MEDIA.includes(mode);
   const showing = isPlaying && current ? current.name : null;
 
   return (
@@ -76,7 +75,6 @@ export const MediaPlaybackPanel: React.FC = () => {
         <button onClick={() => chosenId && addToQueue(chosenId)} disabled={!chosenId} className={`${neutral} px-4 py-2`}><ListPlus size={18} />Add to Queue</button>
         <button onClick={stopAll} aria-label="Stop" className={`${negative} px-4 py-2`}><Square size={18} />Stop</button>
       </div>
-      {!hasMediaArea && <p className="mt-2 text-xs text-amber-400">The {MODE_LABELS[mode]} display has no media area. Choose Pregame, Stadium, Halftime, Live Sponsor or Fullscreen above to show media.</p>}
 
       <div className="mt-3 flex items-center gap-2 rounded border border-neutral-700 bg-neutral-900 p-2 text-sm">
         <ListVideo size={16} aria-hidden className="flex-none text-neutral-400" />

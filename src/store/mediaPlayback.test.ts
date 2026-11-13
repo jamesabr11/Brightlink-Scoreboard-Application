@@ -41,6 +41,16 @@ describe('operator media playback', () => {
     expect(playback.getState().queue).toEqual([]);
   });
 
+  it('Live and Introductions need no media; choosing them stops anything playing', async () => {
+    const { flow, playback } = await setup();
+    expect(['live', 'intro'].map((m) => flow.needsMedia(m as never))).toEqual([false, false]);
+    expect(['pregame', 'stadium', 'halftime', 'livesponsor', 'fullscreen'].every((m) => flow.needsMedia(m as never))).toBe(true);
+    playback.getState().playNow('clip');
+    playback.getState().addToQueue('ad');
+    flow.selectMode('intro');
+    expect(playback.getState()).toMatchObject({ isPlaying: false, queue: ['clip', 'ad'] });
+  });
+
   it('entering Live Sponsor with an empty queue starts the sponsor rotation, but never replaces a queue', async () => {
     const { flow, playback } = await setup();
     flow.selectMode('livesponsor');
