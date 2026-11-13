@@ -71,6 +71,10 @@ export const playCustomLayout = () => {
  * whenever the item or position changes (Next, Previous, a new Play) and clears on Stop. Runs in the operator tab
  * only, so the display never has a second timer; the display just follows the synced state.
  */
+let deadline: number | null = null;
+/** Whole seconds until the timer moves playback on, for display only; null when nothing is counting down. */
+export const secondsUntilAdvance = () => (deadline === null ? null : Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
+
 export const runPlaybackTimer = () => {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let armed = '';
@@ -83,10 +87,13 @@ export const runPlaybackTimer = () => {
     if (key === armed) return; // the same item is still showing: keep its timer running
     armed = key;
     clearTimeout(timer);
+    deadline = null;
     if (!item) return;
-    timer = setTimeout(() => { armed = ''; usePlaybackStore.getState().advance(); }, durationFor(item, sponsors) * 1000);
+    const ms = durationFor(item, sponsors) * 1000;
+    deadline = Date.now() + ms;
+    timer = setTimeout(() => { armed = ''; usePlaybackStore.getState().advance(); }, ms);
   };
   arm();
   const unsubscribe = usePlaybackStore.subscribe(arm);
-  return () => { unsubscribe(); clearTimeout(timer); };
+  return () => { unsubscribe(); clearTimeout(timer); deadline = null; };
 };

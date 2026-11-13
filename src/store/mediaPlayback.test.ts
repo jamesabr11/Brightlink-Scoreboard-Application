@@ -169,6 +169,19 @@ describe('Rotate Through Queue', () => {
     stopTimer();
   });
 
+  it('reports the seconds left on the item showing, restarting on Next and clearing on Stop', async () => {
+    const { flow, playback, stopTimer } = await start();
+    flow.play(flow.QUEUE);
+    expect(flow.secondsUntilAdvance()).toBe(5);
+    vi.advanceTimersByTime(2000);
+    expect(flow.secondsUntilAdvance()).toBe(3);
+    playback.getState().next();
+    expect(flow.secondsUntilAdvance()).toBe(15);
+    flow.stopAll();
+    expect(flow.secondsUntilAdvance()).toBeNull();
+    stopTimer();
+  });
+
   it('does nothing with an empty queue', async () => {
     vi.useFakeTimers();
     const { flow, playback } = await setup();

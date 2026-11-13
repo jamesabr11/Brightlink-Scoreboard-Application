@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Film, Image, ListPlus, ListVideo, Play, Square, X } from 'lucide-react';
-import { mediaIdOf, mediaValue, play as playValue, playCustomLayout, QUEUE, runPlaybackTimer, stopAll } from '../../lib/mediaPlayback';
+import { mediaIdOf, mediaValue, play as playValue, playCustomLayout, QUEUE, runPlaybackTimer, secondsUntilAdvance, stopAll } from '../../lib/mediaPlayback';
 import { useMediaStore } from '../../store/useMediaStore';
 import { usePlaybackStore } from '../../store/usePlaybackStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
@@ -17,6 +17,17 @@ const MODE_LABELS: Record<PresentationMode, string> = {
 
 const KindIcon: React.FC<{ kind: MediaItem['kind'] }> = ({ kind }) =>
   kind === 'video' ? <Film size={14} aria-hidden /> : <Image size={14} aria-hidden />;
+
+// Seconds left on the item showing, ticking down while it plays (display only; the timer itself is runPlaybackTimer).
+const useCountdown = (active: boolean, itemKey: string) => {
+  const [read, setRead] = useState<{ key: string; seconds: number | null }>({ key: '', seconds: null });
+  useEffect(() => {
+    if (!active) return;
+    const tick = setInterval(() => setRead({ key: itemKey, seconds: secondsUntilAdvance() }), 250);
+    return () => clearInterval(tick);
+  }, [active, itemKey]);
+  return active && read.key === itemKey ? read.seconds : null; // a reading from the previous item is never shown
+};
 
 // Plays media on the display mode picked with the Display Mode buttons: choose content, Play Now or Add to Queue,
 // and step through the queue.
@@ -37,6 +48,7 @@ export const MediaPlaybackPanel: React.FC = () => {
   const valid = value === '' || (chosenId ? byId.has(chosenId) : value === QUEUE && queue.length > 0);
   const choice = valid ? value : '';
   const showing = isPlaying && current ? current.name : null;
+  const remaining = useCountdown(showing !== null, `${currentIndex}:${currentId}`);
 
   // Custom Layout runs the media and sponsor sections set up in the Layout Editor, so there is nothing to choose:
   // just Play (the sponsor rotation) and Stop. The timer above keeps that rotation moving.
@@ -81,7 +93,8 @@ export const MediaPlaybackPanel: React.FC = () => {
       <div className="mt-3 flex items-center gap-2 rounded border border-neutral-700 bg-neutral-900 p-2 text-sm">
         <ListVideo size={16} aria-hidden className="flex-none text-neutral-400" />
         <span className={`min-w-0 flex-1 truncate ${showing ? 'text-white' : 'text-neutral-500'}`}>{showing ? `Now playing: ${showing}` : 'Nothing playing'}</span>
-        <div className="flex flex-none gap-1">
+        <div className="flex flex-none items-center gap-1">
+          {remaining !== null && <span className="mr-1 w-9 text-right text-xs tabular-nums text-neutral-300" title="Time until the next item" aria-label={`${remaining} seconds until the next item`}>{remaining}s</span>}
           <button onClick={prev} disabled={queue.length === 0 || (!loop && currentIndex <= 0)} aria-label="Previous" className={`${neutral} px-2 py-1`}><ChevronLeft size={16} />Prev</button>
           <button onClick={next} disabled={queue.length === 0 || atEnd} aria-label="Next" className={`${neutral} px-2 py-1`}>Next<ChevronRight size={16} /></button>
         </div>
