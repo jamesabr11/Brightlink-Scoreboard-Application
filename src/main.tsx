@@ -3,8 +3,10 @@ import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css"; // <-- THIS IS THE MAGIC LINE
 import { BRAND } from "./lib/branding";
+import { guardWheel } from "./lib/wheelGuard";
 
 document.title = `${BRAND.school} Scoreboard`;
+guardWheel();
 document.documentElement.style.setProperty("--brand", BRAND.red);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

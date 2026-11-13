@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Film, ImageOff, Trash2 } from 'lucide-react';
 import { notify } from '../../lib/feedback';
 import { formatBytes, formatSeconds, MAX_IMAGE_SECONDS } from '../../lib/media';
-import { useMediaStore } from '../../store/useMediaStore';
+import { sponsorOf, useMediaStore } from '../../store/useMediaStore';
 import type { MediaItem } from '../../types/media';
 import { input, negative, neutral } from './styles';
 import { NumberField } from './ui';
@@ -42,8 +42,15 @@ export const DurationField: React.FC<{ item: MediaItem; label?: string }> = ({ i
 };
 
 const DetailsForm: React.FC<{ item: MediaItem; onClose: () => void }> = ({ item, onClose }) => {
-  const { categories, sponsors, updateItem } = useMediaStore();
+  const { categories, sponsors, updateItem, assignSponsor } = useMediaStore();
   const [name, setName] = useState(item.name);
+  const sponsor = sponsorOf(item, sponsors);
+  const [sponsorName, setSponsorName] = useState(sponsor?.name ?? '');
+  const saveSponsor = () => {
+    if (sponsorName.trim() === (sponsor?.name ?? '')) return;
+    assignSponsor(item.id, sponsorName);
+    notify(sponsorName.trim() ? 'Sponsor saved.' : 'Sponsor cleared.');
+  };
   const saveName = () => {
     if (!name.trim()) setName(item.name);
     else if (name.trim() !== item.name) { updateItem(item.id, { name }); notify('Name saved.'); }
@@ -65,10 +72,9 @@ const DetailsForm: React.FC<{ item: MediaItem; onClose: () => void }> = ({ item,
         </label>
         <label className="block text-sm text-white">
           Sponsor
-          <select value={item.sponsorId ?? ''} onChange={(e) => updateItem(item.id, { sponsorId: e.target.value || null })} className={input}>
-            <option value="">None</option>
-            {sponsors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          <input list="sponsor-names" value={sponsorName} maxLength={80} placeholder="None. Type or pick a sponsor" onChange={(e) => setSponsorName(e.target.value)} onBlur={saveSponsor} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={input} />
+          <datalist id="sponsor-names">{sponsors.map((s) => <option key={s.id} value={s.name} />)}</datalist>
+          <span className="mt-1 block text-xs text-neutral-400">Adds this media to the sponsor's rotation. A new name creates the sponsor.</span>
         </label>
         <DurationField item={item} />
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 self-start text-sm text-neutral-300">

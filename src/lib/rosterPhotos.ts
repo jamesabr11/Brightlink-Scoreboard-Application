@@ -3,7 +3,6 @@ import { newId } from './storage';
 
 export const PHOTO_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
-const MAX_PHOTO_SIDE = 400;
 
 export const photoFileError = (file: { type: string; size: number }): string | null => {
   if (!PHOTO_TYPES.includes(file.type)) return 'Photos must be PNG, JPG or WebP images.';
@@ -16,28 +15,19 @@ const photosDb = idbStores('basketball-roster', ['photos']);
 const withPhotos = <T,>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequest<T>) =>
   photosDb('photos', mode, run);
 
-const shrink = async (file: Blob): Promise<Blob> => {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_PHOTO_SIDE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob ?? file), 'image/webp', 0.9));
-};
-
+// The uploaded file is stored exactly as it was: no resizing and no re-encoding, so the display always has the
+// original resolution to draw (a 400px, re-compressed copy went soft once it filled a fullscreen display).
+// It is only decoded once, to refuse a file that is not really an image.
 export const savePhoto = async (file: File): Promise<string> => {
   const problem = photoFileError(file);
   if (problem) throw new Error(problem);
-  let image: Blob;
   try {
-    image = await shrink(file);
+    (await createImageBitmap(file)).close();
   } catch {
     throw new Error('That file could not be read as an image.');
   }
   const id = newId();
-  await withPhotos('readwrite', (store) => store.put(image, id));
+  await withPhotos('readwrite', (store) => store.put(file, id));
   return id;
 };
 

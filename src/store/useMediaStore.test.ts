@@ -75,11 +75,19 @@ describe('categories', () => {
     expect(store.getState().categories).toHaveLength(9);
   });
 
-  it('protects the built-in categories', async () => {
+  it('renames built-in categories by id but never deletes them', async () => {
     const store = await openTab();
-    expect(store.getState().renameCategory('sponsors', 'Partners')).toBe(false);
+    store.getState().addItem(image('a', { categoryId: 'sponsors' }));
+    expect(store.getState().renameCategory('sponsors', 'Partners')).toBe(true);
+    expect(store.getState().renameCategory('hype', 'partners')).toBe(false);
     store.getState().removeCategory('sponsors');
-    expect(store.getState().categories[0].name).toBe('Sponsors');
+    expect(store.getState().categories[0]).toMatchObject({ id: 'sponsors', name: 'Partners', builtIn: true });
+    expect(store.getState().items[0].categoryId).toBe('sponsors');
+  });
+
+  it('keeps a renamed built-in category after a reload', async () => {
+    (await openTab()).getState().renameCategory('hype', 'Pump Up');
+    expect((await openTab()).getState().categories.find((c) => c.id === 'hype')?.name).toBe('Pump Up');
   });
 
   it('moves media to General Promotions when its category is deleted', async () => {
@@ -148,5 +156,30 @@ describe('saved data', () => {
     expect(items.map((i) => i.id)).toEqual(['a', 'v']);
     expect(items[0]).toMatchObject({ categoryId: 'promotions', sponsorId: null, duration: 1 });
     expect(items[1]).toMatchObject({ naturalDuration: null, duration: 600 });
+  });
+});
+
+describe('assigning media to a sponsor', () => {
+  it('creates the sponsor, joins its rotation, and moves between sponsors', async () => {
+    const store = await openTab();
+    store.getState().addItem(image('a'));
+    expect(store.getState().assignSponsor('a', 'Main Street Pizza')).toBe(true);
+    let { sponsors } = store.getState();
+    expect(store.getState().items[0].sponsorId).toBe(sponsors[0].id);
+    expect(sponsors).toHaveLength(1);
+    expect(sponsors[0].imageIds).toEqual(['a']);
+
+    store.getState().assignSponsor('a', 'main street pizza'); // same sponsor, any case
+    expect(store.getState().sponsors).toHaveLength(1);
+    expect(store.getState().sponsors[0].imageIds).toEqual(['a']);
+
+    store.getState().assignSponsor('a', 'Acme');
+    ({ sponsors } = store.getState());
+    expect(sponsors.find((s) => s.name === 'Main Street Pizza')!.imageIds).toEqual([]);
+    expect(sponsors.find((s) => s.name === 'Acme')!.imageIds).toEqual(['a']);
+
+    store.getState().assignSponsor('a', '');
+    expect(store.getState().items[0].sponsorId).toBeNull();
+    expect(store.getState().sponsors.every((s) => s.imageIds.length === 0)).toBe(true);
   });
 });

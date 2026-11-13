@@ -51,8 +51,8 @@ Holy Cross Regional High School red, white and black is the default branding. Te
 - Upload PNG, JPG and WebP images (up to 25 MB) and MP4 video (up to 500 MB), with thumbnails
 - Built-in categories (Sponsors, Advertisements, Pregame, Team Hype, Player Introductions, Halftime, Timeout, General Promotions) plus your own
 - Search, filter, preview, rename, recategorize and set display times
-- Sponsors with logos, multiple images/videos with individual durations and reorderable rotation
-- **Live Sponsor presentation mode** — the scoreboard plus a media area (up to three sections) arranged in the [Layout Editor](#layout-editor). Without assigned media, the first section plays each sponsor's rotation in the order and for the durations set on the Sponsors page
+- Sponsors are managed only in the Media Library's **Sponsors** tab (there is no separate Sponsors page or route): create, rename and delete sponsors, set logos, add existing media or upload images and videos, and set each item's order and display time. Any media can also be assigned to a sponsor by name from its details
+- **Live Sponsor presentation mode** — the scoreboard plus a media area (up to three sections) arranged in the [Layout Editor](#layout-editor). Without assigned media, the first section plays each sponsor's rotation in the order and for the durations set under Sponsors in the Media Library
 - **Video with audible audio** — sponsor and intro videos play with sound enabled
 
 ## Getting started
@@ -91,14 +91,12 @@ The navigation at the top of the operator console has:
 | Page | Purpose |
 |---|---|
 | **Scoreboard** | Live game controls |
-| **Game Setup** | Team names, colours, logos, rules, and the scoreboard preset with a live preview |
+| **Game Setup** | *Game Settings*: team names, colours, logos, rules, the scoreboard preset with a live preview, and sound and display preferences (there is no separate Settings page) |
 | **Configurations** | Save, load, update, rename, duplicate and delete prepared setups |
-| **Media** | Upload and organize images and videos |
-| **Sponsors** | Sponsor names, logos, multiple images/videos with per-item durations and reorderable rotation |
+| **Media** | Upload and organize images and videos; assign media to sponsors and manage sponsor logos and rotation |
 | **History** | Finished games, statistics, CSV export and printable summaries |
-| **Settings** | Defaults for new games, sound, and display preferences |
 
-Default rules are 4 × 12-minute quarters, 5-minute overtime, a 24/14 shot clock, bonus at 5 team fouls and 3 timeouts per team. Team fouls reset each period; timeouts carry over. Change them for the current game in Game Setup, or as defaults in Settings.
+Default rules are 4 × 12-minute quarters, 5-minute overtime, a 24/14 shot clock, bonus at 5 team fouls and 3 timeouts per team. Team fouls reset each period; timeouts carry over. Change them for the current game in Game Setup; Reset Game / New Game on the operator page uses them.
 
 ### Scoreboard presets
 
@@ -126,7 +124,11 @@ The Layout Editor (`/layout`) is the one place to customize the display. It edit
 - **Media area.** Place it right, left, top or bottom (default: the full-width scoreboard with the media below it), set its size (20–60%) and Fit or Fill scaling, and split it into 1–3 sections arranged as rows or columns with a share slider for each. Changing placement, arrangement or section count re-lays out the display and, after a confirmation, resets manual positions.
 - **Media sections.** Assign images and videos from the Media Library to each section, reorder or remove them, and see them in place. On the display each section cycles its media using each item's display time; videos play with audio and advance when they end. An empty first section keeps the sponsor rotation from the Playback panel. Only media ids are stored, never files.
 - **Drag and resize.** Drag an element to move it, drag its handles or type values in Properties to resize it. Elements snap to 0.5%, stay on the 16:9 canvas, cannot overlap and cannot shrink below 12%. Once an element has been moved, every block is placed from its saved rect and its text (names, scores, clocks, crest) scales with the block, so branding stays proportioned and unclipped. "Reset element positions" returns to the automatic layout.
+- **Layout type.** In Saved Layouts, choose **With Sponsor Sections** (the default: set the number of sections, their arrangement and media) or **Without Sponsor Sections** for a clean scoreboard that fills the display. Saving without sections drops the section media and positions from that layout and the display shows no media area; the scoreboard element positions and appearance are kept. Load a saved layout to edit it, change anything, then press **Save changes**. Layouts saved earlier keep their sections.
 - **Presets.** Choosing a different scoreboard preset in Game Setup loads that preset's layout geometry here (Broadcast starts with the media beside the board, the others below it); colours, typography and branding always follow the preset. The editor, the configuration thumbnails and `/display` all read the applied preset (`gameConfig.theme`, set by **Apply to Display**) and update when it changes. Arena, Minimal, Tournament and Broadcast also restyle the team blocks (filled team-colour panels, name and score only, centred crest and score, or crest, name, stats and a score slab); Traditional, Live Sponsor and Custom use the base Stadium block. Fouls, timeouts and bonus labels in the team blocks have a 12px floor and grow with the board, and the Broadcast, Arena and Live Sponsor stat rows wrap instead of overlapping. Broadcast keeps its own structure beside the media: the home and away rows stack on the left of a clock column (the editor's boxes, the preview and `/display` use the same geometry), and every box stays draggable and resizable. Your edits are kept until the next preset change or a reset.
+- **Saved Layouts and Configurations.** Saving a layout also saves a Saved Configuration with the same name (teams, branding, rules, appearance) linked to it, and **Save changes** updates both. The configuration appears on the Configurations page with its layout preview; **Load** restores the game settings and then the custom layout, so the operator preview and `/display` match. Updating a configuration there rewrites its layout only when that layout is the one open in the editor. Deleting a layout leaves its configuration in place without the custom layout.
+- **Configuration previews.** **Preview** on a card draws that configuration's complete scoreboard with the same components as `/display`: its teams, colours, logos, rules, appearance and preset, plus its saved custom layout (positions, sizes and sponsor sections, or none if it was saved without) when it has one. Scores, clocks, fouls and possession are sample values; the live game is never shown.
+- **Undo.** Next to Reset to Defaults: steps back through your layout changes (moving or resizing elements, section sizes and shares, placement, sections, scaling, layout type), one step at a time. A drag or slider run counts as one step. The history lives in memory only: it is cleared when you load a saved layout, change the scoreboard preset or reload the page, and it never touches game state or saved layouts.
 - **Reset to Defaults.** Restores the selected preset's geometry, sections and scaling after a confirmation; media assignments and game settings are kept.
 - **Saved layouts.** Save the current layout under a unique name, rename, duplicate, delete (with confirmation) or load one into the editor and the display. Each remembers its scoreboard appearance, positions and sizes, sections, proportions and media assignments, and loading it applies that appearance. The canvas is a working copy: a saved layout changes only when you press **Save changes**. Layouts persist locally across restarts and stay in sync between the operator and display tabs.
 - **Previews.** Saved configurations show a thumbnail of the display layout in the team colours (with a Preview button to enlarge it) from the same geometry, so it matches the canvas and `/display`.
@@ -169,7 +171,7 @@ All data stays in the browser on this computer and is validated when it loads:
 | Data | Where |
 |---|---|
 | Live game, configurations, undo history | localStorage `basketball-storage` |
-| Settings | localStorage `basketball-settings` |
+| Settings (defaults, sound, display) | localStorage `basketball-settings` |
 | Finished games | localStorage `basketball-games` |
 | Media metadata, categories, sponsors | localStorage `basketball-media` |
 | Team logos | IndexedDB `basketball-logos` |
@@ -213,11 +215,11 @@ src/
     ├── ThemePicker.tsx        Preset fields and live preview
     ├── ConfigsPage.tsx        Saved configurations
     ├── MediaPage.tsx          Media library
-    ├── SponsorsPage.tsx       Sponsor management
+    ├── SponsorsPanel.tsx      Sponsor management (Media Library Sponsors tab)
     ├── MediaParts.tsx         Media thumbnail, preview and details dialog
     ├── useMedia.ts            Media URLs, uploads and deletion
     ├── HistoryPage.tsx        Finished games
-    ├── SettingsPage.tsx       Settings
+    ├── AppPreferences.tsx     Sound/Display preferences (Game Setup)
     ├── DisplayView.tsx        Public display page
     ├── Scoreboard.tsx         The five scoreboard layouts
     ├── PresentationViews.tsx  Pregame, Stadium and Halftime displays

@@ -12,6 +12,7 @@ import { Panel } from './ui';
 // "Save changes" is pressed, so editing one layout can never overwrite another.
 export const SavedLayoutsPanel: React.FC = () => {
   const store = usePresentationStore();
+  const savedConfigs = useBasketballStore((s) => s.savedConfigs);
   const theme = useBasketballStore((s) => s.gameConfig.theme);
   const [name, setName] = useState('');
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
@@ -25,11 +26,21 @@ export const SavedLayoutsPanel: React.FC = () => {
     if (layoutNameTaken(savedLayouts, value, exceptId)) { notify('A layout with that name already exists.', 'error'); return false; }
     return true;
   };
+  // Every saved layout is also a Saved Configuration (teams, rules, appearance and this layout), linked by layoutId.
+  const linkedConfig = (layoutId: string) => savedConfigs.find((c) => c.layoutId === layoutId);
+  const syncConfig = (layoutId: string, title: string) => {
+    const game = useBasketballStore.getState();
+    const linked = linkedConfig(layoutId);
+    if (linked) game.updateConfigFromCurrent(linked.id, layoutId);
+    else game.saveCurrentConfig(title, layoutId);
+  };
   const save = () => {
     if (!checkName(name)) return;
     store.saveLayout(name, theme);
+    const saved = usePresentationStore.getState();
+    if (saved.savedLayouts.length > savedLayouts.length && saved.activeLayoutId) syncConfig(saved.activeLayoutId, saved.savedLayouts.find((l) => l.id === saved.activeLayoutId)?.name ?? name);
     setName('');
-    notify('Layout saved.');
+    notify('Layout saved. It is also available on the Configurations page.');
   };
   const load = async (id: string, title: string) => {
     if (dirty && !(await askConfirm({ title: 'Unsaved changes', message: `"${active?.name}" has changes that are not saved. Loading "${title}" discards them.`, confirmLabel: 'Load Layout', danger: true }))) return;
@@ -44,6 +55,15 @@ export const SavedLayoutsPanel: React.FC = () => {
 
   return (
     <Panel title="Saved Layouts">
+      <div role="radiogroup" aria-label="Layout type" className="mb-2">
+        <span className="mb-1 block text-xs text-neutral-400">Layout type</span>
+        <div className="flex gap-2">
+          {([[true, 'With Sponsor Sections'], [false, 'Without Sponsor Sections']] as const).map(([on, text]) => (
+            <button key={text} type="button" role="radio" aria-checked={sponsorLayout.sponsorSections === on} onClick={() => store.setSponsorLayout({ sponsorSections: on })} className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-semibold ${sponsorLayout.sponsorSections === on ? 'border-white bg-neutral-100 text-black' : 'border-neutral-600 bg-neutral-800 text-neutral-200 hover:bg-neutral-700'}`}>{text}</button>
+          ))}
+        </div>
+        <p className="mt-1 text-[11px] text-neutral-500">{sponsorLayout.sponsorSections ? 'Set the number of sections and their arrangement under Media Area.' : 'A clean scoreboard. Media sections are removed from the saved layout and the display.'}</p>
+      </div>
       <form className="flex gap-2 items-end" onSubmit={(e) => { e.preventDefault(); save(); }}>
         <label className="flex-1 text-xs text-neutral-400">
           Save the current layout as
@@ -54,7 +74,7 @@ export const SavedLayoutsPanel: React.FC = () => {
       {active && (
         <div className="mt-2 flex items-center gap-2 text-xs text-neutral-400">
           <span className="flex-1 truncate">Editing <strong className="text-neutral-200">{active.name}</strong>{dirty ? ' · unsaved changes' : ''}</span>
-          <button disabled={!dirty} onClick={() => { store.updateSavedLayout(active.id, theme); notify('Layout updated.'); }} className={`${neutral} px-3 py-1.5 text-sm`}>Save changes</button>
+          <button disabled={!dirty} onClick={() => { store.updateSavedLayout(active.id, theme); syncConfig(active.id, active.name); notify('Layout and configuration updated.'); }} className={`${neutral} px-3 py-1.5 text-sm`}>Save changes</button>
         </div>
       )}
       {savedLayouts.length === 0 ? (
@@ -64,7 +84,7 @@ export const SavedLayoutsPanel: React.FC = () => {
           {savedLayouts.map((l) => (
             <li key={l.id} className={`rounded-md border p-2 ${l.id === activeLayoutId ? 'border-neutral-300 bg-neutral-800' : 'border-neutral-700 bg-neutral-900'}`}>
               {renaming?.id === l.id ? (
-                <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (checkName(renaming.name, l.id)) { store.renameSavedLayout(l.id, renaming.name); setRenaming(null); notify('Layout renamed.'); } }}>
+                <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (checkName(renaming.name, l.id)) { store.renameSavedLayout(l.id, renaming.name); const linked = linkedConfig(l.id); if (linked) useBasketballStore.getState().renameConfig(linked.id, usePresentationStore.getState().savedLayouts.find((x) => x.id === l.id)?.name ?? renaming.name); setRenaming(null); notify('Layout renamed.'); } }}>
                   <input autoFocus aria-label="New layout name" maxLength={MAX_LAYOUT_NAME} value={renaming.name} onChange={(e) => setRenaming({ id: l.id, name: e.target.value })} className={`${input} mt-0 text-sm`} />
                   <button type="submit" className={`${primary} px-3 py-1 text-sm`}>Save</button>
                   <button type="button" onClick={() => setRenaming(null)} className={`${neutral} px-3 py-1 text-sm`}>Cancel</button>
@@ -73,7 +93,7 @@ export const SavedLayoutsPanel: React.FC = () => {
                 <div className="flex items-center gap-1">
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold">{l.name}</div>
-                    <div className="truncate text-[11px] text-neutral-400">{THEMES[l.theme.themeId].label} · {l.layout.sections} media section{l.layout.sections > 1 ? 's' : ''}{Object.keys(l.layout.rects).length > 0 ? ' · custom positions' : ''}</div>
+                    <div className="truncate text-[11px] text-neutral-400">{THEMES[l.theme.themeId].label} · {l.layout.sponsorSections ? `${l.layout.sections} media section${l.layout.sections > 1 ? 's' : ''}` : 'No sponsor sections'}{Object.keys(l.layout.rects).length > 0 ? ' · custom positions' : ''}</div>
                   </div>
                   <button onClick={() => void load(l.id, l.name)} aria-label={`Load ${l.name}`} title="Load into the editor and the display" className={`${neutral} p-1.5`}><FolderOpen size={15} /></button>
                   <button onClick={() => setRenaming({ id: l.id, name: l.name })} aria-label={`Rename ${l.name}`} title="Rename" className={`${neutral} p-1.5`}><Pencil size={15} /></button>

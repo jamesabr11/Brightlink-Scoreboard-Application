@@ -60,6 +60,13 @@ export const areaRects = baseRects;
 
 /** What the canvas draws: scoreboard blocks plus one box per media section. */
 export function layoutRects(layout: SponsorLayout): LayoutRect[] {
+  // No sponsor sections: the three scoreboard blocks fill the whole canvas (manual positions still apply).
+  if (!layout.sponsorSections) {
+    return baseRects({ ...layout, placement: 'bottom', size: 0 }).filter((e) => e.id !== 'sponsor').map((e) => {
+      const o = layout.rects[e.id as SponsorElement];
+      return o ? { ...e, left: o.x, top: o.y, width: o.w, height: o.h } : e;
+    });
+  }
   const base = baseRects(layout);
   const area = base.find((e) => e.id === 'sponsor')!;
   const rows = sectionDirection(layout) === 'rows';

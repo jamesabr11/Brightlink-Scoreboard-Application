@@ -11,12 +11,17 @@ import type { Countdown, CountdownId, PresentationMode, PresentationState, Saved
 
 interface PresentationStore extends PresentationState {
   setMode: (mode: PresentationMode) => void;
+  /** Earlier working layouts, newest last. Memory only: not saved, not synced, cleared when a saved layout is loaded or the scoreboard preset changes. */
+  layoutHistory: SponsorLayout[];
   setSponsorLayout: (patch: Partial<SponsorLayout>) => void;
+  undoLayout: () => void;
   saveLayout: (name: string, theme: ScoreboardTheme) => void;
   updateSavedLayout: (id: string, theme: ScoreboardTheme) => void;
   renameSavedLayout: (id: string, name: string) => void;
   duplicateSavedLayout: (id: string) => void;
   deleteSavedLayout: (id: string) => void;
+  /** Drops deleted Media Library ids from the working layout and every saved layout. */
+  removeMedia: (ids: string[]) => void;
   loadSavedLayout: (id: string) => void;
   startCountdown: (id: CountdownId) => void;
   pauseCountdown: (id: CountdownId) => void;
@@ -26,12 +31,15 @@ interface PresentationStore extends PresentationState {
   tick: () => void;
 }
 
+const MAX_LAYOUT_HISTORY = 50;
+const COALESCE_MS = 500; // a drag or slider fires many changes: those in a quick run count as one undo step
+
 export const MAX_COUNTDOWN_SECONDS = 120 * 60;
 const DEFAULT_SECONDS: Record<CountdownId, number> = { pregame: 10 * 60, halftime: 15 * 60 };
 
 const freshCountdown = (seconds: number): Countdown => ({ duration: seconds, remainingTime: seconds, isRunning: false, startTimestamp: null });
 
-export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'bottom', size: 35, fit: 'contain', sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []], preset: '', rects: {} };
+export const DEFAULT_SPONSOR_LAYOUT: SponsorLayout = { placement: 'bottom', size: 35, fit: 'contain', sponsorSections: true, sections: 1, split: [50, 30, 20], arrange: 'auto', media: [[], [], []], preset: '', rects: {} };
 
 /**
  * The Live Sponsor geometry a scoreboard preset starts from (placement, media size, no manual positions).
@@ -77,6 +85,7 @@ const cleanLayout = (saved: Partial<SponsorLayout> | undefined): SponsorLayout =
   placement: SPONSOR_PLACEMENTS.includes(saved?.placement as never) ? saved!.placement! : DEFAULT_SPONSOR_LAYOUT.placement,
   size: typeof saved?.size === 'number' && Number.isFinite(saved.size) ? Math.min(SPONSOR_SIZE_MAX, Math.max(SPONSOR_SIZE_MIN, Math.round(saved.size))) : DEFAULT_SPONSOR_LAYOUT.size,
   fit: saved?.fit === 'cover' ? 'cover' : 'contain',
+  sponsorSections: saved?.sponsorSections !== false, // layouts saved before this option keep their sections
   sections: typeof saved?.sections === 'number' ? Math.min(SPONSOR_MAX_SECTIONS, Math.max(1, Math.round(saved.sections))) : 1,
   split: DEFAULT_SPONSOR_LAYOUT.split.map((d, i) => {
     const v = saved?.split?.[i];
@@ -90,6 +99,13 @@ const cleanLayout = (saved: Partial<SponsorLayout> | undefined): SponsorLayout =
   preset: typeof saved?.preset === 'string' ? saved.preset.slice(0, 40) : '',
   rects: cleanRects(saved?.rects),
 });
+
+/** A layout saved without sponsor sections carries no section media or section positions. */
+const forSave = (layout: SponsorLayout): SponsorLayout => layout.sponsorSections ? layout : {
+  ...layout,
+  media: DEFAULT_SPONSOR_LAYOUT.media,
+  rects: Object.fromEntries(Object.entries(layout.rects).filter(([id]) => !id.startsWith('section'))),
+};
 
 export const presetKey = (theme: ScoreboardTheme) => `${theme.themeId}:${theme.layout}`;
 
@@ -136,23 +152,45 @@ export const usePresentationStore = create<PresentationStore>()(
       const setCountdown = (id: CountdownId, countdown: Countdown) =>
         syncAndSet({ countdowns: { ...get().countdowns, [id]: countdown } });
 
+      let lastEdit = { keys: '', at: 0 };
+
       return {
         ...initialState(),
+        layoutHistory: [],
 
         setMode: (mode) => { if (mode !== get().mode) syncAndSet({ mode }); },
 
-        setSponsorLayout: (patch) => syncAndSet({ sponsorLayout: cleanLayout({ ...get().sponsorLayout, ...patch }) }),
+        setSponsorLayout: (patch) => {
+          const { sponsorLayout, layoutHistory } = get();
+          const next = cleanLayout({ ...sponsorLayout, ...patch });
+          if (JSON.stringify(next) === JSON.stringify(sponsorLayout)) return;
+          const keys = Object.keys(patch).sort().join();
+          const now = Date.now();
+          const same = keys === lastEdit.keys && now - lastEdit.at < COALESCE_MS && layoutHistory.length > 0;
+          lastEdit = { keys, at: now };
+          if (!same) set({ layoutHistory: [...layoutHistory, sponsorLayout].slice(-MAX_LAYOUT_HISTORY) });
+          syncAndSet({ sponsorLayout: next });
+        },
+
+        // Restores the previous working layout exactly. Game state and saved layouts are never touched.
+        undoLayout: () => {
+          const { layoutHistory } = get();
+          if (layoutHistory.length === 0) return;
+          lastEdit = { keys: '', at: 0 };
+          set({ layoutHistory: layoutHistory.slice(0, -1) });
+          syncAndSet({ sponsorLayout: layoutHistory[layoutHistory.length - 1] });
+        },
 
         // Saved layouts are independent copies: editing the live layout never touches one until it is saved again.
         saveLayout: (name, theme) => {
           const { savedLayouts, sponsorLayout } = get();
           if (savedLayouts.length >= MAX_SAVED_LAYOUTS) return;
-          const saved: SavedLayout = { id: newId(), name: uniqueName(name, savedLayouts), layout: cleanLayout({ ...sponsorLayout, preset: presetKey(theme) }), theme: cleanTheme(theme) };
+          const saved: SavedLayout = { id: newId(), name: uniqueName(name, savedLayouts), layout: forSave(cleanLayout({ ...sponsorLayout, preset: presetKey(theme) })), theme: cleanTheme(theme) };
           syncAndSet({ savedLayouts: [...savedLayouts, saved], activeLayoutId: saved.id, sponsorLayout: saved.layout });
         },
         updateSavedLayout: (id, theme) => {
           const { savedLayouts, sponsorLayout } = get();
-          const layout = cleanLayout({ ...sponsorLayout, preset: presetKey(theme) });
+          const layout = forSave(cleanLayout({ ...sponsorLayout, preset: presetKey(theme) }));
           syncAndSet({ savedLayouts: savedLayouts.map((l) => (l.id === id ? { ...l, layout, theme: cleanTheme(theme) } : l)), sponsorLayout: layout });
         },
         renameSavedLayout: (id, name) => {
@@ -166,6 +204,13 @@ export const usePresentationStore = create<PresentationStore>()(
           const copy: SavedLayout = { id: newId(), name: uniqueName(`${from.name} copy`, savedLayouts), layout: cleanLayout(from.layout), theme: cleanTheme(from.theme) };
           syncAndSet({ savedLayouts: [...savedLayouts, copy] });
         },
+        removeMedia: (ids) => {
+          const gone = new Set(ids);
+          const strip = (l: SponsorLayout): SponsorLayout => ({ ...l, media: l.media.map((m) => m.filter((id) => !gone.has(id))) });
+          const { sponsorLayout, savedLayouts } = get();
+          syncAndSet({ sponsorLayout: strip(sponsorLayout), savedLayouts: savedLayouts.map((l) => ({ ...l, layout: strip(l.layout) })) });
+        },
+
         deleteSavedLayout: (id) => {
           const { savedLayouts, activeLayoutId } = get();
           syncAndSet({ savedLayouts: savedLayouts.filter((l) => l.id !== id), activeLayoutId: activeLayoutId === id ? null : activeLayoutId });
@@ -174,6 +219,7 @@ export const usePresentationStore = create<PresentationStore>()(
         loadSavedLayout: (id) => {
           const saved = get().savedLayouts.find((l) => l.id === id);
           if (!saved) return;
+          set({ layoutHistory: [] }); // the appearance changes too, which undo does not cover
           syncAndSet({ sponsorLayout: cleanLayout({ ...saved.layout, preset: presetKey(saved.theme) }), activeLayoutId: id });
           useBasketballStore.getState().updateGameConfig({ theme: saved.theme });
         },
@@ -255,7 +301,7 @@ if (typeof window !== 'undefined') {
     lastPreset = next;
     const { sponsorLayout } = usePresentationStore.getState();
     if (sponsorLayout.preset === next) return;
-    usePresentationStore.setState({ sponsorLayout: cleanLayout({ ...sponsorLayout, ...presetGeometry(theme.layout), preset: next }) });
+    usePresentationStore.setState({ layoutHistory: [], sponsorLayout: cleanLayout({ ...sponsorLayout, ...presetGeometry(theme.layout), preset: next }) });
   });
   import.meta.hot?.dispose(() => { clearInterval(ticker); unsubscribe(); channel.close(); });
 }

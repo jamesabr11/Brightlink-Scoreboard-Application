@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, FolderPlus, HardDrive, Pencil, Search, Trash2, Upload, X } from 'lucide-react';
+import { Check, FolderPlus, Handshake, HardDrive, Images, Lock, Pencil, Search, Trash2, Upload, X } from 'lucide-react';
 import { askConfirm, notify } from '../../lib/feedback';
 import { formatBytes, formatSeconds, MEDIA_ACCEPT, pruneMediaFiles, storageUsage } from '../../lib/media';
-import { FALLBACK_CATEGORY, useMediaStore } from '../../store/useMediaStore';
-import type { MediaCategory, MediaKind } from '../../types/media';
+import { FALLBACK_CATEGORY, sponsorOf, useMediaStore } from '../../store/useMediaStore';
+import type { MediaCategory, MediaItem, MediaKind } from '../../types/media';
 import { MediaDetails, MediaThumb } from './MediaParts';
+import { StoragePanel } from './StoragePanel';
+import { SponsorsPanel } from './SponsorsPanel';
 import { useUpload } from './useMedia';
 import { brand, input, neutral } from './styles';
 
@@ -39,7 +41,7 @@ const CategoryRow: React.FC<{ category: MediaCategory; count: number; selected: 
   const remove = async () => {
     const confirmed = await askConfirm({
       title: `Delete the "${category.name}" category?`,
-      message: count > 0 ? `Its ${count} ${count === 1 ? 'item moves' : 'items move'} to General Promotions. No media is deleted.` : 'It has no media in it.',
+      message: count > 0 ? `Its ${count} ${count === 1 ? 'file moves' : 'files move'} to General Promotions. The files themselves are not deleted.` : 'It has no media in it.',
       confirmLabel: 'Delete Category',
       danger: true,
     });
@@ -64,12 +66,12 @@ const CategoryRow: React.FC<{ category: MediaCategory; count: number; selected: 
         <span className="truncate">{category.name}</span>
         <span className="text-xs tabular-nums text-neutral-400">{count}</span>
       </button>
-      {!category.builtIn && (
-        <span className="flex pr-1">
-          <button onClick={() => setDraft(category.name)} aria-label={`Rename ${category.name}`} className="rounded p-1.5 text-neutral-400 hover:bg-neutral-700 hover:text-white"><Pencil size={14} /></button>
-          <button onClick={remove} aria-label={`Delete ${category.name}`} className="rounded p-1.5 text-neutral-400 hover:bg-neutral-700 hover:text-white"><Trash2 size={14} /></button>
-        </span>
-      )}
+      <span className="flex pr-1">
+        <button onClick={() => setDraft(category.name)} aria-label={`Rename ${category.name}`} title="Rename" className="rounded p-1.5 text-neutral-400 hover:bg-neutral-700 hover:text-white"><Pencil size={14} /></button>
+        {category.builtIn
+          ? <span title="Required by the scoreboard's presentation modes, so it can be renamed but not deleted" className="rounded p-1.5 text-neutral-600"><Lock size={14} aria-label={`${category.name} is a required category and can't be deleted`} /></span>
+          : <button onClick={remove} aria-label={`Delete ${category.name}`} title="Delete" className="rounded p-1.5 text-neutral-400 hover:bg-neutral-700 hover:text-white"><Trash2 size={14} /></button>}
+      </span>
     </div>
   );
 };
@@ -99,6 +101,7 @@ const NewCategory: React.FC<{ onAdded: (id: string) => void }> = ({ onAdded }) =
 
 export const MediaPage: React.FC = () => {
   const { items, categories, sponsors } = useMediaStore();
+  const [tab, setTab] = useState<'library' | 'sponsors' | 'storage'>('library');
   const [category, setCategory] = useState(ALL);
   const [kind, setKind] = useState<MediaKind | typeof ALL>(ALL);
   const [search, setSearch] = useState('');
@@ -112,7 +115,7 @@ export const MediaPage: React.FC = () => {
   const selected = category === ALL || categories.some((c) => c.id === category) ? category : ALL;
   const uploadCategory = selected === ALL ? FALLBACK_CATEGORY : selected;
   const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? '';
-  const sponsorName = (id: string | null) => sponsors.find((s) => s.id === id)?.name ?? '';
+  const sponsorName = (item: MediaItem) => sponsorOf(item, sponsors)?.name ?? '';
 
   useEffect(() => {
     pruneMediaFiles(new Set(useMediaStore.getState().items.map((item) => item.id)))
@@ -131,7 +134,7 @@ export const MediaPage: React.FC = () => {
   const shown = items
     .filter((item) => selected === ALL || item.categoryId === selected)
     .filter((item) => kind === ALL || item.kind === kind)
-    .filter((item) => !query || item.name.toLowerCase().includes(query) || sponsorName(item.sponsorId).toLowerCase().includes(query))
+    .filter((item) => !query || item.name.toLowerCase().includes(query) || sponsorName(item).toLowerCase().includes(query))
     .sort((a, b) => b.createdAt - a.createdAt);
   const counts = new Map<string, number>();
   for (const item of items) counts.set(item.categoryId, (counts.get(item.categoryId) ?? 0) + 1);
@@ -158,6 +161,15 @@ export const MediaPage: React.FC = () => {
         {status ?? 'PNG, JPG and WebP images up to 25 MB, MP4 video up to 500 MB. Drag files anywhere on this page to add them.'}
       </div>
 
+      <div role="tablist" aria-label="Media Library sections" className="flex gap-1 border-b border-neutral-700">
+        {([['library', 'Library', Images, items.length], ['sponsors', 'Sponsors', Handshake, sponsors.length], ['storage', 'Storage Management', HardDrive, items.length]] as const).map(([value, label, Icon, n]) => (
+          <button key={value} role="tab" aria-selected={tab === value} onClick={() => setTab(value)} className={`-mb-px flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-semibold ${tab === value ? 'border-[var(--brand)] text-white' : 'border-transparent text-neutral-400 hover:text-white'}`}>
+            <Icon size={16} aria-hidden />{label} <span className="text-xs tabular-nums text-neutral-400">{n}</span>
+          </button>
+        ))}
+      </div>
+
+      {tab === 'sponsors' ? <SponsorsPanel onOpen={setOpenId} /> : tab === 'storage' ? <StoragePanel /> : (
       <div className="grid gap-3 md:grid-cols-[15rem_1fr]">
         <nav aria-label="Media categories" className="self-start rounded-lg border border-neutral-700 bg-neutral-900 p-2">
           <div className={`flex items-center rounded border-l-4 ${selected === ALL ? 'border-[var(--brand)] bg-neutral-800' : 'border-transparent hover:bg-neutral-800/60'}`}>
@@ -173,7 +185,7 @@ export const MediaPage: React.FC = () => {
         </nav>
 
         <section aria-label="Media" className="min-w-0 space-y-3">
-          <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2">
             <label className="relative min-w-56 flex-1">
               <Search size={16} aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
               <input type="search" aria-label="Search media" placeholder="Search by name or sponsor" value={search} onChange={(e) => setSearch(e.target.value)} className={`${input} mt-0 pl-9`} />
@@ -203,7 +215,7 @@ export const MediaPage: React.FC = () => {
                     <div className="space-y-1 p-3">
                       <div className="truncate font-semibold">{item.name}</div>
                       <div className="truncate text-xs text-neutral-400">{categoryName(item.categoryId)} · {item.kind === 'image' ? `${formatSeconds(item.duration)} on screen` : formatBytes(item.size)}</div>
-                      {item.sponsorId && <div className="truncate text-xs font-semibold text-[#ff6b7f]">{sponsorName(item.sponsorId)}</div>}
+                      {sponsorName(item) && <div className="truncate text-xs font-semibold text-[#ff6b7f]">{sponsorName(item)}</div>}
                     </div>
                   </button>
                 </li>
@@ -212,6 +224,7 @@ export const MediaPage: React.FC = () => {
           )}
         </section>
       </div>
+      )}
 
       {dragging && (
         <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-black/70">

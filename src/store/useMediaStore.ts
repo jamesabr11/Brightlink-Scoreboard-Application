@@ -31,6 +31,10 @@ export const getSponsorMediaIds = (sponsor: Sponsor): string[] => {
   return result;
 };
 
+// The sponsor an item belongs to: its own tag, else the sponsor whose rotation includes it.
+export const sponsorOf = (item: MediaItem, sponsors: Sponsor[]): Sponsor | undefined =>
+  sponsors.find((s) => s.id === item.sponsorId) ?? sponsors.find((s) => s.imageIds.includes(item.id));
+
 interface MediaState {
   items: MediaItem[];
   categories: MediaCategory[];
@@ -41,12 +45,14 @@ interface MediaStore extends MediaState {
   addItem: (item: MediaItem) => void;
   updateItem: (id: string, patch: ItemPatch) => void;
   removeItem: (id: string) => void;
+  removeItems: (ids: string[]) => void;
   addCategory: (name: string) => string | null;
   renameCategory: (id: string, name: string) => boolean;
   removeCategory: (id: string) => void;
   addSponsor: (name: string) => string | null;
   updateSponsor: (id: string, patch: SponsorPatch) => boolean;
   removeSponsor: (id: string) => void;
+  assignSponsor: (itemId: string, name: string) => boolean;
   addSponsorImage: (sponsorId: string, mediaId: string) => void;
   removeSponsorImage: (sponsorId: string, mediaId: string) => void;
   moveSponsorImage: (sponsorId: string, fromIndex: number, toIndex: number) => void;
@@ -80,11 +86,18 @@ const cleanItem = (item: Partial<MediaItem> | null, categoryIds: Set<string>, sp
 
 // localStorage is outside our control, so nothing from it is trusted as-is.
 export const cleanMediaState = (saved: Partial<MediaState> | undefined): MediaState => {
-  const custom = (Array.isArray(saved?.categories) ? saved.categories : [])
+  const savedCategories = Array.isArray(saved?.categories) ? saved.categories : [];
+  // Built-in categories keep their ids (playback queues use them) but may carry a name the operator chose.
+  const builtIns: MediaCategory[] = [];
+  for (const b of BUILT_IN_CATEGORIES) {
+    const name = cleanName(savedCategories.find((c) => c?.id === b.id && c.builtIn === true)?.name);
+    builtIns.push(name && !builtIns.some((o) => sameName(o.name, name)) ? { ...b, name } : b);
+  }
+  const custom = savedCategories
     .filter((c) => typeof c?.id === 'string' && !BUILT_IN_CATEGORIES.some((b) => b.id === c.id) && cleanName(c.name))
     .map((c) => ({ id: c.id, name: cleanName(c.name), builtIn: false }))
-    .filter((c, i, all) => ![...BUILT_IN_CATEGORIES, ...all.slice(0, i)].some((other) => sameName(other.name, c.name)));
-  const categories = [...BUILT_IN_CATEGORIES, ...custom];
+    .filter((c, i, all) => ![...builtIns, ...all.slice(0, i)].some((other) => sameName(other.name, c.name)));
+  const categories = [...builtIns, ...custom];
   const rawSponsors = (Array.isArray(saved?.sponsors) ? saved.sponsors : []).filter((s) => typeof s?.id === 'string' && cleanName(s.name));
   const sponsorIds = new Set(rawSponsors.map((s) => s.id));
   const categoryIds = new Set(categories.map((c) => c.id));
@@ -133,11 +146,21 @@ export const useMediaStore = create<MediaStore>()(
         });
       },
 
-      // A sponsor that used this image as its logo is left without one.
-      removeItem: (id) => set({
-        items: get().items.filter((item) => item.id !== id),
-        sponsors: get().sponsors.map((s) => (s.logoId === id ? { ...s, logoId: null } : s)),
-      }),
+      // A sponsor that used a removed image as its logo is left without one, and its rotation drops the item.
+      removeItem: (id) => get().removeItems([id]),
+
+      removeItems: (ids) => {
+        const gone = new Set(ids);
+        set({
+          items: get().items.filter((item) => !gone.has(item.id)),
+          sponsors: get().sponsors.map((s) => ({
+            ...s,
+            logoId: s.logoId && gone.has(s.logoId) ? null : s.logoId,
+            imageIds: s.imageIds.filter((id) => !gone.has(id)),
+            imageDurations: Object.fromEntries(Object.entries(s.imageDurations).filter(([id]) => !gone.has(id))),
+          })),
+        });
+      },
 
       addCategory: (name) => {
         const clean = cleanName(name);
@@ -152,12 +175,12 @@ export const useMediaStore = create<MediaStore>()(
         const clean = cleanName(name);
         const { categories } = get();
         const target = categories.find((c) => c.id === id);
-        if (!target || target.builtIn || !clean || categories.some((c) => c.id !== id && sameName(c.name, clean))) return false;
+        if (!target || !clean || categories.some((c) => c.id !== id && sameName(c.name, clean))) return false;
         set({ categories: categories.map((c) => (c.id === id ? { ...c, name: clean } : c)) });
         return true;
       },
 
-      // Its media isn't deleted: it moves to General Promotions.
+      // Only custom categories can be deleted: the built-in ones feed the playback queues. Its media isn't deleted: it moves to General Promotions.
       removeCategory: (id) => {
         const { categories, items } = get();
         if (!categories.some((c) => c.id === id && !c.builtIn)) return;
@@ -206,6 +229,31 @@ export const useMediaStore = create<MediaStore>()(
         sponsors: get().sponsors.filter((s) => s.id !== id),
         items: get().items.map((item) => (item.sponsorId === id ? { ...item, sponsorId: null } : item)),
       }),
+
+      // Designate an item as a sponsor's media by sponsor name (empty clears it). A new
+      // name creates the sponsor; the item joins that sponsor's rotation and leaves any previous one.
+      assignSponsor: (itemId, name) => {
+        const { items, sponsors } = get();
+        if (!items.some((item) => item.id === itemId)) return false;
+        const clean = cleanName(name);
+        let target = sponsors.find((s) => sameName(s.name, clean));
+        let list = sponsors;
+        if (clean && !target) {
+          target = { id: newId(), name: clean, logoId: null, imageIds: [], imageDurations: {}, createdAt: Date.now() };
+          list = [...sponsors, target];
+        }
+        const leave = (s: Sponsor): Sponsor => {
+          if (!s.imageIds.includes(itemId)) return s;
+          const imageDurations = { ...s.imageDurations };
+          delete imageDurations[itemId];
+          return { ...s, imageIds: s.imageIds.filter((id) => id !== itemId), imageDurations };
+        };
+        set({
+          sponsors: list.map((s) => (s.id === target?.id ? { ...s, imageIds: s.imageIds.includes(itemId) ? s.imageIds : [...s.imageIds, itemId] } : leave(s))),
+          items: items.map((item) => (item.id === itemId ? { ...item, sponsorId: target?.id ?? null } : item)),
+        });
+        return true;
+      },
 
       addSponsorImage: (sponsorId, mediaId) => {
         const { sponsors, items } = get();

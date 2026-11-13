@@ -39,8 +39,8 @@ interface BasketballStore extends BasketballState {
   saveConfig: (config: GameConfig) => void;
   loadConfig: (id: string) => void;
   deleteConfig: (id: string) => void;
-  saveCurrentConfig: (name: string) => void;
-  updateConfigFromCurrent: (id: string) => void;
+  saveCurrentConfig: (name: string, layoutId?: string) => void;
+  updateConfigFromCurrent: (id: string, layoutId?: string) => void;
   renameConfig: (id: string, name: string) => void;
   duplicateConfig: (id: string) => void;
   applyDefaults: (rules: GameRules, theme: ScoreboardTheme) => void;
@@ -142,6 +142,7 @@ export const cleanConfig = (config: GameConfig): GameConfig => {
     foulsForBonus: wholeNumber(config.foulsForBonus, 1, defaultConfig.foulsForBonus),
     maxTimeouts: wholeNumber(config.maxTimeouts, 0, defaultConfig.maxTimeouts),
     theme: cleanTheme(config.theme),
+    layoutId: typeof config.layoutId === 'string' ? config.layoutId : undefined,
   };
 };
 
@@ -430,17 +431,17 @@ export const useBasketballStore = create<BasketballStore>()(
           syncAndSet({ savedConfigs: state.savedConfigs.filter(c => c.id !== id) });
         },
 
-        saveCurrentConfig: (name) => {
+        saveCurrentConfig: (name, layoutId) => {
           const state = get();
-          const config = { ...state.gameConfig, id: newId(), name, homeTeam: teamBranding(state.homeTeam), awayTeam: teamBranding(state.awayTeam), createdAt: Date.now() };
+          const config = { ...state.gameConfig, id: newId(), name, layoutId, homeTeam: teamBranding(state.homeTeam), awayTeam: teamBranding(state.awayTeam), createdAt: Date.now() };
           syncAndSet({ savedConfigs: [...state.savedConfigs, config], gameConfig: { ...state.gameConfig, id: config.id, name } });
         },
 
-        updateConfigFromCurrent: (id) => {
+        updateConfigFromCurrent: (id, layoutId) => {
           const state = get();
           const existing = state.savedConfigs.find(c => c.id === id);
           if (!existing) return;
-          get().saveConfig({ ...state.gameConfig, id, name: existing.name, createdAt: existing.createdAt, homeTeam: teamBranding(state.homeTeam), awayTeam: teamBranding(state.awayTeam) });
+          get().saveConfig({ ...state.gameConfig, id, name: existing.name, createdAt: existing.createdAt, layoutId: layoutId ?? existing.layoutId, homeTeam: teamBranding(state.homeTeam), awayTeam: teamBranding(state.awayTeam) });
         },
 
         renameConfig: (id, name) => {

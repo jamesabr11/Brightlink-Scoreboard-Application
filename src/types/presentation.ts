@@ -21,6 +21,7 @@ export interface SponsorLayout {
   placement: SponsorPlacement;
   size: number; // percent of the board, SPONSOR_SIZE_MIN..MAX
   fit: 'contain' | 'cover';
+  sponsorSections: boolean; // false: a clean scoreboard with no media area (sections and media are ignored)
   sections: number; // 1..SPONSOR_MAX_SECTIONS independent media sections
   split: number[]; // relative share of each section (SPONSOR_MAX_SECTIONS weights)
   arrange: SponsorArrange; // direction the sections are divided in

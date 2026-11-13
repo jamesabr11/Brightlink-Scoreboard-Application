@@ -7,6 +7,12 @@ describe('layoutRects', () => {
     const area = layoutRects({ ...DEFAULT_SPONSOR_LAYOUT, placement, sections: 3 }).reduce((s, e) => s + e.width * e.height, 0);
     expect(area).toBeCloseTo(100 * 100, 3);
   });
+  it('without sponsor sections the scoreboard fills the canvas and has no media boxes', () => {
+    const rects = layoutRects({ ...DEFAULT_SPONSOR_LAYOUT, sponsorSections: false, sections: 3 });
+    expect(rects.map((e) => e.id).sort()).toEqual(['away', 'center', 'home']);
+    expect(rects.reduce((s, e) => s + e.width * e.height, 0)).toBeCloseTo(100 * 100, 3);
+    expect(layoutRects({ ...DEFAULT_SPONSOR_LAYOUT, sponsorSections: false, rects: { home: { x: 1, y: 2, w: 30, h: 40 } } }).find((e) => e.id === 'home')).toMatchObject({ left: 1, top: 2, width: 30, height: 40 });
+  });
   it('section width follows size', () => {
     expect(layoutRects({ ...DEFAULT_SPONSOR_LAYOUT, placement: 'right', size: 40 }).find((e) => e.id === 'section0')?.width).toBe(40);
   });

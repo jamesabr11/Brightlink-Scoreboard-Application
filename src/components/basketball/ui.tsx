@@ -86,7 +86,7 @@ export const TeamLogo: React.FC<{ id?: string; alt: string; className?: string; 
   }, [id]);
 
   const url = id && (logoUrls.get(id) ?? (loaded?.id === id ? loaded.url : undefined));
-  return url ? <img src={url} alt={alt} className={className} /> : fallback;
+  return url ? <img src={url} alt={alt} className={className} decoding="async" /> : fallback;
 };
 
 const Toast: React.FC = () => {

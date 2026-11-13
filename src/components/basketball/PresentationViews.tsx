@@ -5,6 +5,7 @@ import { usePresentationStore } from '../../store/usePresentationStore';
 import { halfPeriods, pointsThrough } from '../../lib/periodScores';
 import { useCallback, useEffect, useState } from 'react';
 import { useMediaUrl } from './useMedia';
+import { useGame, useSponsorLayout } from './previewContext';
 import { themeStyle } from '../../lib/theme';
 import type { ScoreboardTheme } from '../../types/basketball';
 import type { CountdownId, PresentationMode } from '../../types/presentation';
@@ -22,8 +23,8 @@ import './presentation.css';
 type Side = 'home' | 'away';
 
 export const Stage: React.FC<{ theme: ScoreboardTheme; mode: PresentationMode; place?: string; look?: string; style?: React.CSSProperties; children: React.ReactNode }> = ({ theme, mode, place, look, style, children }) => {
-  const home = useBasketballStore((state) => state.homeTeam.primaryColor);
-  const away = useBasketballStore((state) => state.awayTeam.primaryColor);
+  const home = useGame((state) => state.homeTeam.primaryColor);
+  const away = useGame((state) => state.awayTeam.primaryColor);
   return (
     <div className="sb-stage" data-testid={`${mode}-view`} style={themeStyle(theme)}>
       <div className="sb-board pm-board" data-mode={mode} data-place={place} data-layout={look} style={{ '--home': home, '--away': away, ...style } as React.CSSProperties}>
@@ -169,8 +170,15 @@ const freeStyle = (r?: LayoutRect, auto?: LayoutRect): React.CSSProperties | und
   width: `calc(${r.width}% - var(--u) * 0.8)`, height: `calc(${r.height}% - var(--u) * 0.8)`,
 });
 
-const SponsorSections: React.FC<{ preview?: boolean }> = ({ preview }) => {
-  const layout = usePresentationStore((state) => state.sponsorLayout);
+// A configuration preview: nothing plays, each section shows the first image it would show.
+const SnapshotMedia: React.FC<{ id: string | undefined }> = ({ id }) => {
+  const { url } = useMediaUrl(id ?? null, 'thumbs');
+  return url ? <img src={url} alt="" className="pm-media-img" /> : null;
+};
+
+const SponsorSections: React.FC<{ preview?: boolean; snapshot?: boolean }> = ({ preview, snapshot }) => {
+  const sponsors = useMediaStore((state) => state.sponsors);
+  const layout = useSponsorLayout();
   const rows = sectionDirection(layout) === 'rows';
   const free = isFree(layout);
   const rects = free ? layoutRects(layout) : [];
@@ -178,7 +186,8 @@ const SponsorSections: React.FC<{ preview?: boolean }> = ({ preview }) => {
     <aside className="pm-slot" data-region="sponsor" data-fit={layout.fit} data-sections={layout.sections} style={free ? { position: 'absolute', inset: 0, gridArea: 'auto', pointerEvents: 'none' } : { flexDirection: rows ? 'column' : 'row' }} aria-label="Sponsor area">
       {sectionShares(layout).map((share, i) => (
         <div key={i} className="pm-section" style={free ? freeStyle(rects.find((r) => r.id === sectionId(i))) : { flex: `${share} 1 0` }}>
-          {preview ? null : layout.media[i].length > 0
+          {snapshot ? <SnapshotMedia id={layout.media[i][0] ?? (i === 0 ? [...sponsors].sort((a, b) => a.createdAt - b.createdAt).flatMap((sp) => sp.imageIds)[0] : undefined)} />
+            : preview ? null : layout.media[i].length > 0
             ? <SectionRotator ids={layout.media[i]} />
             // An unassigned first section keeps the original sponsor rotation.
             : i === 0 && <><MediaPlayer /><SponsorBadge /></>}
@@ -188,8 +197,8 @@ const SponsorSections: React.FC<{ preview?: boolean }> = ({ preview }) => {
   );
 };
 
-export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boolean }> = ({ theme, preview }) => {
-  const layout = usePresentationStore((state) => state.sponsorLayout);
+export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boolean; snapshot?: boolean }> = ({ theme, preview, snapshot }) => {
+  const layout = useSponsorLayout();
   const { placement, size } = layout;
   const free = isFree(layout);
   const rects = free ? layoutRects(layout) : [];
@@ -220,7 +229,7 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boole
   };
   const team = (s: Side) => <TeamBlock side={s} style={at(s)}>{body(s)}</TeamBlock>;
   return (
-    <Stage theme={theme} mode="livesponsor" place={free ? 'free' : stack ? `${placement}-stack` : placement} look={look} style={free ? undefined : tracks}>
+    <Stage theme={theme} mode="livesponsor" place={free ? 'free' : !layout.sponsorSections ? 'none' : stack ? `${placement}-stack` : placement} look={look} style={free || !layout.sponsorSections ? undefined : tracks}>
       {team('home')}
       <section className="pm-center" style={at('center')} aria-label="Game clock">
         <Period />
@@ -228,7 +237,7 @@ export const LiveSponsorView: React.FC<{ theme: ScoreboardTheme; preview?: boole
         <ShotClock />
       </section>
       {team('away')}
-      <SponsorSections preview={preview} />
+      {layout.sponsorSections && <SponsorSections preview={preview} snapshot={snapshot} />}
     </Stage>
   );
 };

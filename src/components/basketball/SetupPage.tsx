@@ -4,9 +4,12 @@ import { referencedLogos, useBasketballStore } from '../../store/useBasketballSt
 import { notify } from '../../lib/feedback';
 import { LOGO_TYPES, pruneLogos, saveLogo } from '../../lib/logos';
 import type { Team } from '../../types/basketball';
-import { input, neutral } from './styles';
+import { input, neutral, primary } from './styles';
 import { Panel, RulesFields, TeamLogo } from './ui';
+import { useSettingsStore, pickRules } from '../../store/useSettingsStore';
+import { cleanTheme } from '../../lib/theme';
 import { ThemePicker } from './ThemePicker';
+import { SoundDisplayPreferences } from './AppPreferences';
 
 const removeUnusedLogos = () => {
   pruneLogos(referencedLogos(useBasketballStore.getState())).catch((error) => console.error('Could not clean up logos', error));
@@ -57,12 +60,32 @@ const TeamFields: React.FC<{ side: 'home' | 'away' }> = ({ side }) => {
   );
 };
 
+// Save Settings keeps the current rules and scoreboard theme in useSettingsStore (its own persisted key, separate
+// from Saved Configurations). Sound and display preferences are written there as they are changed.
+const SaveSettings: React.FC = () => {
+  const { gameConfig, updateGameConfig } = useBasketballStore();
+  const saved = useSettingsStore();
+  const current = { rules: pickRules(gameConfig), theme: cleanTheme(gameConfig.theme) };
+  const unsaved = JSON.stringify(current) !== JSON.stringify({ rules: saved.rules, theme: saved.theme });
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-neutral-700 bg-neutral-900 p-3">
+      <p role="status" className={`flex-1 text-sm ${unsaved ? 'font-semibold text-amber-400' : 'text-neutral-300'}`}>
+        {unsaved ? 'Unsaved changes: the rules or scoreboard theme differ from your saved settings.' : 'Rules and scoreboard theme match your saved settings. Sound and display preferences save as you change them.'}
+      </p>
+      {unsaved && <button onClick={() => { updateGameConfig({ ...saved.rules, theme: saved.theme }); notify('Reverted to your saved settings.'); }} className={`${neutral} px-4 py-2 text-sm`}>Revert</button>}
+      <button onClick={() => { saved.updateRules(current.rules); saved.updateTheme(current.theme); notify('Settings saved.'); }} className={`${primary} px-4 py-2 text-sm`}>Save Settings</button>
+    </div>
+  );
+};
+
 export const SetupPage: React.FC = () => {
   const store = useBasketballStore();
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       <h2 className="text-2xl font-bold">Game Setup</h2>
+      <section aria-labelledby="game-settings-heading" className="space-y-3">
+      <h3 id="game-settings-heading" className="text-xl font-bold">Game Settings</h3>
       <div className="grid md:grid-cols-2 gap-3">
         <TeamFields side="home" />
         <TeamFields side="away" />
@@ -73,6 +96,9 @@ export const SetupPage: React.FC = () => {
       <Panel title="Scoreboard Appearance">
         <ThemePicker />
       </Panel>
+      <SoundDisplayPreferences />
+      <SaveSettings />
+      </section>
     </div>
   );
 };

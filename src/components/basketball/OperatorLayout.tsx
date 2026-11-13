@@ -1,12 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { ExternalLink, FolderOpen, Gauge, Handshake, History, Images, LayoutTemplate, Settings, SlidersHorizontal, Users } from 'lucide-react';
+import { ExternalLink, FolderOpen, Gauge, History, Images, LayoutTemplate, SlidersHorizontal, Users } from 'lucide-react';
 import { BRAND, BRAND_TEAM } from '../../lib/branding';
 import { primary } from './styles';
 import { FeedbackHost } from './ui';
 import { useSounds } from './useSounds';
 
 // Groups keep related nav items together so the operator can scan quickly.
-// Scoreboard | Setup | Configs | Roster — then — Media | Sponsors — then — Layout Editor (display customization) — then — History | Settings
+// Scoreboard | Setup | Configs | Roster — then — Media — then — Layout Editor (display customization) — then — History
 const NAV_GROUPS = [
   [
     { to: '/', label: 'Scoreboard', icon: Gauge },
@@ -16,14 +16,12 @@ const NAV_GROUPS = [
   ],
   [
     { to: '/media', label: 'Media', icon: Images },
-    { to: '/sponsors', label: 'Sponsors', icon: Handshake },
   ],
   [
     { to: '/layout', label: 'Layout Editor', icon: LayoutTemplate },
   ],
   [
     { to: '/history', label: 'History', icon: History },
-    { to: '/settings', label: 'Settings', icon: Settings },
   ],
 ];
 
@@ -31,7 +29,7 @@ export const OperatorLayout: React.FC = () => {
   useSounds();
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="flex min-h-screen flex-col bg-neutral-950 text-white">
       <header className="border-b border-neutral-800 bg-neutral-950/95 backdrop-blur-sm sticky top-0 z-10 px-4 py-3 print:hidden">
         <div className="max-w-[1600px] mx-auto flex flex-wrap items-center gap-x-6 gap-y-3">
           <h1 className="flex items-center gap-2.5 text-xl font-bold whitespace-nowrap">
@@ -58,11 +56,17 @@ export const OperatorLayout: React.FC = () => {
           </button>
         </div>
       </header>
-      <main className="px-4 py-4">
+      <main className="flex-1 px-4 py-4">
         <div className="max-w-[1600px] mx-auto">
           <Outlet />
         </div>
       </main>
+      <footer className="border-t border-neutral-800 px-4 py-4 text-xs text-neutral-500 print:hidden">
+        <div className="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <span className="font-semibold text-neutral-400">Holy Cross Scoreboard</span>
+          <span>Powered by BrightLink AV Ltd.</span>
+        </div>
+      </footer>
       <FeedbackHost />
     </div>
   );

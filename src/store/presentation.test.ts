@@ -205,6 +205,48 @@ describe('sponsor layout sections', () => {
     expect(show.getState().sponsorLayout.rects).toHaveProperty('away');
   });
 
+  describe('layout undo', () => {
+    it('steps back through changes, coalesces a drag, and leaves game state and saved layouts alone', async () => {
+      vi.useFakeTimers();
+      const { game, show } = await openTab();
+      const theme = game.getState().gameConfig.theme;
+      const s = () => show.getState();
+      expect(s().layoutHistory).toEqual([]);
+      s().undoLayout(); // nothing to undo is a no-op
+      const start = s().sponsorLayout;
+
+      s().setSponsorLayout({ rects: { home: { x: 0, y: 0, w: 30, h: 30 } } });
+      s().setSponsorLayout({ rects: { home: { x: 5, y: 5, w: 30, h: 30 } } }); // same drag
+      vi.advanceTimersByTime(1000);
+      s().setSponsorLayout({ sections: 2, size: 40 });
+      expect(s().layoutHistory).toHaveLength(2);
+
+      s().saveLayout('Mine', theme);
+      const before = JSON.stringify(game.getState().gameConfig);
+      s().undoLayout();
+      expect(s().sponsorLayout.sections).toBe(1);
+      expect(s().sponsorLayout.rects.home).toEqual({ x: 5, y: 5, w: 30, h: 30 });
+      s().undoLayout();
+      expect(s().sponsorLayout).toEqual(start);
+      expect(s().layoutHistory).toEqual([]);
+      expect(JSON.stringify(game.getState().gameConfig)).toBe(before);
+      expect(s().savedLayouts[0].layout.sections).toBe(2);
+      vi.useRealTimers();
+    });
+
+    it('is not saved or shared, and loading a saved layout starts a fresh history', async () => {
+      const { game, show } = await openTab();
+      const theme = game.getState().gameConfig.theme;
+      show.getState().setSponsorLayout({ sections: 3 });
+      show.getState().saveLayout('Mine', theme);
+      expect(Object.values(localStorage).some((v) => String(v).includes('layoutHistory'))).toBe(false);
+      expect((await openTab()).show.getState().layoutHistory).toEqual([]);
+      show.getState().setSponsorLayout({ sections: 2 });
+      show.getState().loadSavedLayout(show.getState().savedLayouts[0].id);
+      expect(show.getState().layoutHistory).toEqual([]);
+    });
+  });
+
   describe('saved layouts', () => {
     it('keep independent copies, unique names, and survive a restart', async () => {
       const { game, show } = await openTab();
@@ -227,6 +269,45 @@ describe('sponsor layout sections', () => {
       expect(next.show.getState().savedLayouts.map((l) => l.name)).toEqual(['Game night', 'Practice', 'Game night copy']);
       next.show.getState().deleteSavedLayout(first.id);
       expect(next.show.getState().savedLayouts).toHaveLength(2);
+    });
+
+    it('without sponsor sections saves a clean scoreboard that keeps its positions, and older layouts keep their sections', async () => {
+      const { game, show } = await openTab();
+      const theme = game.getState().gameConfig.theme;
+      const s = () => show.getState();
+      s().setSponsorLayout({ media: [['a'], [], []], rects: { home: { x: 0, y: 0, w: 40, h: 40 }, section0: { x: 50, y: 50, w: 30, h: 30 } } });
+      s().saveLayout('With', theme);
+      s().setSponsorLayout({ sponsorSections: false });
+      s().saveLayout('Without', theme);
+      const [withSections, without] = s().savedLayouts;
+      expect(withSections.layout).toMatchObject({ sponsorSections: true, media: [['a'], [], []] });
+      expect(without.layout).toMatchObject({ sponsorSections: false, media: [[], [], []], rects: { home: { x: 0, y: 0, w: 40, h: 40 } } });
+      expect(without.layout.rects).not.toHaveProperty('section0');
+      expect(s().sponsorLayout.sponsorSections).toBe(false);
+    });
+
+    it('a configuration linked to a saved layout restores both, keeps the link when updated, and survives a restart', async () => {
+      const operator = await openTab();
+      const display = await openTab();
+      const g = () => operator.game.getState(), s = () => operator.show.getState();
+      s().setSponsorLayout({ sections: 2, media: [['a'], ['b'], []], rects: { away: { x: 50, y: 0, w: 30, h: 30 } } });
+      s().saveLayout('Senior night', g().gameConfig.theme);
+      const layoutId = s().savedLayouts[0].id;
+      g().saveCurrentConfig('Senior night', layoutId);
+      const configId = g().savedConfigs.find((c) => c.layoutId === layoutId)!.id;
+
+      s().setSponsorLayout({ sections: 3, rects: {}, media: [[], [], []] }); // wander off
+      g().updateConfigFromCurrent(configId); // a plain update keeps the link
+      expect(g().savedConfigs.find((c) => c.id === configId)!.layoutId).toBe(layoutId);
+
+      g().loadConfig(configId);
+      s().loadSavedLayout(layoutId); // what the Load button does
+      expect(s().sponsorLayout).toMatchObject({ sections: 2, media: [['a'], ['b'], []], rects: { away: { x: 50, y: 0, w: 30, h: 30 } } });
+      expect(display.show.getState().sponsorLayout.sections).toBe(2);
+      expect(s().savedLayouts).toHaveLength(1); // nothing was duplicated
+
+      const next = await openTab();
+      expect(next.game.getState().savedConfigs.find((c) => c.id === configId)!.layoutId).toBe(layoutId);
     });
 
     it('loading one restores its layout and appearance everywhere, and edits stay in the working copy', async () => {
