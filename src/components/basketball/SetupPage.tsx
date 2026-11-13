@@ -7,7 +7,7 @@ import type { Team } from '../../types/basketball';
 import { input, neutral } from './styles';
 import { Panel, RulesFields, TeamLogo } from './ui';
 import { ThemePicker } from './ThemePicker';
-import { AppPreferences } from './AppPreferences';
+import { NewGameDefaults, SoundDisplayPreferences } from './AppPreferences';
 
 const removeUnusedLogos = () => {
   pruneLogos(referencedLogos(useBasketballStore.getState())).catch((error) => console.error('Could not clean up logos', error));
@@ -64,8 +64,8 @@ export const SetupPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Game Setup</h2>
-      <section aria-labelledby="this-game-heading" className="space-y-3">
-      <h3 id="this-game-heading" className="text-xl font-bold">This Game</h3>
+      <section aria-labelledby="game-settings-heading" className="space-y-3">
+      <h3 id="game-settings-heading" className="text-xl font-bold">Game Settings</h3>
       <div className="grid md:grid-cols-2 gap-3">
         <TeamFields side="home" />
         <TeamFields side="away" />
@@ -76,8 +76,9 @@ export const SetupPage: React.FC = () => {
       <Panel title="Scoreboard Appearance">
         <ThemePicker />
       </Panel>
+      <SoundDisplayPreferences />
       </section>
-      <AppPreferences />
+      <NewGameDefaults />
     </div>
   );
 };

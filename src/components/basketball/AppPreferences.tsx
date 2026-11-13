@@ -7,8 +7,8 @@ import { neutral, primary } from './styles';
 import { CheckField, Panel, RulesFields } from './ui';
 import { ThemeFields } from './ThemePicker';
 
-// Application preferences and the defaults for new games (useSettingsStore). Shown on the Game Setup page.
-export const AppPreferences: React.FC = () => {
+// The defaults for new games (useSettingsStore). Shown on the Game Setup page.
+export const NewGameDefaults: React.FC = () => {
   const settings = useSettingsStore();
 
   const startNewGame = async () => {
@@ -30,22 +30,16 @@ export const AppPreferences: React.FC = () => {
     notify('Settings restored.');
   };
 
-  const testSound = () => {
-    unlockAudio();
-    // Resuming audio is asynchronous, so give it a moment on the first click.
-    setTimeout(() => playSound('periodEnd', settings.sound.volume), 100);
-  };
-
   return (
-    <section aria-labelledby="preferences-heading" className="space-y-3">
+    <section aria-labelledby="defaults-heading" className="space-y-3">
       <div className="flex flex-wrap justify-between items-center gap-2">
-        <h3 id="preferences-heading" className="text-xl font-bold">Defaults &amp; Preferences</h3>
+        <h3 id="defaults-heading" className="text-xl font-bold">New Game Defaults</h3>
         <div className="flex gap-2">
           <button onClick={startNewGame} className={`${primary} px-4 py-2`}>New Game With Defaults</button>
           <button onClick={restore} className={`${neutral} px-4 py-2`}>Restore Defaults</button>
         </div>
       </div>
-      <p className="text-sm text-neutral-300">Preferences are saved in this browser. Defaults apply when you choose New Game With Defaults; they don't change a game in progress.</p>
+      <p className="text-sm text-neutral-300">Saved in this browser. Defaults apply when you choose New Game With Defaults; they don't change a game in progress.</p>
 
       <Panel title="Default Game Rules">
         <RulesFields rules={settings.rules} onChange={settings.updateRules} />
@@ -55,6 +49,22 @@ export const AppPreferences: React.FC = () => {
         <ThemeFields value={settings.theme} onChange={settings.updateTheme} />
       </Panel>
 
+    </section>
+  );
+};
+
+// Sound and display preferences (useSettingsStore), shown inside Game Settings.
+export const SoundDisplayPreferences: React.FC = () => {
+  const settings = useSettingsStore();
+
+  const testSound = () => {
+    unlockAudio();
+    // Resuming audio is asynchronous, so give it a moment on the first click.
+    setTimeout(() => playSound('periodEnd', settings.sound.volume), 100);
+  };
+
+  return (
+    <>
       <Panel title="Sound">
         <div className="space-y-3">
           <CheckField label="Enable sound effects" hint="Sounds play from the operator page. Browsers need one click or key press on the page first." checked={settings.sound.enabled} onChange={(enabled) => settings.updateSound({ enabled })} />
@@ -77,6 +87,6 @@ export const AppPreferences: React.FC = () => {
           <CheckField label="Show LEADING badge" checked={settings.display.showLeadingBadge} onChange={(showLeadingBadge) => settings.updateDisplay({ showLeadingBadge })} />
         </div>
       </Panel>
-    </section>
+    </>
   );
 };
