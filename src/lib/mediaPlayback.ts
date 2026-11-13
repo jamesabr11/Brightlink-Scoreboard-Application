@@ -2,69 +2,49 @@ import { useIntroStore } from '../store/useIntroStore';
 import { useMediaStore } from '../store/useMediaStore';
 import { queueForMode, usePlaybackStore } from '../store/usePlaybackStore';
 import { usePresentationStore } from '../store/usePresentationStore';
-import type { RosterSide } from '../types/roster';
 import type { PresentationMode } from '../types/presentation';
 
-// The operator's single "what should the display show" choice. It drives the existing stores (presentation mode,
-// playback queue, intro sequence); nothing here plays anything by itself.
-export type Choice =
-  | { type: 'mode'; mode: Exclude<PresentationMode, 'intro' | 'fullscreen'> }
-  | { type: 'intro'; side: RosterSide }
-  | { type: 'media'; id: string };
+// Operator media playback. It only drives the existing stores (presentation mode, playback queue, intro
+// sequence); nothing here plays anything by itself.
 
-export const choiceValue = (choice: Choice) => (choice.type === 'mode' ? `mode:${choice.mode}` : choice.type === 'intro' ? `intro:${choice.side}` : `media:${choice.id}`);
+/** Dropdown value for the selected mode's own media rotation (pregame ads, sponsors...). */
+export const ROTATION = 'rotation';
+export const mediaValue = (id: string) => `media:${id}`;
+export const mediaIdOf = (value: string) => (value.startsWith('media:') ? value.slice(6) : null);
 
-export const parseChoice = (value: string): Choice | null => {
-  const [type, rest] = [value.slice(0, value.indexOf(':')), value.slice(value.indexOf(':') + 1)];
-  if (type === 'media' && rest) return { type, id: rest };
-  if (type === 'intro' && (rest === 'home' || rest === 'away')) return { type, side: rest };
-  if (type === 'mode' && ['live', 'pregame', 'stadium', 'halftime', 'livesponsor'].includes(rest)) return { type, mode: rest as never };
-  return null;
+/** Modes whose display has a media area. */
+export const SHOWS_MEDIA: PresentationMode[] = ['pregame', 'stadium', 'halftime', 'livesponsor', 'fullscreen'];
+
+export const modeRotation = (mode: PresentationMode) => {
+  const { items, sponsors } = useMediaStore.getState();
+  return queueForMode(mode, items, sponsors);
 };
 
-// Display modes that have a media area; any other mode shows media by switching to Fullscreen.
-const SHOWS_MEDIA: PresentationMode[] = ['pregame', 'stadium', 'halftime', 'livesponsor', 'fullscreen'];
-
-export const showMedia = () => {
-  const { mode, setMode } = usePresentationStore.getState();
-  if (!SHOWS_MEDIA.includes(mode)) setMode('fullscreen');
-};
-
-export const playChoice = (choice: Choice) => {
-  const { setMode } = usePresentationStore.getState();
+/** A display-mode button. Entering Live Sponsor with nothing queued starts the sponsor rotation. */
+export const selectMode = (mode: PresentationMode) => {
+  usePresentationStore.getState().setMode(mode);
   const playback = usePlaybackStore.getState();
-  const intro = useIntroStore.getState();
-  if (choice.type === 'media') {
-    intro.stop();
-    showMedia();
-    playback.playNow(choice.id);
-  } else if (choice.type === 'intro') {
-    playback.stop();
-    setMode('intro');
-    intro.startIntro(choice.side);
-  } else {
-    intro.stop();
-    setMode(choice.mode);
-    if (choice.mode === 'live') return playback.stop();
-    // A mode brings its own media: the pregame, halftime, stadium or sponsor rotation.
-    const { items, sponsors } = useMediaStore.getState();
-    const ids = queueForMode(choice.mode, items, sponsors);
+  if (mode === 'livesponsor' && playback.queue.length === 0) {
+    const ids = modeRotation(mode);
     if (ids.length > 0) playback.setQueue(ids, true);
-    else playback.stop();
   }
 };
 
-/** Starts the queue from where it is (the Play button with no new choice made). */
-export const resumeQueue = () => {
-  if (usePlaybackStore.getState().queue.length === 0) return;
-  useIntroStore.getState().stop();
-  showMedia();
-  usePlaybackStore.getState().play();
+/** Play: the chosen media now, the mode's rotation, or (nothing chosen) whatever is queued. */
+export const play = (value: string) => {
+  const playback = usePlaybackStore.getState();
+  const id = mediaIdOf(value);
+  if (id) return playback.playNow(id);
+  if (value === ROTATION) {
+    const ids = modeRotation(usePresentationStore.getState().mode);
+    if (ids.length > 0) playback.setQueue(ids, true);
+    return;
+  }
+  playback.play();
 };
 
-/** Stops the media and any introduction, and takes the display back to the live scoreboard. */
+/** Stops the media and any introduction; the display mode is left as the operator set it. */
 export const stopAll = () => {
   usePlaybackStore.getState().stop();
   useIntroStore.getState().stop();
-  usePresentationStore.getState().setMode('live');
 };

@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Film, Image, ListPlus, Play, Square, X } from 'lucide-react';
-import { choiceValue, parseChoice, playChoice, resumeQueue, stopAll, type Choice } from '../../lib/mediaPlayback';
-import { useBasketballStore } from '../../store/useBasketballStore';
+import { ChevronLeft, ChevronRight, Film, Image, ListPlus, ListVideo, Play, Square, X } from 'lucide-react';
+import { mediaIdOf, mediaValue, play as playValue, ROTATION, SHOWS_MEDIA, stopAll } from '../../lib/mediaPlayback';
 import { useMediaStore } from '../../store/useMediaStore';
-import { durationFor, usePlaybackStore } from '../../store/usePlaybackStore';
+import { durationFor, queueForMode, usePlaybackStore } from '../../store/usePlaybackStore';
 import { usePresentationStore } from '../../store/usePresentationStore';
 import type { PresentationMode } from '../../types/presentation';
 import type { MediaItem } from '../../types/media';
@@ -11,10 +10,9 @@ import { neutral, negative, positive } from './styles';
 import { Panel } from './ui';
 
 const MODE_LABELS: Record<PresentationMode, string> = {
-  live: 'Live Scoreboard', pregame: 'Pregame', stadium: 'Stadium', halftime: 'Halftime',
-  intro: 'Introductions', fullscreen: 'Fullscreen Media', livesponsor: 'Live Sponsor',
+  live: 'Live', pregame: 'Pregame', stadium: 'Stadium', halftime: 'Halftime',
+  intro: 'Introductions', fullscreen: 'Fullscreen', livesponsor: 'Live Sponsor',
 };
-const MODE_CHOICES: Choice[] = (['live', 'pregame', 'stadium', 'halftime', 'livesponsor'] as const).map((mode) => ({ type: 'mode', mode }));
 
 const KindIcon: React.FC<{ kind: MediaItem['kind'] }> = ({ kind }) =>
   kind === 'video' ? <Film size={14} aria-hidden /> : <Image size={14} aria-hidden />;
@@ -32,69 +30,69 @@ const usePlaybackTicker = (item: MediaItem | null, index: number, isPlaying: boo
   }, [item?.id, index, seconds, isPlaying, advance]); // eslint-disable-line react-hooks/exhaustive-deps
 };
 
-// One place to choose what the public display shows and to run it: pick content, Play Now or Add to Queue,
+// Plays media on the display mode picked with the Display Mode buttons: choose content, Play Now or Add to Queue,
 // and step through the queue.
 export const MediaPlaybackPanel: React.FC = () => {
   const { queue, currentIndex, isPlaying, loop, addToQueue, removeFromQueue, next, prev } = usePlaybackStore();
   const items = useMediaStore((state) => state.items);
   const categories = useMediaStore((state) => state.categories);
+  const sponsors = useMediaStore((state) => state.sponsors);
   const mode = usePresentationStore((state) => state.mode);
-  const home = useBasketballStore((state) => state.homeTeam.name);
-  const away = useBasketballStore((state) => state.awayTeam.name);
   const [value, setValue] = useState('');
-  const choice = parseChoice(value);
+  const chosenId = mediaIdOf(value);
 
   const byId = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
+  const rotationCount = useMemo(() => queueForMode(mode, items, sponsors).length, [mode, items, sponsors]);
   const currentId = currentIndex >= 0 ? queue[currentIndex] : undefined;
   const current = currentId ? byId.get(currentId) ?? null : null;
   usePlaybackTicker(current, currentIndex, isPlaying);
 
+  // A choice that no longer exists (media deleted, or a mode without a rotation) falls back to nothing chosen.
+  const valid = value === '' || (chosenId ? byId.has(chosenId) : value === ROTATION && rotationCount > 0);
+  const choice = valid ? value : '';
   const atEnd = !loop && currentIndex >= queue.length - 1;
-  const play = () => { if (choice) playChoice(choice); else resumeQueue(); };
-  const canPlay = choice !== null || queue.length > 0;
+  const hasMediaArea = SHOWS_MEDIA.includes(mode);
+  const showing = isPlaying && current ? current.name : null;
 
   return (
-    <Panel title="Media Playback" aside={<span className="text-xs text-neutral-400">On display: {MODE_LABELS[mode]}</span>}>
+    <Panel title="Media Playback" aside={<span className="text-xs text-neutral-400">{queue.length > 0 ? `${queue.length} in queue` : 'No queue'}</span>}>
       <div className="flex flex-wrap items-end gap-2">
         <label className="min-w-56 flex-1 text-xs text-neutral-400">
-          Content
-          <select value={value} onChange={(e) => setValue(e.target.value)} className="mt-1 block w-full rounded border border-neutral-600 bg-neutral-800 px-2 py-2 text-sm text-white">
-            <option value="">{queue.length > 0 ? 'Choose content, or press Play to resume the queue' : 'Choose content…'}</option>
-            <optgroup label="Display">
-              {MODE_CHOICES.map((c) => <option key={choiceValue(c)} value={choiceValue(c)}>{MODE_LABELS[(c as { mode: PresentationMode }).mode]}</option>)}
-            </optgroup>
-            <optgroup label="Player Introductions">
-              <option value="intro:home">{home}</option>
-              <option value="intro:away">{away}</option>
-            </optgroup>
+          Media for {MODE_LABELS[mode]}
+          <select value={choice} onChange={(e) => setValue(e.target.value)} className="mt-1 block w-full rounded border border-neutral-600 bg-neutral-800 px-2 py-2 text-sm text-white">
+            <option value="">{queue.length > 0 ? 'Choose media, or press Play to resume the queue' : 'Choose media…'}</option>
+            {rotationCount > 0 && <option value={ROTATION}>All {MODE_LABELS[mode]} media ({rotationCount})</option>}
             {categories.map((category) => {
               const inCategory = items.filter((item) => item.categoryId === category.id);
               return inCategory.length > 0 && (
                 <optgroup key={category.id} label={category.name}>
-                  {inCategory.map((item) => <option key={item.id} value={`media:${item.id}`}>{item.kind === 'video' ? '▶ ' : ''}{item.name}</option>)}
+                  {inCategory.map((item) => <option key={item.id} value={mediaValue(item.id)}>{item.kind === 'video' ? '▶ ' : ''}{item.name}</option>)}
                 </optgroup>
               );
             })}
           </select>
         </label>
-        <button onClick={play} disabled={!canPlay} className={`${positive} px-4 py-2`}><Play size={18} />{choice?.type === 'media' ? 'Play Now' : 'Play'}</button>
-        <button onClick={() => choice?.type === 'media' && addToQueue(choice.id)} disabled={choice?.type !== 'media'} title={choice && choice.type !== 'media' ? 'Only media can be queued' : undefined} className={`${neutral} px-4 py-2`}><ListPlus size={18} />Add to Queue</button>
+        <button onClick={() => playValue(choice)} disabled={choice === '' && queue.length === 0} className={`${positive} px-4 py-2`}><Play size={18} />{chosenId ? 'Play Now' : 'Play'}</button>
+        <button onClick={() => chosenId && addToQueue(chosenId)} disabled={!chosenId} className={`${neutral} px-4 py-2`}><ListPlus size={18} />Add to Queue</button>
+        <button onClick={stopAll} aria-label="Stop" className={`${negative} px-4 py-2`}><Square size={18} />Stop</button>
       </div>
+      {!hasMediaArea && <p className="mt-2 text-xs text-amber-400">The {MODE_LABELS[mode]} display has no media area. Choose Pregame, Stadium, Halftime, Live Sponsor or Fullscreen above to show media.</p>}
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        <button onClick={prev} disabled={queue.length === 0 || (!loop && currentIndex <= 0)} aria-label="Previous" className={`${neutral} py-2`}><ChevronLeft size={18} />Prev</button>
-        <button onClick={stopAll} aria-label="Stop" className={`${negative} py-2`}><Square size={18} />Stop</button>
-        <button onClick={next} disabled={queue.length === 0 || atEnd} aria-label="Next" className={`${neutral} py-2`}>Next<ChevronRight size={18} /></button>
-      </div>
-
-      <div className="mt-3">
-        <div className="mb-1 flex items-center justify-between text-xs text-neutral-400">
-          <span>Queue{queue.length > 0 ? ` · ${queue.length}` : ''}{loop && queue.length > 1 ? ' · repeating' : ''}</span>
-          <span>{queue.length === 0 ? '' : isPlaying ? 'Playing' : 'Stopped'}</span>
+      <div className="mt-3 flex items-center gap-2 rounded border border-neutral-700 bg-neutral-900 p-2 text-sm">
+        <ListVideo size={16} aria-hidden className="flex-none text-neutral-400" />
+        <span className={`min-w-0 flex-1 truncate ${showing ? 'text-white' : 'text-neutral-500'}`}>{showing ? `Now playing: ${showing}` : 'Nothing playing'}</span>
+        <div className="flex flex-none gap-1">
+          <button onClick={prev} disabled={queue.length === 0 || (!loop && currentIndex <= 0)} aria-label="Previous" className={`${neutral} px-2 py-1`}><ChevronLeft size={16} />Prev</button>
+          <button onClick={next} disabled={queue.length === 0 || atEnd} aria-label="Next" className={`${neutral} px-2 py-1`}>Next<ChevronRight size={16} /></button>
         </div>
-        {queue.length === 0 ? (
-          <p className="rounded border border-neutral-700 bg-neutral-900 p-2 text-sm text-neutral-500">Nothing queued. Choose media and press Add to Queue.</p>
-        ) : (
+      </div>
+
+      {queue.length > 0 && (
+        <div className="mt-3">
+          <div className="mb-1 flex items-center justify-between text-xs text-neutral-400">
+            <span>Queue{loop && queue.length > 1 ? ' · repeating' : ''}</span>
+            <span>{isPlaying ? 'Playing' : 'Stopped'}</span>
+          </div>
           <ol className="max-h-56 space-y-1 overflow-y-auto" aria-label="Playback queue">
             {queue.map((id, index) => {
               const item = byId.get(id);
@@ -110,8 +108,8 @@ export const MediaPlaybackPanel: React.FC = () => {
               );
             })}
           </ol>
-        )}
-      </div>
+        </div>
+      )}
     </Panel>
   );
 };

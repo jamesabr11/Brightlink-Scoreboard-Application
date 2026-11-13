@@ -25,58 +25,63 @@ const setup = async () => {
 beforeEach(() => { localStorage.clear(); });
 
 describe('operator media playback', () => {
-  it('parses what the dropdown offers and rejects anything else', async () => {
+  it('reads media values from the dropdown', async () => {
     const { flow } = await setup();
-    expect(flow.parseChoice('media:abc')).toEqual({ type: 'media', id: 'abc' });
-    expect(flow.parseChoice('intro:away')).toEqual({ type: 'intro', side: 'away' });
-    expect(flow.parseChoice('mode:stadium')).toEqual({ type: 'mode', mode: 'stadium' });
-    for (const bad of ['', 'mode:intro', 'intro:both', 'media:', 'junk']) expect(flow.parseChoice(bad)).toBeNull();
+    expect(flow.mediaIdOf(flow.mediaValue('abc'))).toBe('abc');
+    expect(flow.mediaIdOf(flow.ROTATION)).toBeNull();
+    expect(flow.mediaIdOf('')).toBeNull();
   });
 
-  it('playing media from the live scoreboard switches the display to fullscreen', async () => {
+  it('a mode button only changes the display mode', async () => {
     const { flow, playback, presentation } = await setup();
-    presentation.getState().setMode('live');
-    flow.playChoice({ type: 'media', id: 'clip' });
-    expect(presentation.getState().mode).toBe('fullscreen');
+    for (const mode of ['pregame', 'stadium', 'halftime', 'intro', 'fullscreen', 'live'] as const) {
+      flow.selectMode(mode);
+      expect(presentation.getState().mode).toBe(mode);
+    }
+    expect(playback.getState().queue).toEqual([]);
+  });
+
+  it('entering Live Sponsor with an empty queue starts the sponsor rotation, but never replaces a queue', async () => {
+    const { flow, playback } = await setup();
+    flow.selectMode('livesponsor');
+    expect(playback.getState()).toMatchObject({ queue: ['ad'], isPlaying: true, loop: true });
+    flow.selectMode('live');
+    playback.getState().setQueue(['clip'], false, false);
+    flow.selectMode('livesponsor');
+    expect(playback.getState().queue).toEqual(['clip']);
+  });
+
+  it('Play Now plays the chosen media in the selected mode', async () => {
+    const { flow, playback, presentation } = await setup();
+    flow.selectMode('stadium');
+    flow.play(flow.mediaValue('clip'));
+    expect(presentation.getState().mode).toBe('stadium');
     expect(playback.getState()).toMatchObject({ queue: ['clip'], isPlaying: true });
   });
 
-  it('playing media in a mode with a media area keeps that mode', async () => {
-    const { flow, presentation } = await setup();
-    presentation.getState().setMode('stadium');
-    flow.playChoice({ type: 'media', id: 'clip' });
-    expect(presentation.getState().mode).toBe('stadium');
-  });
-
-  it('choosing a mode loads its media; Live stops playback', async () => {
-    const { flow, playback, presentation } = await setup();
-    flow.playChoice({ type: 'mode', mode: 'stadium' });
-    expect(presentation.getState().mode).toBe('stadium');
+  it("Play with the mode's rotation chosen loads that mode's media", async () => {
+    const { flow, playback } = await setup();
+    flow.selectMode('stadium');
+    flow.play(flow.ROTATION);
     expect(playback.getState()).toMatchObject({ queue: ['ad', 'clip'], isPlaying: true, loop: true });
-    flow.playChoice({ type: 'mode', mode: 'live' });
-    expect(presentation.getState().mode).toBe('live');
-    expect(playback.getState().isPlaying).toBe(false);
   });
 
-  it('starts an introduction for the chosen team', async () => {
-    const { flow, intro, presentation, playback } = await setup();
-    playback.getState().playNow('clip');
-    flow.playChoice({ type: 'intro', side: 'away' });
-    expect(presentation.getState().mode).toBe('intro');
-    expect(intro.getState()).toMatchObject({ team: 'away', isPlaying: true });
-    expect(playback.getState().isPlaying).toBe(false);
+  it('Play with nothing chosen resumes the queue', async () => {
+    const { flow, playback } = await setup();
+    playback.getState().addToQueue('clip');
+    flow.play('');
+    expect(playback.getState().isPlaying).toBe(true);
   });
 
-  it('Stop ends media and introductions and returns to the live scoreboard, keeping the queue to resume', async () => {
+  it('Stop halts media and introductions, keeps the mode and the queue', async () => {
     const { flow, playback, presentation, intro } = await setup();
-    flow.playChoice({ type: 'media', id: 'clip' });
+    flow.selectMode('intro');
+    intro.getState().startIntro('home');
+    playback.getState().playNow('clip');
     playback.getState().addToQueue('ad');
     flow.stopAll();
-    expect(presentation.getState().mode).toBe('live');
+    expect(presentation.getState().mode).toBe('intro');
     expect(playback.getState()).toMatchObject({ isPlaying: false, queue: ['clip', 'ad'] });
     expect(intro.getState().isPlaying).toBe(false);
-    flow.resumeQueue();
-    expect(presentation.getState().mode).toBe('fullscreen');
-    expect(playback.getState().isPlaying).toBe(true);
   });
 });

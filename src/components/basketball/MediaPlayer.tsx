@@ -94,7 +94,8 @@ export const MediaPlayer: React.FC = () => {
     if (currentId !== null && item === null) advance();
   }, [currentId, item, advance]);
 
-  if (!item) return <FallbackSlot />;
+  // Stopped means nothing on screen; the queue stays lined up for Play.
+  if (!item || !isPlaying) return <FallbackSlot />;
 
   return item.kind === 'image'
     ? <ImageMedia item={item} isPlaying={isPlaying} onMissing={advance} />
