@@ -91,12 +91,12 @@ The navigation at the top of the operator console has:
 | Page | Purpose |
 |---|---|
 | **Scoreboard** | Live game controls |
-| **Game Setup** | Two sections. *Game Settings*: team names, colours, logos, rules, the scoreboard preset with a live preview, and sound and display preferences. *New Game Defaults*: default rules and theme for new games, New Game With Defaults and Restore Defaults (there is no separate Settings page) |
+| **Game Setup** | *Game Settings*: team names, colours, logos, rules, the scoreboard preset with a live preview, and sound and display preferences (there is no separate Settings page) |
 | **Configurations** | Save, load, update, rename, duplicate and delete prepared setups |
 | **Media** | Upload and organize images and videos; assign media to sponsors and manage sponsor logos and rotation |
 | **History** | Finished games, statistics, CSV export and printable summaries |
 
-Default rules are 4 × 12-minute quarters, 5-minute overtime, a 24/14 shot clock, bonus at 5 team fouls and 3 timeouts per team. Team fouls reset each period; timeouts carry over. Change them for the current game in Game Setup, or as defaults under New Game Defaults on the same page.
+Default rules are 4 × 12-minute quarters, 5-minute overtime, a 24/14 shot clock, bonus at 5 team fouls and 3 timeouts per team. Team fouls reset each period; timeouts carry over. Change them for the current game in Game Setup; Reset Game / New Game on the operator page uses them.
 
 ### Scoreboard presets
 
@@ -219,7 +219,7 @@ src/
     ├── MediaParts.tsx         Media thumbnail, preview and details dialog
     ├── useMedia.ts            Media URLs, uploads and deletion
     ├── HistoryPage.tsx        Finished games
-    ├── AppPreferences.tsx     New Game Defaults and Sound/Display preferences (Game Setup)
+    ├── AppPreferences.tsx     Sound/Display preferences (Game Setup)
     ├── DisplayView.tsx        Public display page
     ├── Scoreboard.tsx         The five scoreboard layouts
     ├── PresentationViews.tsx  Pregame, Stadium and Halftime displays

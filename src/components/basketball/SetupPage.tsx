@@ -7,7 +7,7 @@ import type { Team } from '../../types/basketball';
 import { input, neutral } from './styles';
 import { Panel, RulesFields, TeamLogo } from './ui';
 import { ThemePicker } from './ThemePicker';
-import { NewGameDefaults, SoundDisplayPreferences } from './AppPreferences';
+import { SoundDisplayPreferences } from './AppPreferences';
 
 const removeUnusedLogos = () => {
   pruneLogos(referencedLogos(useBasketballStore.getState())).catch((error) => console.error('Could not clean up logos', error));
@@ -78,7 +78,6 @@ export const SetupPage: React.FC = () => {
       </Panel>
       <SoundDisplayPreferences />
       </section>
-      <NewGameDefaults />
     </div>
   );
 };

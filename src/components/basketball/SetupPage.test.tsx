@@ -7,11 +7,11 @@ describe('Game Setup', () => {
   it('keeps the game configuration', () => {
     for (const text of ['Game Settings', 'Home Team', 'Away Team', 'Restore timeouts now', 'Scoreboard Appearance']) expect(html).toContain(text);
   });
-  it('holds every former Settings option; sound and display sit in Game Settings, before the defaults', () => {
-    const texts = ['New Game Defaults', 'New Game With Defaults', 'Restore Defaults', 'Default Game Rules', 'Default Scoreboard Theme', 'Enable sound effects', 'Volume', 'Period-ending alert', 'Game-ending alert', 'Shot clock warning', 'Test Sound', 'Show shot clock', 'Show LEADING badge'];
+  it('holds every former Settings option; sound and display sit in Game Settings', () => {
+    const texts = ['Enable sound effects', 'Volume', 'Period-ending alert', 'Game-ending alert', 'Shot clock warning', 'Test Sound', 'Show shot clock', 'Show LEADING badge'];
     for (const text of texts) expect(html).toContain(text);
     expect(html).not.toContain('Defaults &amp; Preferences');
     expect(html.indexOf('Scoreboard Appearance')).toBeLessThan(html.indexOf('Enable sound effects'));
-    expect(html.indexOf('Show LEADING badge')).toBeLessThan(html.indexOf('New Game Defaults'));
+    expect(html).not.toContain('New Game Defaults');
   });
 });
