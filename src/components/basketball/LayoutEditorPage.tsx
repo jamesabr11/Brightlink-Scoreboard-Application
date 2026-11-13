@@ -36,7 +36,7 @@ const ShareSlider: React.FC<{ index: number }> = ({ index }) => {
 // Area-level settings: where the media area sits, how big it is, how it is divided.
 const AreaControls: React.FC = () => {
   const [layout, set] = useLayout();
-  const { placement, size, fit, sections, arrange } = layout;
+  const { placement, fit, sections, arrange } = layout;
   // Placement, arrangement and section count re-lay out the whole display, so manual positions are reset (after asking).
   const rearrange = async (patch: Partial<SponsorLayout>) => {
     if (isFree(layout) && !(await askConfirm({ title: 'Rearrange the layout?', message: 'This re-lays out the whole display, so your manual element positions are reset. Media assignments are kept.', confirmLabel: 'Rearrange', danger: true }))) return;
@@ -45,9 +45,6 @@ const AreaControls: React.FC = () => {
   return (
     <div className="space-y-3" role="group" aria-label="Sponsor media area">
       <div><span className={label}>Placement</span><div className="flex flex-wrap gap-2">{SPONSOR_PLACEMENTS.map((p) => <button key={p} onClick={() => void rearrange({ placement: p })} aria-pressed={placement === p} className={pick(placement === p)}>{p}</button>)}</div></div>
-      <label className="block text-xs text-neutral-400">Media area size: {size}%
-        <input type="range" min={SPONSOR_SIZE_MIN} max={SPONSOR_SIZE_MAX} step={5} value={size} onChange={(e) => set({ size: Number(e.target.value), rects: withoutSections(layout.rects) })} className="mt-2 w-full" />
-      </label>
       {isFree(layout) && <button onClick={() => set({ rects: {} })} className={`${neutral} px-3 py-2 text-sm`} title="Go back to the automatic placement, size and sections layout">Reset element positions</button>}
       <button onClick={() => set({ fit: fit === 'contain' ? 'cover' : 'contain' })} className={`${neutral} px-3 py-2 text-sm`} title="Fit shows the whole image; Fill crops the edges to fill the area">Scaling: {fit === 'contain' ? 'Fit' : 'Fill'}</button>
       <div><span className={label}>Sections</span><div className="flex gap-2">{Array.from({ length: SPONSOR_MAX_SECTIONS }, (_, i) => i + 1).map((n) => <button key={n} onClick={() => void rearrange({ sections: n })} aria-pressed={sections === n} className={pick(sections === n)}>{n}</button>)}</div></div>
@@ -172,7 +169,15 @@ export const LayoutEditorPage: React.FC = () => {
           <SavedLayoutsPanel />
           <Panel title="Properties">
             <div className="space-y-3">
+              {withSections && sel.id === 'sponsor' && <AreaControls />}
+              {withSections && sectionIndex >= 0 && <SectionControls index={sectionIndex} />}
+              {!withSections && <p className="text-xs text-neutral-500">This layout has no sponsor sections. Choose "With Sponsor Sections" under Saved Layouts to add them.</p>}
               <div><span className={label}>Name</span><div className={field}>{sel.name}</div></div>
+              {withSections && sel.id === 'sponsor' && (
+                <label className="block text-xs text-neutral-400">Media area size: {layout.size}%
+                  <input type="range" min={SPONSOR_SIZE_MIN} max={SPONSOR_SIZE_MAX} step={5} value={layout.size} onChange={(e) => setLayout({ size: Number(e.target.value), rects: withoutSections(layout.rects) })} className="mt-2 w-full" />
+                </label>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 {([['Top', sel.top, 'y'], ['Left', sel.left, 'x'], ['Width', sel.width, 'w'], ['Height', sel.height, 'h']] as const).map(([l, v, k]) => (
                   element
@@ -180,9 +185,6 @@ export const LayoutEditorPage: React.FC = () => {
                     : <div key={l}><span className={label}>{l}</span><div className={field}>{pct(v)}</div></div>
                 ))}
               </div>
-              {withSections && sel.id === 'sponsor' && <AreaControls />}
-              {withSections && sectionIndex >= 0 && <SectionControls index={sectionIndex} />}
-              {!withSections && <p className="text-xs text-neutral-500">This layout has no sponsor sections. Choose "With Sponsor Sections" under Saved Layouts to add them.</p>}
             </div>
           </Panel>
         </div>
