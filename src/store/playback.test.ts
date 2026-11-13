@@ -223,4 +223,21 @@ describe('usePlaybackStore', () => {
       expect(store.getState().queue).toEqual(['a']);
     });
   });
+
+  it('a display opened after playback started picks up what is playing instead of showing only the game name', async () => {
+    const operator = await openTab();
+    operator.getState().playNow('7.23');
+    operator.getState().addToQueue('next');
+    const display = await openTab(); // /display opened or reloaded afterwards
+    expect(display.getState()).toMatchObject({ queue: ['7.23', 'next'], currentIndex: 0, isPlaying: true, loop: false });
+  });
+
+  it('an idle tab never overwrites a tab that is playing', async () => {
+    const display = await openTab();
+    const operator = await openTab();
+    operator.getState().playNow('a');
+    expect(display.getState().queue).toEqual(['a']);
+    await openTab(); // another idle tab opens
+    expect(operator.getState()).toMatchObject({ queue: ['a'], isPlaying: true });
+  });
 });

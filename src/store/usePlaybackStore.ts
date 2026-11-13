@@ -61,7 +61,17 @@ export const durationFor = (item: MediaItem, sponsors: Sponsor[]): number =>
 const channel = new BroadcastChannel('playback_sync');
 
 export const usePlaybackStore = create<PlaybackStore>()((set, get) => {
-  channel.onmessage = (event) => set(event.data as Partial<PlaybackState>);
+  channel.onmessage = (event) => {
+    const data = event.data as Partial<PlaybackState> & { request?: true };
+    if (data.request) {
+      // A tab that has just opened (the display, or a reloaded operator page) asks what is playing. Playback is
+      // not saved anywhere, so without this answer it would start idle and show only the game name.
+      const { queue, currentIndex, isPlaying, loop } = get();
+      if (queue.length > 0) channel.postMessage({ queue, currentIndex, isPlaying, loop });
+      return;
+    }
+    set(data);
+  };
 
   const sync = (update: Partial<PlaybackState>) => {
     set(update);
@@ -136,6 +146,9 @@ export const usePlaybackStore = create<PlaybackStore>()((set, get) => {
     },
   };
 });
+
+// Ask any other open tab for the current playback state (sent once the store exists, so the answer can be applied).
+channel.postMessage({ request: true });
 
 if (typeof window !== 'undefined') {
   import.meta.hot?.dispose(() => channel.close());
