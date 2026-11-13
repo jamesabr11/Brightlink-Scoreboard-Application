@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, FolderPlus, Handshake, HardDrive, Images, Pencil, Search, Trash2, Upload, X } from 'lucide-react';
+import { Check, FolderPlus, Handshake, HardDrive, Images, Lock, Pencil, Search, Trash2, Upload, X } from 'lucide-react';
 import { askConfirm, notify } from '../../lib/feedback';
 import { formatBytes, formatSeconds, MEDIA_ACCEPT, pruneMediaFiles, storageUsage } from '../../lib/media';
 import { FALLBACK_CATEGORY, sponsorOf, useMediaStore } from '../../store/useMediaStore';
@@ -41,7 +41,7 @@ const CategoryRow: React.FC<{ category: MediaCategory; count: number; selected: 
   const remove = async () => {
     const confirmed = await askConfirm({
       title: `Delete the "${category.name}" category?`,
-      message: count > 0 ? `Its ${count} ${count === 1 ? 'item moves' : 'items move'} to General Promotions. No media is deleted.` : 'It has no media in it.',
+      message: count > 0 ? `Its ${count} ${count === 1 ? 'file moves' : 'files move'} to General Promotions. The files themselves are not deleted.` : 'It has no media in it.',
       confirmLabel: 'Delete Category',
       danger: true,
     });
@@ -66,12 +66,12 @@ const CategoryRow: React.FC<{ category: MediaCategory; count: number; selected: 
         <span className="truncate">{category.name}</span>
         <span className="text-xs tabular-nums text-neutral-400">{count}</span>
       </button>
-      {!category.builtIn && (
-        <span className="flex pr-1">
-          <button onClick={() => setDraft(category.name)} aria-label={`Rename ${category.name}`} className="rounded p-1.5 text-neutral-400 hover:bg-neutral-700 hover:text-white"><Pencil size={14} /></button>
-          <button onClick={remove} aria-label={`Delete ${category.name}`} className="rounded p-1.5 text-neutral-400 hover:bg-neutral-700 hover:text-white"><Trash2 size={14} /></button>
-        </span>
-      )}
+      <span className="flex pr-1">
+        <button onClick={() => setDraft(category.name)} aria-label={`Rename ${category.name}`} title="Rename" className="rounded p-1.5 text-neutral-400 hover:bg-neutral-700 hover:text-white"><Pencil size={14} /></button>
+        {category.builtIn
+          ? <span title="Required by the scoreboard's presentation modes, so it can be renamed but not deleted" className="rounded p-1.5 text-neutral-600"><Lock size={14} aria-label={`${category.name} is a required category and can't be deleted`} /></span>
+          : <button onClick={remove} aria-label={`Delete ${category.name}`} title="Delete" className="rounded p-1.5 text-neutral-400 hover:bg-neutral-700 hover:text-white"><Trash2 size={14} /></button>}
+      </span>
     </div>
   );
 };

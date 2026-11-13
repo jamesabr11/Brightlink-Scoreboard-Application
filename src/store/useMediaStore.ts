@@ -86,11 +86,18 @@ const cleanItem = (item: Partial<MediaItem> | null, categoryIds: Set<string>, sp
 
 // localStorage is outside our control, so nothing from it is trusted as-is.
 export const cleanMediaState = (saved: Partial<MediaState> | undefined): MediaState => {
-  const custom = (Array.isArray(saved?.categories) ? saved.categories : [])
+  const savedCategories = Array.isArray(saved?.categories) ? saved.categories : [];
+  // Built-in categories keep their ids (playback queues use them) but may carry a name the operator chose.
+  const builtIns: MediaCategory[] = [];
+  for (const b of BUILT_IN_CATEGORIES) {
+    const name = cleanName(savedCategories.find((c) => c?.id === b.id && c.builtIn === true)?.name);
+    builtIns.push(name && !builtIns.some((o) => sameName(o.name, name)) ? { ...b, name } : b);
+  }
+  const custom = savedCategories
     .filter((c) => typeof c?.id === 'string' && !BUILT_IN_CATEGORIES.some((b) => b.id === c.id) && cleanName(c.name))
     .map((c) => ({ id: c.id, name: cleanName(c.name), builtIn: false }))
-    .filter((c, i, all) => ![...BUILT_IN_CATEGORIES, ...all.slice(0, i)].some((other) => sameName(other.name, c.name)));
-  const categories = [...BUILT_IN_CATEGORIES, ...custom];
+    .filter((c, i, all) => ![...builtIns, ...all.slice(0, i)].some((other) => sameName(other.name, c.name)));
+  const categories = [...builtIns, ...custom];
   const rawSponsors = (Array.isArray(saved?.sponsors) ? saved.sponsors : []).filter((s) => typeof s?.id === 'string' && cleanName(s.name));
   const sponsorIds = new Set(rawSponsors.map((s) => s.id));
   const categoryIds = new Set(categories.map((c) => c.id));
@@ -168,12 +175,12 @@ export const useMediaStore = create<MediaStore>()(
         const clean = cleanName(name);
         const { categories } = get();
         const target = categories.find((c) => c.id === id);
-        if (!target || target.builtIn || !clean || categories.some((c) => c.id !== id && sameName(c.name, clean))) return false;
+        if (!target || !clean || categories.some((c) => c.id !== id && sameName(c.name, clean))) return false;
         set({ categories: categories.map((c) => (c.id === id ? { ...c, name: clean } : c)) });
         return true;
       },
 
-      // Its media isn't deleted: it moves to General Promotions.
+      // Only custom categories can be deleted: the built-in ones feed the playback queues. Its media isn't deleted: it moves to General Promotions.
       removeCategory: (id) => {
         const { categories, items } = get();
         if (!categories.some((c) => c.id === id && !c.builtIn)) return;

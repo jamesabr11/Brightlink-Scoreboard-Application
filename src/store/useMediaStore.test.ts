@@ -75,11 +75,19 @@ describe('categories', () => {
     expect(store.getState().categories).toHaveLength(9);
   });
 
-  it('protects the built-in categories', async () => {
+  it('renames built-in categories by id but never deletes them', async () => {
     const store = await openTab();
-    expect(store.getState().renameCategory('sponsors', 'Partners')).toBe(false);
+    store.getState().addItem(image('a', { categoryId: 'sponsors' }));
+    expect(store.getState().renameCategory('sponsors', 'Partners')).toBe(true);
+    expect(store.getState().renameCategory('hype', 'partners')).toBe(false);
     store.getState().removeCategory('sponsors');
-    expect(store.getState().categories[0].name).toBe('Sponsors');
+    expect(store.getState().categories[0]).toMatchObject({ id: 'sponsors', name: 'Partners', builtIn: true });
+    expect(store.getState().items[0].categoryId).toBe('sponsors');
+  });
+
+  it('keeps a renamed built-in category after a reload', async () => {
+    (await openTab()).getState().renameCategory('hype', 'Pump Up');
+    expect((await openTab()).getState().categories.find((c) => c.id === 'hype')?.name).toBe('Pump Up');
   });
 
   it('moves media to General Promotions when its category is deleted', async () => {
