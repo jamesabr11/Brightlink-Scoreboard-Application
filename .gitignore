@@ -36,6 +36,7 @@ skills-lock.json
 # Personal AI assistant instructions and settings
 CLAUDE.md
 .claude_exempt
+PRODUCT.md
 # Private design research, kept locally
 design-references/
 # Environment files
@@ -49,3 +50,5 @@ intro-home-button.txt
 txt/
 reports/
 screenshots/
+
+/.codex
